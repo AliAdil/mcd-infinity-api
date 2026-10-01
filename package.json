@@ -1,0 +1,20 @@
+{
+  "name": "mcd-infinity-api",
+  "version": "1.0.0",
+  "description": "Mock server and API implementation for MCD Infinity API",
+  "main": "server.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node test-runner.mjs"
+  },
+  "keywords": [
+    "apidog",
+    "mcd",
+    "infinity",
+    "banking",
+    "api"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}

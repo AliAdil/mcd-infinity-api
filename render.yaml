@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mcd-infinity-api
+    env: node
+    plan: free
+    buildCommand: echo "Zero dependency install"
+    startCommand: node server.mjs
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production

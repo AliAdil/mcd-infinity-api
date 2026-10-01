@@ -1,0 +1,2212 @@
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PORT = process.env.PORT || 3000;
+const DB_FILE_PATH = path.join(__dirname, 'db.json');
+
+// Load OpenAPI specification
+const openapiSpecPath = path.join(__dirname, 'openapi.json');
+let openapiSpec = {};
+try {
+  openapiSpec = JSON.parse(fs.readFileSync(openapiSpecPath, 'utf-8'));
+} catch (err) {
+  console.error('Failed to load openapi.json:', err.message);
+}
+
+// Initial seed data
+const initialSeedData = {
+  physicalPersons: [
+    ['P1001', {
+      McdId: 'P1001',
+      FirstName: 'Jonas',
+      MiddleName: null,
+      LastName: 'Kazlauskas',
+      PersonalCode: '38501010001',
+      CountryCode: 'LT',
+      Gender: 'MALE',
+      Status: 'Existing',
+      TransactID: 'TX-98765',
+      DateOfBirth: '1985-01-01',
+      DateOfDeath: null,
+      BirthCountryCode: 'LT',
+      BirthCity: 'Vilnius',
+      LanguageCode: 'lt',
+      PrimaryEmail: 'jonas.kazlauskas@example.com',
+      PrimaryEmailVerified: true,
+      SecondaryEmail: null,
+      PrimaryPhoneNumber: '+37060012345',
+      PrimaryPhoneNumberVerified: true,
+      SecondaryPhoneNumber: null,
+      RegistrationAddress: {
+        countryCode: 'LT',
+        buildingNumber: '12',
+        flatNumber: '4',
+        postCode: 'LT-01111',
+        city: 'Vilnius',
+        street: 'Gedimino pr.',
+        municipality: 'Vilniaus m.',
+        fullAddress: 'Gedimino pr. 12-4, LT-01111 Vilnius'
+      },
+      ResidenceAddress: {
+        countryCode: 'LT',
+        buildingNumber: '12',
+        flatNumber: '4',
+        postCode: 'LT-01111',
+        city: 'Vilnius',
+        street: 'Gedimino pr.',
+        municipality: 'Vilniaus m.',
+        fullAddress: 'Gedimino pr. 12-4, LT-01111 Vilnius'
+      },
+      CorrespondenceAddress: {
+        countryCode: 'LT',
+        buildingNumber: '12',
+        flatNumber: '4',
+        postCode: 'LT-01111',
+        city: 'Vilnius',
+        street: 'Gedimino pr.',
+        municipality: 'Vilniaus m.',
+        fullAddress: 'Gedimino pr. 12-4, LT-01111 Vilnius'
+      },
+      Consents: {
+        ConsentOffers: true,
+        ConsentProfiling: false,
+        ConsentPartnersOffers: false,
+        Date: '2026-01-10T10:00:00.000Z',
+        ValidUntil: '2028-12-31'
+      },
+      Nationalities: ['LT'],
+      IdDocuments: [
+        {
+          Id: 'DOC-101',
+          Number: '12345678',
+          TypeCode: 'PASSPORT',
+          IssuerCountryCode: 'LT',
+          IssueDate: '2020-05-15',
+          ExpirationDate: '2030-05-15',
+          FormpipeFileId: 'FP-888',
+          NationalIdentifier: {
+            Type: 'PERSONAL_CODE',
+            Value: '38501010001',
+            CountryCode: 'LT'
+          }
+        }
+      ],
+      OndatoCheckValid: true,
+      AmlScreening: {
+        LastAmlResultDate: '2026-02-01T08:00:00.000Z',
+        AmlResult: 'PASSED',
+        SmaApprovalStatus: 'APPROVED',
+        SmaDecisionDate: '2026-02-01T08:00:00.000Z'
+      },
+      Kyc: {
+        IsKycRequired: false,
+        ExpirationDate: '2027-01-01'
+      },
+      SelectedProducts: [
+        { ProductCategory: 'ACCOUNTS', ProductId: 'CURRENT_ACCOUNT_STANDARD' }
+      ],
+      HasParentalPermissionToManageProducts: null,
+      IsMinor: false,
+      IsEmancipatedMinor: false,
+      IsIncapable: false,
+      guardianMcdId: null,
+      coapplicantMcdId: null
+    }],
+    ['P1002', {
+      McdId: 'P1002',
+      FirstName: 'Ieva',
+      MiddleName: null,
+      LastName: 'Kazlauskienė',
+      PersonalCode: '48802020002',
+      CountryCode: 'LT',
+      Gender: 'FEMALE',
+      Status: 'Existing',
+      TransactID: 'TX-98766',
+      DateOfBirth: '1988-02-02',
+      DateOfDeath: null,
+      BirthCountryCode: 'LT',
+      BirthCity: 'Kaunas',
+      LanguageCode: 'lt',
+      PrimaryEmail: 'ieva.k@example.com',
+      PrimaryEmailVerified: true,
+      SecondaryEmail: null,
+      PrimaryPhoneNumber: '+37060023456',
+      PrimaryPhoneNumberVerified: true,
+      SecondaryPhoneNumber: null,
+      RegistrationAddress: {
+        countryCode: 'LT',
+        buildingNumber: '12',
+        flatNumber: '4',
+        postCode: 'LT-01111',
+        city: 'Vilnius',
+        street: 'Gedimino pr.',
+        fullAddress: 'Gedimino pr. 12-4, LT-01111 Vilnius'
+      },
+      ResidenceAddress: null,
+      CorrespondenceAddress: {
+        countryCode: 'LT',
+        buildingNumber: '12',
+        flatNumber: '4',
+        postCode: 'LT-01111',
+        city: 'Vilnius',
+        street: 'Gedimino pr.',
+        fullAddress: 'Gedimino pr. 12-4, LT-01111 Vilnius'
+      },
+      Consents: {
+        ConsentOffers: true,
+        ConsentProfiling: true,
+        ConsentPartnersOffers: true,
+        Date: '2026-01-10T10:00:00.000Z',
+        ValidUntil: '2027-01-01'
+      },
+      Nationalities: ['LT'],
+      IdDocuments: [],
+      OndatoCheckValid: true,
+      AmlScreening: {
+        LastAmlResultDate: '2026-02-01T08:00:00.000Z',
+        AmlResult: 'PASSED',
+        SmaApprovalStatus: 'APPROVED',
+        SmaDecisionDate: '2026-02-01T08:00:00.000Z'
+      },
+      Kyc: {
+        IsKycRequired: false,
+        ExpirationDate: '2027-05-01'
+      },
+      SelectedProducts: [
+        { ProductCategory: 'ACCOUNTS', ProductId: 'CURRENT_ACCOUNT_PREMIUM' }
+      ],
+      HasParentalPermissionToManageProducts: null,
+      IsMinor: false,
+      IsEmancipatedMinor: false,
+      IsIncapable: false,
+      guardianMcdId: null,
+      coapplicantMcdId: null
+    }],
+    ['P1003', {
+      McdId: 'P1003',
+      FirstName: 'Lukas',
+      MiddleName: null,
+      LastName: 'Kazlauskas',
+      PersonalCode: '51503030003',
+      CountryCode: 'LT',
+      Gender: 'MALE',
+      Status: 'Existing',
+      TransactID: 'TX-98767',
+      DateOfBirth: '2015-03-03',
+      DateOfDeath: null,
+      BirthCountryCode: 'LT',
+      BirthCity: 'Vilnius',
+      LanguageCode: 'lt',
+      PrimaryEmail: null,
+      PrimaryEmailVerified: false,
+      SecondaryEmail: null,
+      PrimaryPhoneNumber: null,
+      PrimaryPhoneNumberVerified: false,
+      SecondaryPhoneNumber: null,
+      RegistrationAddress: {
+        countryCode: 'LT',
+        buildingNumber: '12',
+        flatNumber: '4',
+        postCode: 'LT-01111',
+        city: 'Vilnius',
+        street: 'Gedimino pr.',
+        fullAddress: 'Gedimino pr. 12-4, LT-01111 Vilnius'
+      },
+      ResidenceAddress: null,
+      CorrespondenceAddress: {
+        countryCode: 'LT',
+        buildingNumber: '12',
+        flatNumber: '4',
+        postCode: 'LT-01111',
+        city: 'Vilnius',
+        street: 'Gedimino pr.',
+        fullAddress: 'Gedimino pr. 12-4, LT-01111 Vilnius'
+      },
+      Consents: {
+        ConsentOffers: false,
+        ConsentProfiling: false,
+        ConsentPartnersOffers: false,
+        Date: '2026-01-10T10:00:00.000Z',
+        ValidUntil: '2026-12-31'
+      },
+      Nationalities: ['LT'],
+      IdDocuments: [],
+      OndatoCheckValid: true,
+      AmlScreening: null,
+      Kyc: {
+        IsKycRequired: false,
+        ExpirationDate: '2030-01-01'
+      },
+      SelectedProducts: [
+        { ProductCategory: 'JUNIOR', ProductId: 'JUNIOR_SAVINGS_CARD' }
+      ],
+      HasParentalPermissionToManageProducts: true,
+      IsMinor: true,
+      IsEmancipatedMinor: false,
+      IsIncapable: false,
+      guardianMcdId: 'P1001',
+      coapplicantMcdId: null
+    }]
+  ],
+
+  juridicalPersons: [
+    ['J2001', {
+      McdId: 'J2001',
+      FullName: 'UAB Baltijos Technologijos',
+      CompanyCode: '305123456',
+      CountryCode: 'LT',
+      Status: 'Existing',
+      TransactId: 'TX-J-54321',
+      PrimaryEmail: 'info@baltiantech.lt',
+      PrimaryEmailVerified: true,
+      SecondaryEmail: 'finance@baltiantech.lt',
+      PrimaryPhoneNumber: '+37052123456',
+      PrimaryPhoneNumberVerified: true,
+      SecondaryPhoneNumber: null,
+      RegistrationAddress: {
+        countryCode: 'LT',
+        buildingNumber: '10',
+        flatNumber: '101',
+        postCode: 'LT-08105',
+        city: 'Vilnius',
+        street: 'Saltoniškių g.',
+        fullAddress: 'Saltoniškių g. 10-101, LT-08105 Vilnius'
+      },
+      ResidenceAddress: null,
+      CorrespondenceAddress: {
+        countryCode: 'LT',
+        buildingNumber: '10',
+        flatNumber: '101',
+        postCode: 'LT-08105',
+        city: 'Vilnius',
+        street: 'Saltoniškių g.',
+        fullAddress: 'Saltoniškių g. 10-101, LT-08105 Vilnius'
+      },
+      Consents: {
+        ConsentOffers: true,
+        ConsentPartnersOffers: false
+      },
+      AmlScreening: {
+        LastAmlResultDate: '2026-02-01T08:00:00.000Z',
+        AmlResult: 'PASSED',
+        SmaApprovalStatus: 'APPROVED',
+        SmaDecisionDate: '2026-02-01T08:00:00.000Z'
+      },
+      Kyc: {
+        IsKycRequired: false,
+        ExpirationDate: '2027-10-01'
+      },
+      SelectedProducts: [
+        { ProductCategory: 'BUSINESS_ACCOUNTS', ProductId: 'SME_CORPORATE_PACKAGE' }
+      ],
+      FinalBeneficiariesMissing: false,
+      RepresentativeMcdId: 'R3001'
+    }]
+  ],
+
+  representatives: [
+    ['R3001', {
+      McdId: 'R3001',
+      FirstName: 'Vytautas',
+      MiddleName: null,
+      LastName: 'Petrauskas',
+      PersonalCode: '37905050005',
+      CountryCode: 'LT',
+      Gender: 'MALE',
+      DateOfBirth: '1979-05-05',
+      BirthCountryCode: 'LT',
+      BirthCity: 'Klaipėda',
+      LanguageCode: 'lt',
+      PrimaryEmail: 'v.petrauskas@baltiantech.lt',
+      PrimaryEmailVerified: true,
+      SecondaryEmail: null,
+      PrimaryPhoneNumber: '+37068899000',
+      PrimaryPhoneNumberVerified: true,
+      SecondaryPhoneNumber: null,
+      RegistrationAddress: {
+        countryCode: 'LT',
+        buildingNumber: '5',
+        flatNumber: '12',
+        postCode: 'LT-03100',
+        city: 'Vilnius',
+        street: 'Konstitucijos pr.',
+        fullAddress: 'Konstitucijos pr. 5-12, LT-03100 Vilnius'
+      },
+      ResidenceAddress: null,
+      CorrespondenceAddress: {
+        countryCode: 'LT',
+        buildingNumber: '5',
+        flatNumber: '12',
+        postCode: 'LT-03100',
+        city: 'Vilnius',
+        street: 'Konstitucijos pr.',
+        fullAddress: 'Konstitucijos pr. 5-12, LT-03100 Vilnius'
+      },
+      Consents: {
+        ConsentOffers: true,
+        ConsentProfiling: false,
+        ConsentPartnersOffers: false,
+        Date: '2026-01-10T10:00:00.000Z',
+        ValidUntil: '2028-05-05'
+      },
+      Nationalities: ['LT'],
+      IdDocuments: [
+        {
+          Id: 'DOC-301',
+          Number: '87654321',
+          TypeCode: 'IDENTITY_CARD',
+          IssuerCountryCode: 'LT',
+          IssueDate: '2022-01-10',
+          ExpirationDate: '2032-01-10',
+          FormpipeFileId: 'FP-301',
+          NationalIdentifier: {
+            Type: 'PERSONAL_CODE',
+            Value: '37905050005',
+            CountryCode: 'LT'
+          }
+        }
+      ],
+      OndatoCheckValid: true,
+      AmlScreening: {
+        LastAmlResultDate: '2026-02-01T08:00:00.000Z',
+        AmlResult: 'PASSED',
+        SmaApprovalStatus: 'APPROVED',
+        SmaDecisionDate: '2026-02-01T08:00:00.000Z'
+      },
+      Kyc: {
+        IsKycRequired: false,
+        ExpirationDate: '2028-01-01'
+      },
+      Status: 'Existing'
+    }]
+  ],
+
+  accumulatedJuridicalPersons: [
+    ['A4001', {
+      McdId: 'A4001',
+      FullName: 'UAB Naujas Startas',
+      CompanyCode: 'EST-998877',
+      CountryCode: 'LT',
+      Status: 'Prospect',
+      TransactId: 'TX-ACC-001',
+      RepresentativeMcdId: 'R3001',
+      phoneNumber: '+37067711223',
+      secondaryPhoneNumber: '+37052998877',
+      registrationAddress: {
+        countryCode: 'LT',
+        buildingNumber: '1',
+        flatNumber: '1',
+        postCode: 'LT-01001',
+        city: 'Vilnius',
+        street: 'Pilies g.',
+        fullAddress: 'Pilies g. 1-1, LT-01001 Vilnius'
+      },
+      selectedProducts: [
+        { ProductCategory: 'ACCUMULATED_ACCOUNT', ProductId: 'ESTABLISHING_CAPITAL_ACCOUNT' }
+      ]
+    }]
+  ]
+};
+
+// Database container
+export const db = {
+  physicalPersons: new Map(initialSeedData.physicalPersons),
+  juridicalPersons: new Map(initialSeedData.juridicalPersons),
+  representatives: new Map(initialSeedData.representatives),
+  accumulatedJuridicalPersons: new Map(initialSeedData.accumulatedJuridicalPersons)
+};
+
+// Map collection aliases
+export function getCollection(name) {
+  if (!name) return null;
+  const n = name.toLowerCase();
+  if (n === 'physical' || n === 'physicalpersons') return db.physicalPersons;
+  if (n === 'juridical' || n === 'juridicalpersons') return db.juridicalPersons;
+  if (n === 'representatives' || n === 'representative') return db.representatives;
+  if (n === 'accumulated' || n === 'accumulatedjuridicalpersons') return db.accumulatedJuridicalPersons;
+  return null;
+}
+
+// Sync database to db.json file
+export function syncDbToFile() {
+  try {
+    const serialized = {
+      _lastUpdated: new Date().toISOString(),
+      physicalPersons: Array.from(db.physicalPersons.entries()),
+      juridicalPersons: Array.from(db.juridicalPersons.entries()),
+      representatives: Array.from(db.representatives.entries()),
+      accumulatedJuridicalPersons: Array.from(db.accumulatedJuridicalPersons.entries())
+    };
+    fs.writeFileSync(DB_FILE_PATH, JSON.stringify(serialized, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Failed to sync db to file:', err.message);
+  }
+}
+
+// Load database from db.json if present
+export function loadDbFromFile() {
+  if (fs.existsSync(DB_FILE_PATH)) {
+    try {
+      const content = JSON.parse(fs.readFileSync(DB_FILE_PATH, 'utf-8'));
+      if (content.physicalPersons) db.physicalPersons = new Map(content.physicalPersons);
+      if (content.juridicalPersons) db.juridicalPersons = new Map(content.juridicalPersons);
+      if (content.representatives) db.representatives = new Map(content.representatives);
+      if (content.accumulatedJuridicalPersons) db.accumulatedJuridicalPersons = new Map(content.accumulatedJuridicalPersons);
+      console.log('Loaded database state from db.json');
+    } catch (err) {
+      console.error('Error reading db.json, using defaults:', err.message);
+    }
+  } else {
+    syncDbToFile();
+  }
+}
+
+// Initial sync
+syncDbToFile();
+
+// Sequence counters
+let physicalSeq = 1004;
+let juridicalSeq = 2002;
+let repSeq = 3002;
+let accSeq = 4002;
+
+// Helper: send JSON response
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept'
+  });
+  res.end(JSON.stringify(data, null, 2));
+}
+
+// Helper: send HTML response
+function sendHtml(res, statusCode, html) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Access-Control-Allow-Origin': '*'
+  });
+  res.end(html);
+}
+
+// Helper: parse JSON request body
+async function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let raw = '';
+    req.on('data', chunk => { raw += chunk; });
+    req.on('end', () => {
+      if (!raw.trim()) return resolve({});
+      try {
+        resolve(JSON.parse(raw));
+      } catch (err) {
+        reject(new Error('Invalid JSON payload: ' + err.message));
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+// Full DB snapshot in plain JSON object
+export function getDbSnapshot() {
+  return {
+    _meta: {
+      service: 'MCD Infinity API Server',
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+      counts: {
+        physicalPersons: db.physicalPersons.size,
+        juridicalPersons: db.juridicalPersons.size,
+        representatives: db.representatives.size,
+        accumulatedJuridicalPersons: db.accumulatedJuridicalPersons.size
+      }
+    },
+    physicalPersons: Array.from(db.physicalPersons.values()),
+    juridicalPersons: Array.from(db.juridicalPersons.values()),
+    representatives: Array.from(db.representatives.values()),
+    accumulatedJuridicalPersons: Array.from(db.accumulatedJuridicalPersons.values())
+  };
+}
+
+// -------------------------------------------------------------
+// Request Routing Engine
+// -------------------------------------------------------------
+export async function handleRequest(req, res) {
+  // CORS Preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept'
+    });
+    return res.end();
+  }
+
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const pathname = parsedUrl.pathname;
+  const method = req.method.toUpperCase();
+  const query = Object.fromEntries(parsedUrl.searchParams.entries());
+
+  try {
+    // ---------------------------------------------------------
+    // Health, Spec, & Database Admin Endpoints
+    // ---------------------------------------------------------
+    if (method === 'GET' && pathname === '/health') {
+      return sendJson(res, 200, {
+        status: 'ok',
+        service: 'MCD Infinity API Server',
+        version: '1.0.0',
+        uptime: process.uptime(),
+        database: {
+          physicalPersons: db.physicalPersons.size,
+          juridicalPersons: db.juridicalPersons.size,
+          representatives: db.representatives.size,
+          accumulatedAccounts: db.accumulatedJuridicalPersons.size
+        }
+      });
+    }
+
+    if (method === 'GET' && (pathname === '/admin/db' || pathname === '/api/db')) {
+      return sendJson(res, 200, getDbSnapshot());
+    }
+
+    // Direct Browser Update endpoint: PUT /admin/db/:collection/:id
+    let dbMatch = pathname.match(/^\/admin\/db\/([^\/]+)\/([^\/]+)$/);
+    if (method === 'PUT' && dbMatch) {
+      const [, colName, id] = dbMatch;
+      const targetMap = getCollection(colName);
+      if (!targetMap) {
+        return sendJson(res, 400, { success: false, ErrorMessage: `Unknown collection '${colName}'` });
+      }
+
+      const body = await parseBody(req);
+      const existing = targetMap.get(id);
+      if (!existing) {
+        return sendJson(res, 404, { success: false, ErrorMessage: `Record '${id}' not found in '${colName}'` });
+      }
+
+      // Merge and update
+      const updated = { ...existing, ...body, McdId: id };
+      targetMap.set(id, updated);
+      syncDbToFile();
+
+      return sendJson(res, 200, {
+        success: true,
+        message: `Record ${id} updated in ${colName} successfully`,
+        record: updated
+      });
+    }
+
+    // Direct Browser Delete endpoint: DELETE /admin/db/:collection/:id
+    if (method === 'DELETE' && dbMatch) {
+      const [, colName, id] = dbMatch;
+      const targetMap = getCollection(colName);
+      if (!targetMap) {
+        return sendJson(res, 400, { success: false, ErrorMessage: `Unknown collection '${colName}'` });
+      }
+
+      if (!targetMap.has(id)) {
+        return sendJson(res, 404, { success: false, ErrorMessage: `Record '${id}' not found in '${colName}'` });
+      }
+
+      targetMap.delete(id);
+      syncDbToFile();
+
+      return sendJson(res, 200, {
+        success: true,
+        message: `Record ${id} deleted from ${colName} successfully`
+      });
+    }
+
+    // Direct Browser Add endpoint: POST /admin/db/:collection
+    dbMatch = pathname.match(/^\/admin\/db\/([^\/]+)$/);
+    if (method === 'POST' && dbMatch && dbMatch[1] !== 'reset') {
+      const colName = dbMatch[1];
+      const targetMap = getCollection(colName);
+      if (!targetMap) {
+        return sendJson(res, 400, { success: false, ErrorMessage: `Unknown collection '${colName}'` });
+      }
+
+      const body = await parseBody(req);
+      const prefix = colName.startsWith('p') ? 'P' : colName.startsWith('j') ? 'J' : colName.startsWith('r') ? 'R' : 'A';
+      const id = body.McdId || (prefix + Math.floor(1000 + Math.random() * 9000));
+      const record = { ...body, McdId: id };
+
+      targetMap.set(id, record);
+      syncDbToFile();
+
+      return sendJson(res, 201, {
+        success: true,
+        message: `Record ${id} created in ${colName} successfully`,
+        record
+      });
+    }
+
+    if (method === 'POST' && pathname === '/admin/db/reset') {
+      db.physicalPersons = new Map(initialSeedData.physicalPersons);
+      db.juridicalPersons = new Map(initialSeedData.juridicalPersons);
+      db.representatives = new Map(initialSeedData.representatives);
+      db.accumulatedJuridicalPersons = new Map(initialSeedData.accumulatedJuridicalPersons);
+      syncDbToFile();
+      return sendJson(res, 200, { success: true, message: 'Database reset to default seed data', snapshot: getDbSnapshot() });
+    }
+
+    if (method === 'GET' && pathname === '/openapi.json') {
+      return sendJson(res, 200, openapiSpec);
+    }
+
+    // Swagger UI docs
+    if (method === 'GET' && (pathname === '/docs' || pathname === '/swagger')) {
+      const swaggerHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MCD Infinity API - Swagger UI</title>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" />
+  <link rel="icon" type="image/png" href="https://assets.apidog.com/app/project-icon/builtin/15.jpg" />
+  <style>
+    html { box-sizing: border-box; overflow-y: scroll; }
+    *, *:before, *:after { box-sizing: inherit; }
+    body { margin: 0; background: #fafafa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .topbar-wrapper img { content: url('https://assets.apidog.com/app/project-icon/builtin/15.jpg'); height: 35px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      SwaggerUIBundle({
+        url: "/openapi.json",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout"
+      });
+    };
+  </script>
+</body>
+</html>`;
+      return sendHtml(res, 200, swaggerHtml);
+    }
+
+    // Interactive Dashboard & API Explorer with Live Database Viewer & Editor
+    if (method === 'GET' && pathname === '/') {
+      return sendHtml(res, 200, renderDashboardHtml());
+    }
+
+    // ---------------------------------------------------------
+    // 1. PHYSICAL PERSONS ENDPOINTS
+    // ---------------------------------------------------------
+
+    // GET /persons/physical - Search physical persons
+    if (method === 'GET' && pathname === '/persons/physical') {
+      const results = [];
+      for (const p of db.physicalPersons.values()) {
+        let match = true;
+        if (query.FirstName && !p.FirstName.toLowerCase().includes(query.FirstName.toLowerCase())) match = false;
+        if (query.LastName && !p.LastName.toLowerCase().includes(query.LastName.toLowerCase())) match = false;
+        if (query.PersonalCode && p.PersonalCode !== query.PersonalCode) match = false;
+        if (query.CountryCode && p.CountryCode !== query.CountryCode) match = false;
+        if (query.IsJunior !== undefined) {
+          const isJuniorBool = query.IsJunior === 'true';
+          if (Boolean(p.IsMinor) !== isJuniorBool) match = false;
+        }
+        if (match) {
+          results.push({
+            McdId: p.McdId,
+            FirstName: p.FirstName,
+            MiddleName: p.MiddleName,
+            LastName: p.LastName,
+            PersonalCode: p.PersonalCode,
+            CountryCode: p.CountryCode,
+            Status: p.Status,
+            TransactID: p.TransactID,
+            SelectedProducts: p.SelectedProducts
+          });
+        }
+      }
+      return sendJson(res, 200, results);
+    }
+
+    // POST /persons/physical - Create physical prospect
+    if (method === 'POST' && pathname === '/persons/physical') {
+      const body = await parseBody(req);
+      if (!body.firstName || !body.lastName || !body.personalCode) {
+        return sendJson(res, 400, {
+          ErrorCode: '400001',
+          ErrorMessage: 'Missing mandatory fields: firstName, lastName, personalCode'
+        });
+      }
+
+      const newMcdId = 'P' + (physicalSeq++);
+      const isMinor = body.dateOfBirth && (new Date().getFullYear() - new Date(body.dateOfBirth).getFullYear() < 18);
+      const newPerson = {
+        McdId: newMcdId,
+        FirstName: body.firstName,
+        MiddleName: body.middleName || null,
+        LastName: body.lastName,
+        PersonalCode: body.personalCode,
+        CountryCode: body.countryCode || 'LT',
+        Gender: body.gender || 'MALE',
+        Status: 'Prospect',
+        TransactID: 'TX-' + Math.floor(10000 + Math.random() * 90000),
+        DateOfBirth: body.dateOfBirth || '1995-01-01',
+        DateOfDeath: null,
+        BirthCountryCode: body.countryCode || 'LT',
+        BirthCity: 'Vilnius',
+        LanguageCode: 'lt',
+        PrimaryEmail: body.email || null,
+        PrimaryEmailVerified: Boolean(body.emailVerified),
+        SecondaryEmail: null,
+        PrimaryPhoneNumber: body.phoneNumber || null,
+        PrimaryPhoneNumberVerified: Boolean(body.phoneNumberVerified),
+        SecondaryPhoneNumber: null,
+        RegistrationAddress: body.ResidenceAddress || { countryCode: body.countryCode || 'LT', city: 'Vilnius', street: 'Gedimino pr. 1' },
+        ResidenceAddress: body.ResidenceAddress || null,
+        CorrespondenceAddress: body.CorrespondenceAddress || body.ResidenceAddress || { countryCode: body.countryCode || 'LT', city: 'Vilnius' },
+        Consents: {
+          ConsentOffers: true,
+          ConsentProfiling: false,
+          ConsentPartnersOffers: false,
+          Date: new Date().toISOString(),
+          ValidUntil: '2028-12-31'
+        },
+        Nationalities: [body.countryCode || 'LT'],
+        IdDocuments: [],
+        OndatoCheckValid: true,
+        AmlScreening: {
+          LastAmlResultDate: new Date().toISOString(),
+          AmlResult: 'PASSED',
+          SmaApprovalStatus: 'APPROVED',
+          SmaDecisionDate: new Date().toISOString()
+        },
+        Kyc: {
+          IsKycRequired: false,
+          ExpirationDate: '2027-01-01'
+        },
+        SelectedProducts: body.selectedProducts || [{ ProductCategory: 'ACCOUNTS', ProductId: 'STANDARD' }],
+        HasParentalPermissionToManageProducts: isMinor ? false : null,
+        IsMinor: Boolean(isMinor),
+        IsEmancipatedMinor: false,
+        IsIncapable: false,
+        guardianMcdId: body.onboardingClientMcdId || null,
+        coapplicantMcdId: null
+      };
+
+      db.physicalPersons.set(newMcdId, newPerson);
+      syncDbToFile();
+      return sendJson(res, 201, newPerson);
+    }
+
+    // GET /persons/physical/:mcdId/potentialGuardians
+    let m = pathname.match(/^\/persons\/physical\/([^\/]+)\/potentialGuardians$/);
+    if (method === 'GET' && m) {
+      const mcdId = m[1];
+      const person = db.physicalPersons.get(mcdId);
+      if (!person) {
+        return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Physical person ${mcdId} not found` });
+      }
+      const potentialGuardians = [
+        { mcdId: 'P1001', firstName: 'Jonas', lastName: 'Kazlauskas', personalCode: '38501010001' },
+        { mcdId: 'P1002', firstName: 'Ieva', lastName: 'Kazlauskienė', personalCode: '48802020002' }
+      ].filter(g => g.mcdId !== mcdId);
+
+      return sendJson(res, 200, potentialGuardians);
+    }
+
+    // PUT /persons/physical/:mcdId/guardian/:guardianMcdId
+    m = pathname.match(/^\/persons\/physical\/([^\/]+)\/guardian\/([^\/]+)$/);
+    if (method === 'PUT' && m) {
+      const [, mcdId, guardianMcdId] = m;
+      const person = db.physicalPersons.get(mcdId);
+      const guardian = db.physicalPersons.get(guardianMcdId);
+      if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Child person ${mcdId} not found` });
+      if (!guardian) return sendJson(res, 404, { ErrorCode: '404002', ErrorMessage: `Guardian person ${guardianMcdId} not found` });
+
+      person.guardianMcdId = guardianMcdId;
+      syncDbToFile();
+      return sendJson(res, 200, { success: true, message: `Guardian ${guardianMcdId} set for junior ${mcdId}` });
+    }
+
+    // GET /persons/physical/:mcdId/children
+    m = pathname.match(/^\/persons\/physical\/([^\/]+)\/children$/);
+    if (method === 'GET' && m) {
+      const mcdId = m[1];
+      const person = db.physicalPersons.get(mcdId);
+      if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Person ${mcdId} not found` });
+
+      const children = [];
+      for (const p of db.physicalPersons.values()) {
+        if (p.guardianMcdId === mcdId || (p.IsMinor && p.LastName === person.LastName)) {
+          children.push({
+            FirstName: p.FirstName,
+            LastName: p.LastName,
+            PersonalCode: p.PersonalCode,
+            DateOfBirth: p.DateOfBirth,
+            McdId: p.McdId,
+            PhoneNumber: p.PrimaryPhoneNumber,
+            PhoneNumberVerified: p.PrimaryPhoneNumberVerified,
+            Email: p.PrimaryEmail,
+            EmailVerified: p.PrimaryEmailVerified,
+            CountryCode: p.CountryCode,
+            isWard: p.guardianMcdId === mcdId
+          });
+        }
+      }
+      return sendJson(res, 200, children);
+    }
+
+    // PUT /persons/physical/:mcdId/coapplicant/:coapplicantMcdId
+    m = pathname.match(/^\/persons\/physical\/([^\/]+)\/coapplicant\/([^\/]+)$/);
+    if (method === 'PUT' && m) {
+      const [, mcdId, coapplicantMcdId] = m;
+      const person = db.physicalPersons.get(mcdId);
+      const coapplicant = db.physicalPersons.get(coapplicantMcdId);
+      if (!person || !coapplicant) {
+        return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: 'Person or coapplicant not found' });
+      }
+      person.coapplicantMcdId = coapplicantMcdId;
+      coapplicant.coapplicantMcdId = mcdId;
+      syncDbToFile();
+      return sendJson(res, 200, { success: true, message: `Coapplicants ${mcdId} and ${coapplicantMcdId} linked` });
+    }
+
+    // POST /persons/physical/:mcdId/consent
+    m = pathname.match(/^\/persons\/physical\/([^\/]+)\/consent$/);
+    if (method === 'POST' && m) {
+      const mcdId = m[1];
+      const person = db.physicalPersons.get(mcdId);
+      if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Person ${mcdId} not found` });
+
+      const body = await parseBody(req);
+      person.Consents = {
+        ConsentOffers: Boolean(body.ConsentOffers),
+        ConsentProfiling: Boolean(body.ConsentProfiling),
+        ConsentPartnersOffers: Boolean(body.ConsentPartnersOffers),
+        Date: new Date().toISOString(),
+        ValidUntil: body.ValidUntil || '2029-12-31'
+      };
+      syncDbToFile();
+      return sendJson(res, 200, person.Consents);
+    }
+
+    // GET /persons/physical/:mcdId - Get physical person full details
+    m = pathname.match(/^\/persons\/physical\/([^\/]+)$/);
+    if (method === 'GET' && m) {
+      const mcdId = m[1];
+      const person = db.physicalPersons.get(mcdId);
+      if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Physical person ${mcdId} not found` });
+      return sendJson(res, 200, person);
+    }
+
+    // PUT /persons/physical/:mcdId - Update physical person
+    m = pathname.match(/^\/persons\/physical\/([^\/]+)$/);
+    if (method === 'PUT' && m) {
+      const mcdId = m[1];
+      const person = db.physicalPersons.get(mcdId);
+      if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Physical person ${mcdId} not found` });
+
+      const body = await parseBody(req);
+      if (body.PrimaryEmail !== undefined) person.PrimaryEmail = body.PrimaryEmail;
+      if (body.PrimaryEmailVerified !== undefined) person.PrimaryEmailVerified = body.PrimaryEmailVerified;
+      if (body.PrimaryPhoneNumber !== undefined) person.PrimaryPhoneNumber = body.PrimaryPhoneNumber;
+      if (body.PrimaryPhoneNumberVerified !== undefined) person.PrimaryPhoneNumberVerified = body.PrimaryPhoneNumberVerified;
+      if (body.ResidenceAddress) person.ResidenceAddress = body.ResidenceAddress;
+      if (body.CorrespondenceAddress) person.CorrespondenceAddress = body.CorrespondenceAddress;
+      if (body.SelectedProducts) person.SelectedProducts = body.SelectedProducts;
+
+      syncDbToFile();
+      return sendJson(res, 200, person);
+    }
+
+    // ---------------------------------------------------------
+    // 2. JURIDICAL PERSONS (SME) ENDPOINTS
+    // ---------------------------------------------------------
+
+    // GET /persons/juridical/accumulated - Search accumulated account
+    if (method === 'GET' && pathname === '/persons/juridical/accumulated') {
+      const results = [];
+      const companyNameQuery = (query.CompanyName || '').toLowerCase().replace(/['"]/g, '').trim();
+
+      for (const acc of db.accumulatedJuridicalPersons.values()) {
+        const cleanName = acc.FullName.toLowerCase().replace(/['"]/g, '').trim();
+        if (!companyNameQuery || cleanName.includes(companyNameQuery)) {
+          results.push({
+            McdId: acc.McdId,
+            FullName: acc.FullName,
+            CompanyCode: acc.CompanyCode,
+            CountryCode: acc.CountryCode,
+            Status: acc.Status,
+            TransactId: acc.TransactId
+          });
+        }
+      }
+      return sendJson(res, 200, results);
+    }
+
+    // PUT /persons/juridical/accumulated - Ensure accumulated account with representative
+    if (method === 'PUT' && pathname === '/persons/juridical/accumulated') {
+      const body = await parseBody(req);
+      const rep = body.representativeDetails || {};
+      const jur = body.juridicalPersonDetails || {};
+
+      if (!rep.firstName || !rep.lastName || !rep.personalCode || !jur.fullName) {
+        return sendJson(res, 400, {
+          ErrorCode: '400001',
+          ErrorMessage: 'Missing required representative or juridical person details'
+        });
+      }
+
+      let representative = null;
+      for (const r of db.representatives.values()) {
+        if (r.PersonalCode === rep.personalCode) {
+          representative = r;
+          break;
+        }
+      }
+      if (!representative) {
+        const rId = 'R' + (repSeq++);
+        representative = {
+          McdId: rId,
+          FirstName: rep.firstName,
+          LastName: rep.lastName,
+          PersonalCode: rep.personalCode,
+          CountryCode: rep.countryCode || 'LT',
+          Status: 'Prospect'
+        };
+        db.representatives.set(rId, representative);
+      }
+
+      const accId = 'A' + (accSeq++);
+      const accumulatedAccount = {
+        McdId: accId,
+        FullName: jur.fullName,
+        CompanyCode: 'EST-' + Math.floor(100000 + Math.random() * 900000),
+        CountryCode: 'LT',
+        Status: 'Prospect',
+        TransactId: 'TX-ACC-' + Math.floor(1000 + Math.random() * 9000),
+        RepresentativeMcdId: representative.McdId,
+        phoneNumber: jur.phoneNumber,
+        secondaryPhoneNumber: jur.secondaryPhoneNumber,
+        registrationAddress: jur.registrationAddress,
+        selectedProducts: jur.selectedProducts || [{ ProductCategory: 'ACCUMULATED', ProductId: 'DEFAULT' }]
+      };
+      db.accumulatedJuridicalPersons.set(accId, accumulatedAccount);
+      syncDbToFile();
+
+      return sendJson(res, 200, {
+        juridicalPerson: {
+          McdId: accumulatedAccount.McdId,
+          FullName: accumulatedAccount.FullName,
+          CompanyCode: accumulatedAccount.CompanyCode,
+          CountryCode: accumulatedAccount.CountryCode,
+          Status: accumulatedAccount.Status,
+          TransactId: accumulatedAccount.TransactId
+        },
+        representative: {
+          McdId: representative.McdId,
+          FirstName: representative.FirstName,
+          LastName: representative.LastName,
+          PersonalCode: representative.PersonalCode,
+          CountryCode: representative.CountryCode,
+          Status: representative.Status
+        }
+      });
+    }
+
+    // POST /persons/juridical/:mcdId/transformFromAccumulated
+    m = pathname.match(/^\/persons\/juridical\/([^\/]+)\/transformFromAccumulated$/);
+    if (method === 'POST' && m) {
+      const mcdId = m[1];
+      const acc = db.accumulatedJuridicalPersons.get(mcdId);
+      if (!acc) {
+        return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Accumulated account ${mcdId} not found` });
+      }
+
+      const body = await parseBody(req);
+      const compCode = body.juridicalPersonDetails?.companyCode || ('305' + Math.floor(100000 + Math.random() * 900000));
+      const repDetails = body.representativeDetails || {};
+
+      let rep = null;
+      for (const r of db.representatives.values()) {
+        if (r.PersonalCode === repDetails.personalCode) {
+          rep = r;
+          break;
+        }
+      }
+      if (!rep) {
+        const rId = 'R' + (repSeq++);
+        rep = {
+          McdId: rId,
+          FirstName: repDetails.firstName || 'Rep',
+          LastName: repDetails.lastName || 'LastName',
+          PersonalCode: repDetails.personalCode || '38000000000',
+          CountryCode: repDetails.countryCode || 'LT',
+          Status: 'Existing'
+        };
+        db.representatives.set(rId, rep);
+      }
+
+      const newJurId = 'J' + (juridicalSeq++);
+      const newJur = {
+        McdId: newJurId,
+        FullName: acc.FullName,
+        CompanyCode: compCode,
+        CountryCode: 'LT',
+        Status: 'Existing',
+        TransactId: 'TX-TRF-' + Math.floor(10000 + Math.random() * 90000),
+        PrimaryEmail: 'info@' + acc.FullName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.lt',
+        PrimaryEmailVerified: true,
+        SecondaryEmail: null,
+        PrimaryPhoneNumber: acc.phoneNumber || '+37060000000',
+        PrimaryPhoneNumberVerified: true,
+        SecondaryPhoneNumber: acc.secondaryPhoneNumber || null,
+        RegistrationAddress: acc.registrationAddress || { countryCode: 'LT', city: 'Vilnius', street: 'Gedimino pr. 1' },
+        ResidenceAddress: null,
+        CorrespondenceAddress: acc.registrationAddress || { countryCode: 'LT', city: 'Vilnius' },
+        Consents: {
+          ConsentOffers: true,
+          ConsentPartnersOffers: false
+        },
+        AmlScreening: {
+          LastAmlResultDate: new Date().toISOString(),
+          AmlResult: 'PASSED',
+          SmaApprovalStatus: 'APPROVED',
+          SmaDecisionDate: new Date().toISOString()
+        },
+        Kyc: {
+          IsKycRequired: false,
+          ExpirationDate: '2028-01-01'
+        },
+        SelectedProducts: acc.selectedProducts || [{ ProductCategory: 'BUSINESS', ProductId: 'SME_PACKAGE' }],
+        FinalBeneficiariesMissing: false,
+        RepresentativeMcdId: rep.McdId
+      };
+
+      db.juridicalPersons.set(newJurId, newJur);
+      db.accumulatedJuridicalPersons.delete(mcdId);
+      syncDbToFile();
+
+      return sendJson(res, 200, {
+        juridicalPerson: {
+          McdId: newJur.McdId,
+          FullName: newJur.FullName,
+          CompanyCode: newJur.CompanyCode,
+          CountryCode: newJur.CountryCode,
+          Status: newJur.Status,
+          TransactId: newJur.TransactId
+        },
+        representative: {
+          McdId: rep.McdId,
+          FirstName: rep.FirstName,
+          LastName: rep.LastName,
+          PersonalCode: rep.PersonalCode,
+          CountryCode: rep.CountryCode,
+          Status: rep.Status
+        }
+      });
+    }
+
+    // GET /persons/juridical/:mcdId/representatives/:representativeMcdId - Validate representative
+    m = pathname.match(/^\/persons\/juridical\/([^\/]+)\/representatives\/([^\/]+)$/);
+    if (method === 'GET' && m) {
+      const [, mcdId, representativeMcdId] = m;
+      const jur = db.juridicalPersons.get(mcdId);
+      const rep = db.representatives.get(representativeMcdId);
+      if (!jur || !rep) {
+        return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: 'Company or representative not found' });
+      }
+
+      if (jur.RepresentativeMcdId === representativeMcdId) {
+        return sendJson(res, 200, {
+          McdId: rep.McdId,
+          FirstName: rep.FirstName,
+          LastName: rep.LastName,
+          PersonalCode: rep.PersonalCode,
+          CountryCode: rep.CountryCode,
+          Status: rep.Status
+        });
+      } else {
+        return sendJson(res, 404, { ErrorCode: '404002', ErrorMessage: 'Representative is not linked to this company' });
+      }
+    }
+
+    // POST /persons/juridical/:mcdId/consent
+    m = pathname.match(/^\/persons\/juridical\/([^\/]+)\/consent$/);
+    if (method === 'POST' && m) {
+      const mcdId = m[1];
+      const jur = db.juridicalPersons.get(mcdId);
+      if (!jur) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Juridical person ${mcdId} not found` });
+
+      const body = await parseBody(req);
+      jur.Consents = {
+        ConsentOffers: Boolean(body.ConsentOffers),
+        ConsentPartnersOffers: Boolean(body.ConsentPartnersOffers)
+      };
+      syncDbToFile();
+      return sendJson(res, 200, jur.Consents);
+    }
+
+    // GET /persons/juridical - Search juridical person
+    if (method === 'GET' && pathname === '/persons/juridical') {
+      const results = [];
+      for (const j of db.juridicalPersons.values()) {
+        let match = true;
+        if (query.CompanyCode && j.CompanyCode !== query.CompanyCode) match = false;
+        if (query.CountryCode && j.CountryCode !== query.CountryCode) match = false;
+        if (match) {
+          results.push({
+            McdId: j.McdId,
+            FullName: j.FullName,
+            CompanyCode: j.CompanyCode,
+            CountryCode: j.CountryCode,
+            Status: j.Status,
+            TransactId: j.TransactId
+          });
+        }
+      }
+      return sendJson(res, 200, results);
+    }
+
+    // PUT /persons/juridical - Ensure juridical prospect with representative
+    if (method === 'PUT' && pathname === '/persons/juridical') {
+      const body = await parseBody(req);
+      const rep = body.representative || {};
+      const jur = body.juridicalPerson || {};
+
+      let representative = null;
+      for (const r of db.representatives.values()) {
+        if (r.PersonalCode === rep.personalCode) {
+          representative = r;
+          break;
+        }
+      }
+      if (!representative) {
+        const rId = 'R' + (repSeq++);
+        representative = {
+          McdId: rId,
+          FirstName: rep.firstName || 'Rep',
+          LastName: rep.lastName || 'LastName',
+          PersonalCode: rep.personalCode || '38000000000',
+          CountryCode: rep.countryCode || 'LT',
+          Status: 'Prospect'
+        };
+        db.representatives.set(rId, representative);
+      }
+
+      let juridical = null;
+      for (const j of db.juridicalPersons.values()) {
+        if (j.CompanyCode === jur.companyCode) {
+          juridical = j;
+          break;
+        }
+      }
+      if (!juridical) {
+        const jId = 'J' + (juridicalSeq++);
+        juridical = {
+          McdId: jId,
+          FullName: jur.fullName || 'UAB Nauja Kompanija',
+          CompanyCode: jur.companyCode || ('305' + Math.floor(100000 + Math.random() * 900000)),
+          CountryCode: jur.countryCode || 'LT',
+          Status: 'Prospect',
+          TransactId: 'TX-J-' + Math.floor(10000 + Math.random() * 90000),
+          PrimaryEmail: 'contact@company.lt',
+          PrimaryEmailVerified: true,
+          PrimaryPhoneNumber: '+37060000000',
+          PrimaryPhoneNumberVerified: true,
+          RegistrationAddress: { countryCode: 'LT', city: 'Vilnius', street: 'Gedimino pr. 10' },
+          SelectedProducts: [{ ProductCategory: 'BUSINESS_ACCOUNTS', ProductId: 'SME_STANDARD' }],
+          RepresentativeMcdId: representative.McdId
+        };
+        db.juridicalPersons.set(jId, juridical);
+      }
+      syncDbToFile();
+
+      return sendJson(res, 200, {
+        juridicalPerson: {
+          McdId: juridical.McdId,
+          FullName: juridical.FullName,
+          CompanyCode: juridical.CompanyCode,
+          CountryCode: juridical.CountryCode,
+          Status: juridical.Status,
+          TransactId: juridical.TransactId
+        },
+        representative: {
+          McdId: representative.McdId,
+          FirstName: representative.FirstName,
+          LastName: representative.LastName,
+          PersonalCode: representative.PersonalCode,
+          CountryCode: representative.CountryCode,
+          Status: representative.Status
+        }
+      });
+    }
+
+    // GET /persons/juridical/:mcdId - Get juridical person
+    m = pathname.match(/^\/persons\/juridical\/([^\/]+)$/);
+    if (method === 'GET' && m) {
+      const mcdId = m[1];
+      const jur = db.juridicalPersons.get(mcdId);
+      if (!jur) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Juridical person ${mcdId} not found` });
+      return sendJson(res, 200, jur);
+    }
+
+    // PUT /persons/juridical/:mcdId - Update juridical person
+    m = pathname.match(/^\/persons\/juridical\/([^\/]+)$/);
+    if (method === 'PUT' && m) {
+      const mcdId = m[1];
+      const jur = db.juridicalPersons.get(mcdId);
+      if (!jur) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Juridical person ${mcdId} not found` });
+
+      const body = await parseBody(req);
+      if (body.FullName) jur.FullName = body.FullName;
+      if (body.PrimaryEmail) jur.PrimaryEmail = body.PrimaryEmail;
+      if (body.PrimaryPhoneNumber) jur.PrimaryPhoneNumber = body.PrimaryPhoneNumber;
+      if (body.RegistrationAddress) jur.RegistrationAddress = body.RegistrationAddress;
+      if (body.SelectedProducts) jur.SelectedProducts = body.SelectedProducts;
+      if (body.RepresentativeMcdId) jur.RepresentativeMcdId = body.RepresentativeMcdId;
+
+      syncDbToFile();
+      return sendJson(res, 200, jur);
+    }
+
+    // ---------------------------------------------------------
+    // 3. REPRESENTATIVES ENDPOINTS
+    // ---------------------------------------------------------
+
+    // GET /persons/representatives - Search representatives
+    if (method === 'GET' && pathname === '/persons/representatives') {
+      const results = [];
+      for (const r of db.representatives.values()) {
+        let match = true;
+        if (query.FirstName && !r.FirstName.toLowerCase().includes(query.FirstName.toLowerCase())) match = false;
+        if (query.LastName && !r.LastName.toLowerCase().includes(query.LastName.toLowerCase())) match = false;
+        if (query.PersonalCode && r.PersonalCode !== query.PersonalCode) match = false;
+        if (query.CountryCode && r.CountryCode !== query.CountryCode) match = false;
+        if (match) {
+          results.push({
+            McdId: r.McdId,
+            FirstName: r.FirstName,
+            LastName: r.LastName,
+            PersonalCode: r.PersonalCode,
+            CountryCode: r.CountryCode,
+            Status: r.Status || 'Existing'
+          });
+        }
+      }
+      return sendJson(res, 200, results);
+    }
+
+    // GET /persons/representatives/:mcdId - Get representative
+    m = pathname.match(/^\/persons\/representatives\/([^\/]+)$/);
+    if (method === 'GET' && m) {
+      const mcdId = m[1];
+      const rep = db.representatives.get(mcdId);
+      if (!rep) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Representative ${mcdId} not found` });
+      return sendJson(res, 200, rep);
+    }
+
+    // PUT /persons/representatives/:mcdId - Update representative
+    m = pathname.match(/^\/persons\/representatives\/([^\/]+)$/);
+    if (method === 'PUT' && m) {
+      const mcdId = m[1];
+      const rep = db.representatives.get(mcdId);
+      if (!rep) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Representative ${mcdId} not found` });
+
+      const body = await parseBody(req);
+      if (body.LanguageCode) rep.LanguageCode = body.LanguageCode;
+      if (body.PrimaryEmail) rep.PrimaryEmail = body.PrimaryEmail;
+      if (body.PrimaryPhoneNumber) rep.PrimaryPhoneNumber = body.PrimaryPhoneNumber;
+      if (body.ResidenceAddress) rep.ResidenceAddress = body.ResidenceAddress;
+      if (body.CorrespondenceAddress) rep.CorrespondenceAddress = body.CorrespondenceAddress;
+
+      syncDbToFile();
+      return sendJson(res, 200, rep);
+    }
+
+    // 404 Fallback
+    return sendJson(res, 404, {
+      ErrorCode: '404000',
+      ErrorMessage: `Route ${method} ${pathname} not found in MCD Infinity API. Check /docs or / for available endpoints.`
+    });
+
+  } catch (error) {
+    console.error('Server error:', error);
+    return sendJson(res, 500, {
+      ErrorCode: '500000',
+      ErrorMessage: error.message || 'Internal Server Error'
+    });
+  }
+}
+
+// -------------------------------------------------------------
+// Interactive Dashboard HTML Renderer with Database Editor
+// -------------------------------------------------------------
+function renderDashboardHtml() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCD Infinity API - Live Server & Database Explorer</title>
+  <link rel="icon" href="https://assets.apidog.com/app/project-icon/builtin/15.jpg">
+  <style>
+    :root {
+      --primary: #9373ee;
+      --primary-dark: #6e4bc5;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-green: #10b981;
+      --accent-blue: #38bdf8;
+      --accent-orange: #f59e0b;
+      --accent-purple: #c084fc;
+      --accent-red: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 24px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .brand img { width: 48px; height: 48px; border-radius: 12px; }
+    .title h1 { font-size: 24px; font-weight: 700; color: #fff; }
+    .title p { font-size: 14px; color: var(--text-muted); }
+    .badge-status {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      display: inline-block;
+    }
+    .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn-secondary { background: #334155; }
+    .btn-secondary:hover { background: #475569; }
+    .btn-success { background: #059669; }
+    .btn-success:hover { background: #047857; }
+    .btn-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.3); }
+
+    .btn-sm { padding: 4px 8px; font-size: 12px; border-radius: 6px; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--primary);
+    }
+    .stat-label { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
+    .stat-value { font-size: 28px; font-weight: 700; margin-top: 4px; color: #fff; }
+    .stat-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+    .tab-nav {
+      display: flex;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 15px;
+      font-weight: 600;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .endpoint-list { display: flex; flex-direction: column; gap: 8px; }
+    .endpoint-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .endpoint-item:hover { border-color: var(--primary); }
+    .method-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      margin-right: 10px;
+    }
+    .method-get { background: rgba(56, 189, 248, 0.15); color: var(--accent-blue); }
+    .method-post { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .method-put { background: rgba(245, 158, 11, 0.15); color: var(--accent-orange); }
+
+    .terminal {
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      color: #38bdf8;
+      max-height: 480px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Database Table Styling */
+    .table-container {
+      overflow-x: auto;
+      background: #0f172a;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-top: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: #1e293b;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    tr:hover { background: rgba(147, 115, 238, 0.05); }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-existing { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .badge-prospect { background: rgba(245, 158, 11, 0.15); color: var(--accent-orange); }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-card {
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 750px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 { font-size: 18px; color: #fff; }
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #0f172a;
+      border-bottom-left-radius: 14px;
+      border-bottom-right-radius: 14px;
+    }
+    .json-editor {
+      width: 100%;
+      height: 380px;
+      background: #090d16;
+      color: #38bdf8;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.4;
+      resize: vertical;
+    }
+    .json-editor:focus { outline: none; border-color: var(--primary); }
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #10b981;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      display: none;
+      z-index: 2000;
+    }
+  </style>
+</head>
+<body>
+  <div id="toast" class="toast">Record updated successfully!</div>
+
+  <div class="header">
+    <div class="brand">
+      <img src="https://assets.apidog.com/app/project-icon/builtin/15.jpg" alt="Logo">
+      <div class="title">
+        <h1>MCD Infinity API Server & Database</h1>
+        <p>Live REST API implementation & Direct Browser Database Editor</p>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <span class="badge-status">Server Port :${PORT}</span>
+      <div class="nav-links">
+        <a href="/admin/db" target="_blank" class="btn btn-secondary">DB JSON</a>
+        <a href="/docs" target="_blank" class="btn">Swagger UI</a>
+        <a href="/openapi.json" target="_blank" class="btn btn-secondary">OpenAPI Spec</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card" onclick="switchTable('physical')">
+      <div class="stat-label">Physical Persons</div>
+      <div class="stat-value" id="count-physical">${db.physicalPersons.size}</div>
+      <div class="stat-hint">Retail, Juniors, Guardians (e.g. P1001, P1002, P1003)</div>
+    </div>
+    <div class="stat-card" onclick="switchTable('juridical')">
+      <div class="stat-label">Juridical (SME)</div>
+      <div class="stat-value" id="count-juridical">${db.juridicalPersons.size}</div>
+      <div class="stat-hint">Corporate clients & JAR validation (e.g. J2001)</div>
+    </div>
+    <div class="stat-card" onclick="switchTable('representatives')">
+      <div class="stat-label">Representatives</div>
+      <div class="stat-value" id="count-rep">${db.representatives.size}</div>
+      <div class="stat-hint">Founders, signatories, delegates (e.g. R3001)</div>
+    </div>
+    <div class="stat-card" onclick="switchTable('accumulated')">
+      <div class="stat-label">Accumulated Accounts</div>
+      <div class="stat-value" id="count-acc">${db.accumulatedJuridicalPersons.size}</div>
+      <div class="stat-hint">Establishing capital accounts (e.g. A4001)</div>
+    </div>
+  </div>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" id="tab-btn-db" onclick="setMainTab('db')">Database Viewer & Editor</button>
+    <button class="tab-btn" id="tab-btn-api" onclick="setMainTab('api')">API Explorer & Tester</button>
+  </div>
+
+  <!-- TAB 1: DATABASE VIEWER & EDITOR -->
+  <div id="tab-content-db">
+    <div class="card">
+      <div class="card-title">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <span id="current-table-title">Table: Physical Persons</span>
+          <select id="table-selector" onchange="switchTable(this.value)" style="background: #0f172a; color: #fff; border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; font-weight: 600;">
+            <option value="physical">Physical Persons</option>
+            <option value="juridical">Juridical Persons (SME)</option>
+            <option value="representatives">Representatives</option>
+            <option value="accumulated">Accumulated Accounts</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="btn btn-success" onclick="openCreateModal()">+ Add Record</button>
+          <button class="btn btn-secondary" onclick="refreshDbViewer()">Refresh DB</button>
+          <button class="btn btn-secondary" onclick="exportDbJson()">Download JSON</button>
+          <button class="btn btn-danger" onclick="resetDb()">Reset to Seed</button>
+        </div>
+      </div>
+      <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+        Database state is synced on disk at: <code style="color: var(--accent-blue);">db.json</code>. You can directly edit any record using the <strong>Edit</strong> button.
+      </div>
+      <div id="table-display" class="table-container">Loading table data...</div>
+    </div>
+
+    <div class="card" style="margin-top: 24px;">
+      <div class="card-title">
+        <span id="record-inspector-title">Record Details Inspector</span>
+        <div id="inspector-actions" style="display: none;">
+          <button class="btn btn-sm btn-primary" onclick="editInspectedRecord()">Edit This Record</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteInspectedRecord()">Delete Record</button>
+        </div>
+      </div>
+      <div id="record-inspector" class="terminal">// Click any row in the table above to view and edit its full JSON document...</div>
+    </div>
+  </div>
+
+  <!-- TAB 2: API EXPLORER -->
+  <div id="tab-content-api" style="display: none;">
+    <div class="main-grid">
+      <div class="card">
+        <div class="card-title">
+          <span>Click Any Endpoint to Test Live</span>
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">All 21 endpoints</span>
+        </div>
+        <div class="endpoint-list">
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical')">
+            <div><span class="method-tag method-get">GET</span>/persons/physical</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Search physical persons</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/P1001')">
+            <div><span class="method-tag method-get">GET</span>/persons/physical/P1001</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Get Jonas Kazlauskas</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/P1003/potentialGuardians')">
+            <div><span class="method-tag method-get">GET</span>/persons/physical/P1003/potentialGuardians</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Get junior guardians</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/P1001/children')">
+            <div><span class="method-tag method-get">GET</span>/persons/physical/P1001/children</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Get client's children</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('POST', '/persons/physical', sampleProspect)">
+            <div><span class="method-tag method-post">POST</span>/persons/physical</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Create physical prospect</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('POST', '/persons/physical/P1001/consent', { ConsentOffers: true, ConsentProfiling: true, ConsentPartnersOffers: true })">
+            <div><span class="method-tag method-post">POST</span>/persons/physical/P1001/consent</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Update consents</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical')">
+            <div><span class="method-tag method-get">GET</span>/persons/juridical</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Search SME clients</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical/J2001')">
+            <div><span class="method-tag method-get">GET</span>/persons/juridical/J2001</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Get juridical person</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical/accumulated')">
+            <div><span class="method-tag method-get">GET</span>/persons/juridical/accumulated</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Search accumulated acc.</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical/J2001/representatives/R3001')">
+            <div><span class="method-tag method-get">GET</span>/persons/juridical/J2001/representatives/R3001</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Validate legal rep</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/representatives')">
+            <div><span class="method-tag method-get">GET</span>/persons/representatives</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Search representatives</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/representatives/R3001')">
+            <div><span class="method-tag method-get">GET</span>/persons/representatives/R3001</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Get representative R3001</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span id="response-title">Live Response Console</span>
+          <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="clearConsole()">Clear</button>
+        </div>
+        <div id="console-output" class="terminal">// Select an endpoint on the left or use Swagger UI to view live API response...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT / CREATE MODAL -->
+  <div id="edit-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-title">Edit Record</h3>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+          Modify JSON below. Changes are saved immediately to in-memory state and synced to <code style="color:var(--accent-blue)">db.json</code>.
+        </div>
+        <textarea id="modal-json-editor" class="json-editor" spellcheck="false"></textarea>
+        <div id="modal-error" style="color: #f87171; font-size: 12px; margin-top: 8px; display: none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-success" id="modal-save-btn" onclick="saveModalChanges()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let dbData = null;
+    let currentTable = 'physical';
+    let currentlyInspected = null;
+    let modalMode = 'edit'; // 'edit' or 'create'
+    let modalRecordId = null;
+
+    async function loadDatabase() {
+      try {
+        const res = await fetch('/admin/db');
+        dbData = await res.json();
+        document.getElementById('count-physical').innerText = dbData.physicalPersons.length;
+        document.getElementById('count-juridical').innerText = dbData.juridicalPersons.length;
+        document.getElementById('count-rep').innerText = dbData.representatives.length;
+        document.getElementById('count-acc').innerText = dbData.accumulatedJuridicalPersons.length;
+        renderTable();
+      } catch (err) {
+        console.error('Failed to load DB:', err);
+      }
+    }
+
+    function switchTable(name) {
+      currentTable = name;
+      document.getElementById('table-selector').value = name;
+      const titles = {
+        physical: 'Physical Persons',
+        juridical: 'Juridical Persons (SME)',
+        representatives: 'Representatives',
+        accumulated: 'Accumulated Accounts'
+      };
+      document.getElementById('current-table-title').innerText = 'Table: ' + titles[name];
+      renderTable();
+    }
+
+    function renderTable() {
+      if (!dbData) return;
+      const container = document.getElementById('table-display');
+      let html = '';
+
+      if (currentTable === 'physical') {
+        html = '<table><thead><tr><th>MCD ID</th><th>Full Name</th><th>Personal Code</th><th>Status</th><th>Email</th><th>Phone</th><th>Guardian / Minor</th><th>Actions</th></tr></thead><tbody>';
+        for (const p of dbData.physicalPersons) {
+          const badgeClass = p.Status === 'Existing' ? 'badge-existing' : 'badge-prospect';
+          const minorTag = p.IsMinor ? '<span style="color:var(--accent-orange)">Yes (Minor)</span>' : 'No';
+          html += '<tr>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'><strong style="color:var(--accent-blue)">' + p.McdId + '</strong></td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + p.FirstName + ' ' + p.LastName + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + p.PersonalCode + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'><span class="badge ' + badgeClass + '">' + p.Status + '</span></td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + (p.PrimaryEmail || '-') + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + (p.PrimaryPhoneNumber || '-') + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + minorTag + (p.guardianMcdId ? ' (Guardian: ' + p.guardianMcdId + ')' : '') + '</td>' +
+            '<td><div style="display:flex; gap:6px;">' +
+              '<button class="btn btn-sm btn-primary" onclick=\\'openEditModal("physical", "' + p.McdId + '", ' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>Edit</button>' +
+              '<button class="btn btn-sm btn-danger" onclick=\\'deleteRecord("physical", "' + p.McdId + '")\\'>Delete</button>' +
+            '</div></td>' +
+          '</tr>';
+        }
+        html += '</tbody></table>';
+      } else if (currentTable === 'juridical') {
+        html = '<table><thead><tr><th>MCD ID</th><th>Company Name</th><th>Company Code</th><th>Status</th><th>Email</th><th>Phone</th><th>Legal Representative</th><th>Actions</th></tr></thead><tbody>';
+        for (const j of dbData.juridicalPersons) {
+          const badgeClass = j.Status === 'Existing' ? 'badge-existing' : 'badge-prospect';
+          html += '<tr>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'><strong style="color:var(--accent-blue)">' + j.McdId + '</strong></td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + j.FullName + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + j.CompanyCode + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'><span class="badge ' + badgeClass + '">' + j.Status + '</span></td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + (j.PrimaryEmail || '-') + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + (j.PrimaryPhoneNumber || '-') + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + (j.RepresentativeMcdId || '-') + '</td>' +
+            '<td><div style="display:flex; gap:6px;">' +
+              '<button class="btn btn-sm btn-primary" onclick=\\'openEditModal("juridical", "' + j.McdId + '", ' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>Edit</button>' +
+              '<button class="btn btn-sm btn-danger" onclick=\\'deleteRecord("juridical", "' + j.McdId + '")\\'>Delete</button>' +
+            '</div></td>' +
+          '</tr>';
+        }
+        html += '</tbody></table>';
+      } else if (currentTable === 'representatives') {
+        html = '<table><thead><tr><th>MCD ID</th><th>Full Name</th><th>Personal Code</th><th>Country</th><th>Email</th><th>Phone</th><th>Actions</th></tr></thead><tbody>';
+        for (const r of dbData.representatives) {
+          html += '<tr>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'><strong style="color:var(--accent-blue)">' + r.McdId + '</strong></td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + r.FirstName + ' ' + r.LastName + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + r.PersonalCode + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + r.CountryCode + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + (r.PrimaryEmail || '-') + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + (r.PrimaryPhoneNumber || '-') + '</td>' +
+            '<td><div style="display:flex; gap:6px;">' +
+              '<button class="btn btn-sm btn-primary" onclick=\\'openEditModal("representatives", "' + r.McdId + '", ' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>Edit</button>' +
+              '<button class="btn btn-sm btn-danger" onclick=\\'deleteRecord("representatives", "' + r.McdId + '")\\'>Delete</button>' +
+            '</div></td>' +
+          '</tr>';
+        }
+        html += '</tbody></table>';
+      } else if (currentTable === 'accumulated') {
+        html = '<table><thead><tr><th>MCD ID</th><th>Proposed Name</th><th>Temporary Code</th><th>Representative</th><th>Phone</th><th>Actions</th></tr></thead><tbody>';
+        for (const a of dbData.accumulatedJuridicalPersons) {
+          html += '<tr>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'><strong style="color:var(--accent-blue)">' + a.McdId + '</strong></td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>' + a.FullName + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>' + a.CompanyCode + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>' + (a.RepresentativeMcdId || '-') + '</td>' +
+            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>' + (a.phoneNumber || '-') + '</td>' +
+            '<td><div style="display:flex; gap:6px;">' +
+              '<button class="btn btn-sm btn-primary" onclick=\\'openEditModal("accumulated", "' + a.McdId + '", ' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>Edit</button>' +
+              '<button class="btn btn-sm btn-danger" onclick=\\'deleteRecord("accumulated", "' + a.McdId + '")\\'>Delete</button>' +
+            '</div></td>' +
+          '</tr>';
+        }
+        html += '</tbody></table>';
+      }
+
+      container.innerHTML = html;
+    }
+
+    function inspectRecord(record) {
+      currentlyInspected = record;
+      const title = record.FullName || (record.FirstName + ' ' + record.LastName);
+      document.getElementById('record-inspector-title').innerText = 'Record: ' + record.McdId + ' (' + title + ')';
+      document.getElementById('record-inspector').innerText = JSON.stringify(record, null, 2);
+      document.getElementById('inspector-actions').style.display = 'flex';
+      document.getElementById('inspector-actions').style.gap = '8px';
+    }
+
+    function editInspectedRecord() {
+      if (currentlyInspected) {
+        openEditModal(currentTable, currentlyInspected.McdId, currentlyInspected);
+      }
+    }
+
+    function deleteInspectedRecord() {
+      if (currentlyInspected) {
+        deleteRecord(currentTable, currentlyInspected.McdId);
+      }
+    }
+
+    // Modal Editor Functions
+    function openEditModal(col, id, record) {
+      modalMode = 'edit';
+      modalRecordId = id;
+      document.getElementById('modal-title').innerText = 'Edit ' + id + ' (' + col + ')';
+      document.getElementById('modal-json-editor').value = JSON.stringify(record, null, 2);
+      document.getElementById('modal-error').style.display = 'none';
+      document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function openCreateModal() {
+      modalMode = 'create';
+      modalRecordId = null;
+      document.getElementById('modal-title').innerText = 'Add New Record (' + currentTable + ')';
+      let template = {};
+      if (currentTable === 'physical') {
+        template = {
+          FirstName: "Vardenis",
+          LastName: "Pavardenis",
+          PersonalCode: "39001010099",
+          CountryCode: "LT",
+          Status: "Prospect",
+          DateOfBirth: "1990-01-01",
+          PrimaryEmail: "vardenis@example.lt",
+          PrimaryEmailVerified: true,
+          PrimaryPhoneNumber: "+37060099000",
+          PrimaryPhoneNumberVerified: true,
+          SelectedProducts: [{ ProductCategory: "ACCOUNTS", ProductId: "STANDARD" }]
+        };
+      } else if (currentTable === 'juridical') {
+        template = {
+          FullName: "UAB Naujas Verslas",
+          CompanyCode: "305999111",
+          CountryCode: "LT",
+          Status: "Prospect",
+          PrimaryEmail: "info@verslas.lt",
+          PrimaryPhoneNumber: "+37052999111",
+          RepresentativeMcdId: "R3001"
+        };
+      } else if (currentTable === 'representatives') {
+        template = {
+          FirstName: "Jurgis",
+          LastName: "Didziulis",
+          PersonalCode: "38202020088",
+          CountryCode: "LT",
+          PrimaryEmail: "jurgis@verslas.lt",
+          PrimaryPhoneNumber: "+37060011888",
+          Status: "Existing"
+        };
+      } else {
+        template = {
+          FullName: "UAB Steigiama Imone",
+          CompanyCode: "EST-123456",
+          CountryCode: "LT",
+          Status: "Prospect",
+          RepresentativeMcdId: "R3001",
+          phoneNumber: "+37060022333"
+        };
+      }
+      document.getElementById('modal-json-editor').value = JSON.stringify(template, null, 2);
+      document.getElementById('modal-error').style.display = 'none';
+      document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('edit-modal').style.display = 'none';
+    }
+
+    async function saveModalChanges() {
+      const editor = document.getElementById('modal-json-editor');
+      const errBox = document.getElementById('modal-error');
+      let payload;
+      try {
+        payload = JSON.parse(editor.value);
+      } catch (e) {
+        errBox.innerText = 'Invalid JSON: ' + e.message;
+        errBox.style.display = 'block';
+        return;
+      }
+
+      try {
+        let url = '/admin/db/' + currentTable;
+        let method = 'POST';
+        if (modalMode === 'edit') {
+          url += '/' + modalRecordId;
+          method = 'PUT';
+        }
+
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        if (res.ok) {
+          closeModal();
+          showToast(result.message || 'Saved successfully!');
+          await loadDatabase();
+          if (modalMode === 'edit' && currentlyInspected && currentlyInspected.McdId === modalRecordId) {
+            inspectRecord(result.record || payload);
+          }
+        } else {
+          errBox.innerText = result.ErrorMessage || 'Failed to save';
+          errBox.style.display = 'block';
+        }
+      } catch (err) {
+        errBox.innerText = 'Network error: ' + err.message;
+        errBox.style.display = 'block';
+      }
+    }
+
+    async function deleteRecord(col, id) {
+      if (!confirm('Are you sure you want to delete ' + id + ' from ' + col + '?')) return;
+      try {
+        const res = await fetch('/admin/db/' + col + '/' + id, { method: 'DELETE' });
+        const result = await res.json();
+        if (res.ok) {
+          showToast('Deleted ' + id);
+          if (currentlyInspected && currentlyInspected.McdId === id) {
+            currentlyInspected = null;
+            document.getElementById('record-inspector-title').innerText = 'Record Details Inspector';
+            document.getElementById('record-inspector').innerText = '// Record deleted.';
+            document.getElementById('inspector-actions').style.display = 'none';
+          }
+          await loadDatabase();
+        } else {
+          alert('Delete failed: ' + (result.ErrorMessage || 'Unknown error'));
+        }
+      } catch (err) {
+        alert('Delete failed: ' + err.message);
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.innerText = '✅ ' + msg;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+
+    function setMainTab(tab) {
+      document.getElementById('tab-btn-db').className = 'tab-btn' + (tab === 'db' ? ' active' : '');
+      document.getElementById('tab-btn-api').className = 'tab-btn' + (tab === 'api' ? ' active' : '');
+      document.getElementById('tab-content-db').style.display = tab === 'db' ? 'block' : 'none';
+      document.getElementById('tab-content-api').style.display = tab === 'api' ? 'block' : 'none';
+    }
+
+    async function refreshDbViewer() {
+      await loadDatabase();
+      showToast('Database refreshed!');
+    }
+
+    function exportDbJson() {
+      window.open('/admin/db', '_blank');
+    }
+
+    async function resetDb() {
+      if (confirm('Reset database to default test entities?')) {
+        await fetch('/admin/db/reset', { method: 'POST' });
+        await loadDatabase();
+        showToast('Database reset to defaults');
+      }
+    }
+
+    // API Explorer Logic
+    const sampleProspect = {
+      firstName: "Dovile",
+      lastName: "Naujokaite",
+      personalCode: "49208080008",
+      countryCode: "LT",
+      dateOfBirth: "1992-08-08",
+      email: "dovile.n@example.com",
+      emailVerified: true,
+      phoneNumber: "+37061122334",
+      phoneNumberVerified: true,
+      selectedProducts: [{ ProductCategory: "ACCOUNTS", ProductId: "CURRENT_ACCOUNT_STANDARD" }]
+    };
+
+    async function testEndpoint(method, path, body) {
+      const output = document.getElementById('console-output');
+      const title = document.getElementById('response-title');
+      title.innerText = 'Requesting: ' + method + ' ' + path + '...';
+      output.innerText = 'Sending request to ' + path + '...\\n';
+
+      const start = performance.now();
+      try {
+        const opts = { method, headers: { 'Accept': 'application/json' } };
+        if (body) {
+          opts.headers['Content-Type'] = 'application/json';
+          opts.body = JSON.stringify(body);
+        }
+        const res = await fetch(path, opts);
+        const time = (performance.now() - start).toFixed(1);
+        const data = await res.json();
+
+        title.innerText = method + ' ' + path + ' (' + res.status + ' ' + res.statusText + ' in ' + time + 'ms)';
+        output.innerText = '// Status: ' + res.status + ' ' + res.statusText + ' (' + time + 'ms)\\n// Method: ' + method + ' ' + path + '\\n\\n' + JSON.stringify(data, null, 2);
+        loadDatabase(); // refresh DB view
+      } catch (err) {
+        output.innerText = '// Request failed: ' + err.message;
+      }
+    }
+
+    function clearConsole() {
+      document.getElementById('console-output').innerText = '// Console cleared.';
+      document.getElementById('response-title').innerText = 'Live Response Console';
+    }
+
+    // Initialize
+    loadDatabase();
+  </script>
+</body>
+</html>`;
+}
+
+// Create HTTP server
+export const server = http.createServer(handleRequest);
+
+// Auto-start when executed directly
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log('====================================================');
+    console.log(` MCD Infinity API Server is running on port ${PORT}`);
+    console.log(` Web Dashboard:  http://localhost:${PORT}/`);
+    console.log(` Database JSON:  http://localhost:${PORT}/admin/db`);
+    console.log(` Swagger Docs:   http://localhost:${PORT}/docs`);
+    console.log(` OpenAPI Spec:   http://localhost:${PORT}/openapi.json`);
+    console.log(` Health Check:   http://localhost:${PORT}/health`);
+    console.log(` DB File Path:   ${DB_FILE_PATH}`);
+    console.log('====================================================');
+  });
+}

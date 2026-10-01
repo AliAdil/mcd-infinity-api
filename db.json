@@ -1,0 +1,432 @@
+{
+  "_lastUpdated": "2026-10-01T14:15:41.904Z",
+  "physicalPersons": [
+    [
+      "P1001",
+      {
+        "McdId": "P1001",
+        "FirstName": "JonasAli",
+        "MiddleName": null,
+        "LastName": "Kazlauskas",
+        "PersonalCode": "38501010001",
+        "CountryCode": "LT",
+        "Gender": "MALE",
+        "Status": "Existing",
+        "TransactID": "TX-98765",
+        "DateOfBirth": "1985-01-01",
+        "DateOfDeath": null,
+        "BirthCountryCode": "LT",
+        "BirthCity": "Vilnius",
+        "LanguageCode": "lt",
+        "PrimaryEmail": "jonas.kazlauskas@example.com",
+        "PrimaryEmailVerified": true,
+        "SecondaryEmail": null,
+        "PrimaryPhoneNumber": "+37060012345",
+        "PrimaryPhoneNumberVerified": true,
+        "SecondaryPhoneNumber": null,
+        "RegistrationAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "12",
+          "flatNumber": "4",
+          "postCode": "LT-01111",
+          "city": "Vilnius",
+          "street": "Gedimino pr.",
+          "municipality": "Vilniaus m.",
+          "fullAddress": "Gedimino pr. 12-4, LT-01111 Vilnius"
+        },
+        "ResidenceAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "12",
+          "flatNumber": "4",
+          "postCode": "LT-01111",
+          "city": "Vilnius",
+          "street": "Gedimino pr.",
+          "municipality": "Vilniaus m.",
+          "fullAddress": "Gedimino pr. 12-4, LT-01111 Vilnius"
+        },
+        "CorrespondenceAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "12",
+          "flatNumber": "4",
+          "postCode": "LT-01111",
+          "city": "Vilnius",
+          "street": "Gedimino pr.",
+          "municipality": "Vilniaus m.",
+          "fullAddress": "Gedimino pr. 12-4, LT-01111 Vilnius"
+        },
+        "Consents": {
+          "ConsentOffers": true,
+          "ConsentProfiling": false,
+          "ConsentPartnersOffers": false,
+          "Date": "2026-01-10T10:00:00.000Z",
+          "ValidUntil": "2028-12-31"
+        },
+        "Nationalities": [
+          "LT"
+        ],
+        "IdDocuments": [
+          {
+            "Id": "DOC-101",
+            "Number": "12345678",
+            "TypeCode": "PASSPORT",
+            "IssuerCountryCode": "LT",
+            "IssueDate": "2020-05-15",
+            "ExpirationDate": "2030-05-15",
+            "FormpipeFileId": "FP-888",
+            "NationalIdentifier": {
+              "Type": "PERSONAL_CODE",
+              "Value": "38501010001",
+              "CountryCode": "LT"
+            }
+          }
+        ],
+        "OndatoCheckValid": true,
+        "AmlScreening": {
+          "LastAmlResultDate": "2026-02-01T08:00:00.000Z",
+          "AmlResult": "PASSED",
+          "SmaApprovalStatus": "APPROVED",
+          "SmaDecisionDate": "2026-02-01T08:00:00.000Z"
+        },
+        "Kyc": {
+          "IsKycRequired": false,
+          "ExpirationDate": "2027-01-01"
+        },
+        "SelectedProducts": [
+          {
+            "ProductCategory": "ACCOUNTS",
+            "ProductId": "CURRENT_ACCOUNT_STANDARD"
+          }
+        ],
+        "HasParentalPermissionToManageProducts": null,
+        "IsMinor": false,
+        "IsEmancipatedMinor": false,
+        "IsIncapable": false,
+        "guardianMcdId": null,
+        "coapplicantMcdId": null
+      }
+    ],
+    [
+      "P1002",
+      {
+        "McdId": "P1002",
+        "FirstName": "Ieva",
+        "MiddleName": null,
+        "LastName": "Kazlauskienė",
+        "PersonalCode": "48802020002",
+        "CountryCode": "LT",
+        "Gender": "FEMALE",
+        "Status": "Existing",
+        "TransactID": "TX-98766",
+        "DateOfBirth": "1988-02-02",
+        "DateOfDeath": null,
+        "BirthCountryCode": "LT",
+        "BirthCity": "Kaunas",
+        "LanguageCode": "lt",
+        "PrimaryEmail": "ieva.k@example.com",
+        "PrimaryEmailVerified": true,
+        "SecondaryEmail": null,
+        "PrimaryPhoneNumber": "+37060023456",
+        "PrimaryPhoneNumberVerified": true,
+        "SecondaryPhoneNumber": null,
+        "RegistrationAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "12",
+          "flatNumber": "4",
+          "postCode": "LT-01111",
+          "city": "Vilnius",
+          "street": "Gedimino pr.",
+          "fullAddress": "Gedimino pr. 12-4, LT-01111 Vilnius"
+        },
+        "ResidenceAddress": null,
+        "CorrespondenceAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "12",
+          "flatNumber": "4",
+          "postCode": "LT-01111",
+          "city": "Vilnius",
+          "street": "Gedimino pr.",
+          "fullAddress": "Gedimino pr. 12-4, LT-01111 Vilnius"
+        },
+        "Consents": {
+          "ConsentOffers": true,
+          "ConsentProfiling": true,
+          "ConsentPartnersOffers": true,
+          "Date": "2026-01-10T10:00:00.000Z",
+          "ValidUntil": "2027-01-01"
+        },
+        "Nationalities": [
+          "LT"
+        ],
+        "IdDocuments": [],
+        "OndatoCheckValid": true,
+        "AmlScreening": {
+          "LastAmlResultDate": "2026-02-01T08:00:00.000Z",
+          "AmlResult": "PASSED",
+          "SmaApprovalStatus": "APPROVED",
+          "SmaDecisionDate": "2026-02-01T08:00:00.000Z"
+        },
+        "Kyc": {
+          "IsKycRequired": false,
+          "ExpirationDate": "2027-05-01"
+        },
+        "SelectedProducts": [
+          {
+            "ProductCategory": "ACCOUNTS",
+            "ProductId": "CURRENT_ACCOUNT_PREMIUM"
+          }
+        ],
+        "HasParentalPermissionToManageProducts": null,
+        "IsMinor": false,
+        "IsEmancipatedMinor": false,
+        "IsIncapable": false,
+        "guardianMcdId": null,
+        "coapplicantMcdId": null
+      }
+    ],
+    [
+      "P1003",
+      {
+        "McdId": "P1003",
+        "FirstName": "Lukas",
+        "MiddleName": null,
+        "LastName": "Kazlauskas",
+        "PersonalCode": "51503030003",
+        "CountryCode": "LT",
+        "Gender": "MALE",
+        "Status": "Existing",
+        "TransactID": "TX-98767",
+        "DateOfBirth": "2015-03-03",
+        "DateOfDeath": null,
+        "BirthCountryCode": "LT",
+        "BirthCity": "Vilnius",
+        "LanguageCode": "lt",
+        "PrimaryEmail": null,
+        "PrimaryEmailVerified": false,
+        "SecondaryEmail": null,
+        "PrimaryPhoneNumber": null,
+        "PrimaryPhoneNumberVerified": false,
+        "SecondaryPhoneNumber": null,
+        "RegistrationAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "12",
+          "flatNumber": "4",
+          "postCode": "LT-01111",
+          "city": "Vilnius",
+          "street": "Gedimino pr.",
+          "fullAddress": "Gedimino pr. 12-4, LT-01111 Vilnius"
+        },
+        "ResidenceAddress": null,
+        "CorrespondenceAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "12",
+          "flatNumber": "4",
+          "postCode": "LT-01111",
+          "city": "Vilnius",
+          "street": "Gedimino pr.",
+          "fullAddress": "Gedimino pr. 12-4, LT-01111 Vilnius"
+        },
+        "Consents": {
+          "ConsentOffers": false,
+          "ConsentProfiling": false,
+          "ConsentPartnersOffers": false,
+          "Date": "2026-01-10T10:00:00.000Z",
+          "ValidUntil": "2026-12-31"
+        },
+        "Nationalities": [
+          "LT"
+        ],
+        "IdDocuments": [],
+        "OndatoCheckValid": true,
+        "AmlScreening": null,
+        "Kyc": {
+          "IsKycRequired": false,
+          "ExpirationDate": "2030-01-01"
+        },
+        "SelectedProducts": [
+          {
+            "ProductCategory": "JUNIOR",
+            "ProductId": "JUNIOR_SAVINGS_CARD"
+          }
+        ],
+        "HasParentalPermissionToManageProducts": true,
+        "IsMinor": true,
+        "IsEmancipatedMinor": false,
+        "IsIncapable": false,
+        "guardianMcdId": "P1001",
+        "coapplicantMcdId": null
+      }
+    ]
+  ],
+  "juridicalPersons": [
+    [
+      "J2001",
+      {
+        "McdId": "J2001",
+        "FullName": "UAB Baltijos Technologijos",
+        "CompanyCode": "305123456",
+        "CountryCode": "LT",
+        "Status": "Existing",
+        "TransactId": "TX-J-54321",
+        "PrimaryEmail": "info@baltiantech.lt",
+        "PrimaryEmailVerified": true,
+        "SecondaryEmail": "finance@baltiantech.lt",
+        "PrimaryPhoneNumber": "+37052123456",
+        "PrimaryPhoneNumberVerified": true,
+        "SecondaryPhoneNumber": null,
+        "RegistrationAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "10",
+          "flatNumber": "101",
+          "postCode": "LT-08105",
+          "city": "Vilnius",
+          "street": "Saltoniškių g.",
+          "fullAddress": "Saltoniškių g. 10-101, LT-08105 Vilnius"
+        },
+        "ResidenceAddress": null,
+        "CorrespondenceAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "10",
+          "flatNumber": "101",
+          "postCode": "LT-08105",
+          "city": "Vilnius",
+          "street": "Saltoniškių g.",
+          "fullAddress": "Saltoniškių g. 10-101, LT-08105 Vilnius"
+        },
+        "Consents": {
+          "ConsentOffers": true,
+          "ConsentPartnersOffers": false
+        },
+        "AmlScreening": {
+          "LastAmlResultDate": "2026-02-01T08:00:00.000Z",
+          "AmlResult": "PASSED",
+          "SmaApprovalStatus": "APPROVED",
+          "SmaDecisionDate": "2026-02-01T08:00:00.000Z"
+        },
+        "Kyc": {
+          "IsKycRequired": false,
+          "ExpirationDate": "2027-10-01"
+        },
+        "SelectedProducts": [
+          {
+            "ProductCategory": "BUSINESS_ACCOUNTS",
+            "ProductId": "SME_CORPORATE_PACKAGE"
+          }
+        ],
+        "FinalBeneficiariesMissing": false,
+        "RepresentativeMcdId": "R3001"
+      }
+    ]
+  ],
+  "representatives": [
+    [
+      "R3001",
+      {
+        "McdId": "R3001",
+        "FirstName": "Vytautas",
+        "MiddleName": null,
+        "LastName": "Petrauskas",
+        "PersonalCode": "37905050005",
+        "CountryCode": "LT",
+        "Gender": "MALE",
+        "DateOfBirth": "1979-05-05",
+        "BirthCountryCode": "LT",
+        "BirthCity": "Klaipėda",
+        "LanguageCode": "lt",
+        "PrimaryEmail": "v.petrauskas@baltiantech.lt",
+        "PrimaryEmailVerified": true,
+        "SecondaryEmail": null,
+        "PrimaryPhoneNumber": "+37068899000",
+        "PrimaryPhoneNumberVerified": true,
+        "SecondaryPhoneNumber": null,
+        "RegistrationAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "5",
+          "flatNumber": "12",
+          "postCode": "LT-03100",
+          "city": "Vilnius",
+          "street": "Konstitucijos pr.",
+          "fullAddress": "Konstitucijos pr. 5-12, LT-03100 Vilnius"
+        },
+        "ResidenceAddress": null,
+        "CorrespondenceAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "5",
+          "flatNumber": "12",
+          "postCode": "LT-03100",
+          "city": "Vilnius",
+          "street": "Konstitucijos pr.",
+          "fullAddress": "Konstitucijos pr. 5-12, LT-03100 Vilnius"
+        },
+        "Consents": {
+          "ConsentOffers": true,
+          "ConsentProfiling": false,
+          "ConsentPartnersOffers": false,
+          "Date": "2026-01-10T10:00:00.000Z",
+          "ValidUntil": "2028-05-05"
+        },
+        "Nationalities": [
+          "LT"
+        ],
+        "IdDocuments": [
+          {
+            "Id": "DOC-301",
+            "Number": "87654321",
+            "TypeCode": "IDENTITY_CARD",
+            "IssuerCountryCode": "LT",
+            "IssueDate": "2022-01-10",
+            "ExpirationDate": "2032-01-10",
+            "FormpipeFileId": "FP-301",
+            "NationalIdentifier": {
+              "Type": "PERSONAL_CODE",
+              "Value": "37905050005",
+              "CountryCode": "LT"
+            }
+          }
+        ],
+        "OndatoCheckValid": true,
+        "AmlScreening": {
+          "LastAmlResultDate": "2026-02-01T08:00:00.000Z",
+          "AmlResult": "PASSED",
+          "SmaApprovalStatus": "APPROVED",
+          "SmaDecisionDate": "2026-02-01T08:00:00.000Z"
+        },
+        "Kyc": {
+          "IsKycRequired": false,
+          "ExpirationDate": "2028-01-01"
+        },
+        "Status": "Existing"
+      }
+    ]
+  ],
+  "accumulatedJuridicalPersons": [
+    [
+      "A4001",
+      {
+        "McdId": "A4001",
+        "FullName": "UAB Naujas Startas",
+        "CompanyCode": "EST-998877",
+        "CountryCode": "LT",
+        "Status": "Prospect",
+        "TransactId": "TX-ACC-001",
+        "RepresentativeMcdId": "R3001",
+        "phoneNumber": "+37067711223",
+        "secondaryPhoneNumber": "+37052998877",
+        "registrationAddress": {
+          "countryCode": "LT",
+          "buildingNumber": "1",
+          "flatNumber": "1",
+          "postCode": "LT-01001",
+          "city": "Vilnius",
+          "street": "Pilies g.",
+          "fullAddress": "Pilies g. 1-1, LT-01001 Vilnius"
+        },
+        "selectedProducts": [
+          {
+            "ProductCategory": "ACCUMULATED_ACCOUNT",
+            "ProductId": "ESTABLISHING_CAPITAL_ACCOUNT"
+          }
+        ]
+      }
+    ]
+  ]
+}
