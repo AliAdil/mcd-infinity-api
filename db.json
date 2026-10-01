@@ -1,5 +1,5 @@
 {
-  "_lastUpdated": "2026-10-01T14:29:31.295Z",
+  "_lastUpdated": "2026-10-01T15:04:22.601Z",
   "physicalPersons": [
     [
       "P1001",
@@ -18,7 +18,7 @@
         "BirthCountryCode": "LT",
         "BirthCity": "Vilnius",
         "LanguageCode": "lt",
-        "PrimaryEmail": "jonas.kazlauskas@example.com",
+        "PrimaryEmail": "jonas.updated@example.com",
         "PrimaryEmailVerified": true,
         "SecondaryEmail": null,
         "PrimaryPhoneNumber": "+37060012345",
@@ -56,10 +56,10 @@
         },
         "Consents": {
           "ConsentOffers": true,
-          "ConsentProfiling": false,
-          "ConsentPartnersOffers": false,
-          "Date": "2026-01-10T10:00:00.000Z",
-          "ValidUntil": "2028-12-31"
+          "ConsentProfiling": true,
+          "ConsentPartnersOffers": true,
+          "Date": "2026-10-01T15:04:22.575Z",
+          "ValidUntil": "2029-12-31"
         },
         "Nationalities": [
           "LT"
@@ -102,7 +102,7 @@
         "IsEmancipatedMinor": false,
         "IsIncapable": false,
         "guardianMcdId": null,
-        "coapplicantMcdId": null
+        "coapplicantMcdId": "P1002"
       }
     ],
     [
@@ -180,7 +180,7 @@
         "IsEmancipatedMinor": false,
         "IsIncapable": false,
         "guardianMcdId": null,
-        "coapplicantMcdId": null
+        "coapplicantMcdId": "P1001"
       }
     ],
     [
@@ -262,7 +262,7 @@
       "J2001",
       {
         "McdId": "J2001",
-        "FullName": "UAB Baltijos Technologijos",
+        "FullName": "UAB Baltijos Technologijos Group",
         "CompanyCode": "305123456",
         "CountryCode": "LT",
         "Status": "Existing",
@@ -294,7 +294,7 @@
         },
         "Consents": {
           "ConsentOffers": true,
-          "ConsentPartnersOffers": false
+          "ConsentPartnersOffers": true
         },
         "AmlScreening": {
           "LastAmlResultDate": "2026-02-01T08:00:00.000Z",
@@ -331,8 +331,8 @@
         "DateOfBirth": "1979-05-05",
         "BirthCountryCode": "LT",
         "BirthCity": "Klaipėda",
-        "LanguageCode": "lt",
-        "PrimaryEmail": "v.petrauskas@baltiantech.lt",
+        "LanguageCode": "en",
+        "PrimaryEmail": "v.petrauskas.updated@example.com",
         "PrimaryEmailVerified": true,
         "SecondaryEmail": null,
         "PrimaryPhoneNumber": "+37068899000",

@@ -2195,6 +2195,8 @@ function renderDashboardHtml() {
 
 // Create HTTP server
 export const server = http.createServer(handleRequest);
+export default handleRequest;
+
 
 // Auto-start when executed directly
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
