@@ -1354,7 +1354,7 @@ export async function handleRequest(req, res) {
 // -------------------------------------------------------------
 // Interactive Dashboard HTML Renderer with Database Editor
 // -------------------------------------------------------------
-function renderDashboardHtml() {
+export function renderDashboardHtml() {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1875,79 +1875,110 @@ function renderDashboardHtml() {
       renderTable();
     }
 
+    function getRecord(col, id) {
+      if (!dbData) return null;
+      var list = [];
+      if (col === 'physical') list = dbData.physicalPersons || [];
+      else if (col === 'juridical') list = dbData.juridicalPersons || [];
+      else if (col === 'representatives') list = dbData.representatives || [];
+      else if (col === 'accumulated') list = dbData.accumulatedJuridicalPersons || [];
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].McdId === id) return list[i];
+      }
+      return null;
+    }
+
+    function selectRecord(col, id) {
+      var rec = getRecord(col, id);
+      if (rec) inspectRecord(rec);
+    }
+
+    function openEditById(col, id) {
+      var rec = getRecord(col, id);
+      if (rec) openEditModal(col, id, rec);
+    }
+
     function renderTable() {
       if (!dbData) return;
-      const container = document.getElementById('table-display');
-      let html = '';
+      var container = document.getElementById('table-display');
+      var html = '';
 
       if (currentTable === 'physical') {
         html = '<table><thead><tr><th>MCD ID</th><th>Full Name</th><th>Personal Code</th><th>Status</th><th>Email</th><th>Phone</th><th>Guardian / Minor</th><th>Actions</th></tr></thead><tbody>';
-        for (const p of dbData.physicalPersons) {
-          const badgeClass = p.Status === 'Existing' ? 'badge-existing' : 'badge-prospect';
-          const minorTag = p.IsMinor ? '<span style="color:var(--accent-orange)">Yes (Minor)</span>' : 'No';
-          html += '<tr>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'><strong style="color:var(--accent-blue)">' + p.McdId + '</strong></td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + p.FirstName + ' ' + p.LastName + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + p.PersonalCode + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'><span class="badge ' + badgeClass + '">' + p.Status + '</span></td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + (p.PrimaryEmail || '-') + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + (p.PrimaryPhoneNumber || '-') + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>' + minorTag + (p.guardianMcdId ? ' (Guardian: ' + p.guardianMcdId + ')' : '') + '</td>' +
+        var pList = dbData.physicalPersons || [];
+        for (var i = 0; i < pList.length; i++) {
+          var p = pList[i];
+          var badgeClass = p.Status === 'Existing' ? 'badge-existing' : 'badge-prospect';
+          var minorTag = p.IsMinor ? '<span style="color:var(--accent-orange)">Yes (Minor)</span>' : 'No';
+          html += '<tr data-col="physical" data-id="' + p.McdId + '" style="cursor:pointer;">' +
+            '<td><strong style="color:var(--accent-blue)">' + p.McdId + '</strong></td>' +
+            '<td>' + (p.FirstName || '') + ' ' + (p.LastName || '') + '</td>' +
+            '<td>' + (p.PersonalCode || '-') + '</td>' +
+            '<td><span class="badge ' + badgeClass + '">' + p.Status + '</span></td>' +
+            '<td>' + (p.PrimaryEmail || '-') + '</td>' +
+            '<td>' + (p.PrimaryPhoneNumber || '-') + '</td>' +
+            '<td>' + minorTag + (p.guardianMcdId ? ' (Guardian: ' + p.guardianMcdId + ')' : '') + '</td>' +
             '<td><div style="display:flex; gap:6px;">' +
-              '<button class="btn btn-sm btn-primary" onclick=\\'openEditModal("physical", "' + p.McdId + '", ' + JSON.stringify(p).replace(/'/g, "&apos;") + ')\\'>Edit</button>' +
-              '<button class="btn btn-sm btn-danger" onclick=\\'deleteRecord("physical", "' + p.McdId + '")\\'>Delete</button>' +
+              '<button class="btn btn-sm btn-primary btn-edit">Edit</button>' +
+              '<button class="btn btn-sm btn-danger btn-delete">Delete</button>' +
             '</div></td>' +
           '</tr>';
         }
         html += '</tbody></table>';
       } else if (currentTable === 'juridical') {
         html = '<table><thead><tr><th>MCD ID</th><th>Company Name</th><th>Company Code</th><th>Status</th><th>Email</th><th>Phone</th><th>Legal Representative</th><th>Actions</th></tr></thead><tbody>';
-        for (const j of dbData.juridicalPersons) {
-          const badgeClass = j.Status === 'Existing' ? 'badge-existing' : 'badge-prospect';
-          html += '<tr>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'><strong style="color:var(--accent-blue)">' + j.McdId + '</strong></td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + j.FullName + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + j.CompanyCode + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'><span class="badge ' + badgeClass + '">' + j.Status + '</span></td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + (j.PrimaryEmail || '-') + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + (j.PrimaryPhoneNumber || '-') + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>' + (j.RepresentativeMcdId || '-') + '</td>' +
+        var jList = dbData.juridicalPersons || [];
+        for (var j = 0; j < jList.length; j++) {
+          var jItem = jList[j];
+          var badgeClass = jItem.Status === 'Existing' ? 'badge-existing' : 'badge-prospect';
+          html += '<tr data-col="juridical" data-id="' + jItem.McdId + '" style="cursor:pointer;">' +
+            '<td><strong style="color:var(--accent-blue)">' + jItem.McdId + '</strong></td>' +
+            '<td>' + (jItem.FullName || '-') + '</td>' +
+            '<td>' + (jItem.CompanyCode || '-') + '</td>' +
+            '<td><span class="badge ' + badgeClass + '">' + jItem.Status + '</span></td>' +
+            '<td>' + (jItem.PrimaryEmail || '-') + '</td>' +
+            '<td>' + (jItem.PrimaryPhoneNumber || '-') + '</td>' +
+            '<td>' + (jItem.RepresentativeMcdId || '-') + '</td>' +
             '<td><div style="display:flex; gap:6px;">' +
-              '<button class="btn btn-sm btn-primary" onclick=\\'openEditModal("juridical", "' + j.McdId + '", ' + JSON.stringify(j).replace(/'/g, "&apos;") + ')\\'>Edit</button>' +
-              '<button class="btn btn-sm btn-danger" onclick=\\'deleteRecord("juridical", "' + j.McdId + '")\\'>Delete</button>' +
+              '<button class="btn btn-sm btn-primary btn-edit">Edit</button>' +
+              '<button class="btn btn-sm btn-danger btn-delete">Delete</button>' +
             '</div></td>' +
           '</tr>';
         }
         html += '</tbody></table>';
       } else if (currentTable === 'representatives') {
         html = '<table><thead><tr><th>MCD ID</th><th>Full Name</th><th>Personal Code</th><th>Country</th><th>Email</th><th>Phone</th><th>Actions</th></tr></thead><tbody>';
-        for (const r of dbData.representatives) {
-          html += '<tr>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'><strong style="color:var(--accent-blue)">' + r.McdId + '</strong></td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + r.FirstName + ' ' + r.LastName + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + r.PersonalCode + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + r.CountryCode + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + (r.PrimaryEmail || '-') + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>' + (r.PrimaryPhoneNumber || '-') + '</td>' +
+        var rList = dbData.representatives || [];
+        for (var r = 0; r < rList.length; r++) {
+          var rItem = rList[r];
+          html += '<tr data-col="representatives" data-id="' + rItem.McdId + '" style="cursor:pointer;">' +
+            '<td><strong style="color:var(--accent-blue)">' + rItem.McdId + '</strong></td>' +
+            '<td>' + (rItem.FirstName || '') + ' ' + (rItem.LastName || '') + '</td>' +
+            '<td>' + (rItem.PersonalCode || '-') + '</td>' +
+            '<td>' + (rItem.CountryCode || '-') + '</td>' +
+            '<td>' + (rItem.PrimaryEmail || '-') + '</td>' +
+            '<td>' + (rItem.PrimaryPhoneNumber || '-') + '</td>' +
             '<td><div style="display:flex; gap:6px;">' +
-              '<button class="btn btn-sm btn-primary" onclick=\\'openEditModal("representatives", "' + r.McdId + '", ' + JSON.stringify(r).replace(/'/g, "&apos;") + ')\\'>Edit</button>' +
-              '<button class="btn btn-sm btn-danger" onclick=\\'deleteRecord("representatives", "' + r.McdId + '")\\'>Delete</button>' +
+              '<button class="btn btn-sm btn-primary btn-edit">Edit</button>' +
+              '<button class="btn btn-sm btn-danger btn-delete">Delete</button>' +
             '</div></td>' +
           '</tr>';
         }
         html += '</tbody></table>';
       } else if (currentTable === 'accumulated') {
         html = '<table><thead><tr><th>MCD ID</th><th>Proposed Name</th><th>Temporary Code</th><th>Representative</th><th>Phone</th><th>Actions</th></tr></thead><tbody>';
-        for (const a of dbData.accumulatedJuridicalPersons) {
-          html += '<tr>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'><strong style="color:var(--accent-blue)">' + a.McdId + '</strong></td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>' + a.FullName + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>' + a.CompanyCode + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>' + (a.RepresentativeMcdId || '-') + '</td>' +
-            '<td onclick=\\'inspectRecord(' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>' + (a.phoneNumber || '-') + '</td>' +
+        var aList = dbData.accumulatedJuridicalPersons || [];
+        for (var a = 0; a < aList.length; a++) {
+          var aItem = aList[a];
+          html += '<tr data-col="accumulated" data-id="' + aItem.McdId + '" style="cursor:pointer;">' +
+            '<td><strong style="color:var(--accent-blue)">' + aItem.McdId + '</strong></td>' +
+            '<td>' + (aItem.FullName || '-') + '</td>' +
+            '<td>' + (aItem.CompanyCode || '-') + '</td>' +
+            '<td>' + (aItem.RepresentativeMcdId || '-') + '</td>' +
+            '<td>' + (aItem.phoneNumber || '-') + '</td>' +
             '<td><div style="display:flex; gap:6px;">' +
-              '<button class="btn btn-sm btn-primary" onclick=\\'openEditModal("accumulated", "' + a.McdId + '", ' + JSON.stringify(a).replace(/'/g, "&apos;") + ')\\'>Edit</button>' +
-              '<button class="btn btn-sm btn-danger" onclick=\\'deleteRecord("accumulated", "' + a.McdId + '")\\'>Delete</button>' +
+              '<button class="btn btn-sm btn-primary btn-edit">Edit</button>' +
+              '<button class="btn btn-sm btn-danger btn-delete">Delete</button>' +
             '</div></td>' +
           '</tr>';
         }
@@ -2186,7 +2217,35 @@ function renderDashboardHtml() {
       document.getElementById('response-title').innerText = 'Live Response Console';
     }
 
+    function setupTableEvents() {
+      const container = document.getElementById('table-display');
+      if (!container) return;
+      container.addEventListener('click', function(e) {
+        const btnEdit = e.target.closest('.btn-edit');
+        if (btnEdit) {
+          e.stopPropagation();
+          const tr = btnEdit.closest('tr');
+          if (tr) openEditById(tr.getAttribute('data-col'), tr.getAttribute('data-id'));
+          return;
+        }
+
+        const btnDel = e.target.closest('.btn-delete');
+        if (btnDel) {
+          e.stopPropagation();
+          const tr = btnDel.closest('tr');
+          if (tr) deleteRecord(tr.getAttribute('data-col'), tr.getAttribute('data-id'));
+          return;
+        }
+
+        const tr = e.target.closest('tr[data-id]');
+        if (tr) {
+          selectRecord(tr.getAttribute('data-col'), tr.getAttribute('data-id'));
+        }
+      });
+    }
+
     // Initialize
+    setupTableEvents();
     loadDatabase();
   </script>
 </body>

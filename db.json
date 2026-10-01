@@ -1,5 +1,5 @@
 {
-  "_lastUpdated": "2026-10-01T15:04:22.601Z",
+  "_lastUpdated": "2026-10-01T15:18:59.571Z",
   "physicalPersons": [
     [
       "P1001",
@@ -58,7 +58,7 @@
           "ConsentOffers": true,
           "ConsentProfiling": true,
           "ConsentPartnersOffers": true,
-          "Date": "2026-10-01T15:04:22.575Z",
+          "Date": "2026-10-01T15:18:59.566Z",
           "ValidUntil": "2029-12-31"
         },
         "Nationalities": [
