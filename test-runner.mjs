@@ -1,5 +1,15 @@
 import { EventEmitter } from 'node:events';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { handleRequest, db } from './server.mjs';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DB_FILE_PATH = path.join(__dirname, 'db.json');
+
+// Snapshot original DB state so testing never alters or wipes actual user records
+const originalDbSnapshot = fs.existsSync(DB_FILE_PATH) ? fs.readFileSync(DB_FILE_PATH, 'utf-8') : null;
 
 class MockReq extends EventEmitter {
   constructor(method, url, body = null) {
@@ -375,6 +385,18 @@ await assertTest('POST /admin/db/reset (Reset to seed)', async () => {
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if (!res.json.success) throw new Error('Reset failed');
 });
+
+// Restore original database state so user data is never wiped by tests
+if (originalDbSnapshot) {
+  try {
+    fs.writeFileSync(DB_FILE_PATH, originalDbSnapshot, 'utf-8');
+    const { loadDbFromFile } = await import('./server.mjs');
+    loadDbFromFile();
+    console.log('Restored original database state after test run.');
+  } catch (err) {
+    console.error('Failed to restore original database state:', err.message);
+  }
+}
 
 console.log(`\n${GREEN}====================================================${RESET}`);
 console.log(`${GREEN}  ALL ${passed} TESTS PASSED! (${failed} failed)              ${RESET}`);

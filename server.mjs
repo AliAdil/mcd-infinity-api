@@ -7,6 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 3000;
 const DB_FILE_PATH = path.join(__dirname, 'db.json');
+const DB_BACKUP_PATH = path.join(__dirname, 'db.backup.json');
 
 // Load OpenAPI specification
 const openapiSpecPath = path.join(__dirname, 'openapi.json');
@@ -431,7 +432,32 @@ export function getCollection(name) {
   return null;
 }
 
-// Sync database to db.json file
+// Sequence counters
+export let physicalSeq = 1004;
+export let juridicalSeq = 2002;
+export let repSeq = 3002;
+export let accSeq = 4002;
+
+export function recalculateSequenceCounters() {
+  for (const key of db.physicalPersons.keys()) {
+    const num = parseInt(String(key).replace(/\D/g, ''), 10);
+    if (!isNaN(num) && num >= physicalSeq) physicalSeq = num + 1;
+  }
+  for (const key of db.juridicalPersons.keys()) {
+    const num = parseInt(String(key).replace(/\D/g, ''), 10);
+    if (!isNaN(num) && num >= juridicalSeq) juridicalSeq = num + 1;
+  }
+  for (const key of db.representatives.keys()) {
+    const num = parseInt(String(key).replace(/\D/g, ''), 10);
+    if (!isNaN(num) && num >= repSeq) repSeq = num + 1;
+  }
+  for (const key of db.accumulatedJuridicalPersons.keys()) {
+    const num = parseInt(String(key).replace(/\D/g, ''), 10);
+    if (!isNaN(num) && num >= accSeq) accSeq = num + 1;
+  }
+}
+
+// Sync database to db.json file atomically and update backup
 export function syncDbToFile() {
   try {
     const serialized = {
@@ -441,38 +467,75 @@ export function syncDbToFile() {
       representatives: Array.from(db.representatives.entries()),
       accumulatedJuridicalPersons: Array.from(db.accumulatedJuridicalPersons.entries())
     };
-    fs.writeFileSync(DB_FILE_PATH, JSON.stringify(serialized, null, 2), 'utf-8');
+    const jsonStr = JSON.stringify(serialized, null, 2);
+    // Write atomically via tmp file to prevent zero-byte or corrupt files on unexpected shutdown
+    const tmpPath = DB_FILE_PATH + '.tmp';
+    fs.writeFileSync(tmpPath, jsonStr, 'utf-8');
+    fs.renameSync(tmpPath, DB_FILE_PATH);
+    fs.writeFileSync(DB_BACKUP_PATH, jsonStr, 'utf-8');
   } catch (err) {
     console.error('Failed to sync db to file:', err.message);
   }
 }
 
-// Load database from db.json if present
+// Load database from db.json or fallback backup
 export function loadDbFromFile() {
+  let fileToLoad = null;
   if (fs.existsSync(DB_FILE_PATH)) {
     try {
-      const content = JSON.parse(fs.readFileSync(DB_FILE_PATH, 'utf-8'));
-      if (content.physicalPersons) db.physicalPersons = new Map(content.physicalPersons);
-      if (content.juridicalPersons) db.juridicalPersons = new Map(content.juridicalPersons);
-      if (content.representatives) db.representatives = new Map(content.representatives);
-      if (content.accumulatedJuridicalPersons) db.accumulatedJuridicalPersons = new Map(content.accumulatedJuridicalPersons);
-      console.log('Loaded database state from db.json');
+      const stats = fs.statSync(DB_FILE_PATH);
+      if (stats.size > 20) fileToLoad = DB_FILE_PATH;
+    } catch (e) {}
+  }
+  if (!fileToLoad && fs.existsSync(DB_BACKUP_PATH)) {
+    try {
+      const stats = fs.statSync(DB_BACKUP_PATH);
+      if (stats.size > 20) fileToLoad = DB_BACKUP_PATH;
+    } catch (e) {}
+  }
+
+  if (fileToLoad) {
+    try {
+      const content = JSON.parse(fs.readFileSync(fileToLoad, 'utf-8'));
+      if (content.physicalPersons && Array.isArray(content.physicalPersons) && content.physicalPersons.length > 0) {
+        db.physicalPersons = new Map(content.physicalPersons);
+      }
+      if (content.juridicalPersons && Array.isArray(content.juridicalPersons) && content.juridicalPersons.length > 0) {
+        db.juridicalPersons = new Map(content.juridicalPersons);
+      }
+      if (content.representatives && Array.isArray(content.representatives) && content.representatives.length > 0) {
+        db.representatives = new Map(content.representatives);
+      }
+      if (content.accumulatedJuridicalPersons && Array.isArray(content.accumulatedJuridicalPersons) && content.accumulatedJuridicalPersons.length > 0) {
+        db.accumulatedJuridicalPersons = new Map(content.accumulatedJuridicalPersons);
+      }
+      console.log(`Loaded database state from ${path.basename(fileToLoad)} (${db.physicalPersons.size} physical persons)`);
     } catch (err) {
-      console.error('Error reading db.json, using defaults:', err.message);
+      console.error('Error reading database file, using defaults:', err.message);
     }
   } else {
     syncDbToFile();
   }
+  recalculateSequenceCounters();
 }
 
-// Initial load from db.json if it exists, otherwise seed and sync
+// Initial load from disk
 loadDbFromFile();
 
-// Sequence counters
-let physicalSeq = 1004;
-let juridicalSeq = 2002;
-let repSeq = 3002;
-let accSeq = 4002;
+// Graceful process exit handlers to ensure data is always flushed to disk
+process.on('SIGINT', () => {
+  try { syncDbToFile(); } catch (e) {}
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  try { syncDbToFile(); } catch (e) {}
+  process.exit(0);
+});
+
+process.on('beforeExit', () => {
+  try { syncDbToFile(); } catch (e) {}
+});
 
 // Helper: send JSON response
 function sendJson(res, statusCode, data) {
