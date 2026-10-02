@@ -550,14 +550,21 @@ export function toSwiftSafeString(str, allowSpecial = '') {
     .trim();
 }
 
+// Incremental & random series generator for Transact customerMnemonic (e.g. XD005, XD10145)
+let mnemonicCounter = 100;
+export function generateCustomerMnemonic(prefix = 'XD') {
+  mnemonicCounter++;
+  const randomSuffix = Math.floor(100 + Math.random() * 900);
+  return `${prefix}${mnemonicCounter}${randomSuffix}`.slice(0, 10);
+}
+
 export function buildTransactPayload(customer, overrides = {}) {
   const givenName = toSwiftSafeString(customer.FirstName) || 'Customer';
   const lastName = toSwiftSafeString(customer.LastName) || 'User';
   const fullName = `${givenName} ${lastName}`.trim();
 
-  // Generate unique mnemonic: 2 letters + 4 random digits (e.g. JK1234)
-  const prefix = ((givenName[0] || 'X') + (lastName[0] || 'D')).toUpperCase().replace(/[^A-Z]/g, 'X');
-  const mnemonic = `${prefix}${Math.floor(1000 + Math.random() * 9000)}`;
+  // Generate unique mnemonic with XD series prefix (e.g. XD005, XD10123)
+  const mnemonic = overrides.customerMnemonic || generateCustomerMnemonic('XD');
 
   const dob = customer.DateOfBirth || '1990-01-01';
 
@@ -619,7 +626,7 @@ export function buildTransactPayload(customer, overrides = {}) {
       domicile: country,
       manualRiskClass: '',
       overrideReason: '',
-      numberOfDependents: 0,
+      numberOfDependents: customer.numberOfDependents !== undefined ? customer.numberOfDependents : 2,
       dateOfDeath: '',
       extensions: {
         sourceSystem: 'INFINITY',
