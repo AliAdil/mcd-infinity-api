@@ -465,8 +465,8 @@ export function loadDbFromFile() {
   }
 }
 
-// Initial sync
-syncDbToFile();
+// Initial load from db.json if it exists, otherwise seed and sync
+loadDbFromFile();
 
 // Sequence counters
 let physicalSeq = 1004;
@@ -2005,7 +2005,10 @@ export function renderDashboardHtml() {
         Enter a <strong>Personal Code</strong> below. The system will look up the customer in MCD, call the Transact Customer API (T24), extract the assigned <code>id</code>, and automatically update the customer's <strong>TransactID</strong> in the database!
       </div>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <input type="text" id="sync-personal-code" placeholder="Personal Code (e.g. 38501010001, 48802020002, 51503030003)" style="flex:1; min-width:240px; padding:10px 14px; background:#0b1120; border:1px solid var(--border); border-radius:6px; color:#f8fafc; font-family:monospace;" value="38501010001" />
+        <select id="sync-customer-select" onchange="if(this.value){document.getElementById('sync-personal-code').value=this.value;}" style="padding:10px 14px; background:#0b1120; border:1px solid var(--border); border-radius:6px; color:#f8fafc; font-size:13px; max-width:320px;">
+          <option value="">-- Select customer to sync --</option>
+        </select>
+        <input type="text" id="sync-personal-code" placeholder="Personal Code (e.g. 38501010001, 39001010099)" style="flex:1; min-width:220px; padding:10px 14px; background:#0b1120; border:1px solid var(--border); border-radius:6px; color:#f8fafc; font-family:monospace;" value="39001010099" />
         <button class="btn btn-primary" id="btn-transact-sync" onclick="triggerTransactSync()" style="display:flex; align-items:center; gap:6px;">
           <span>⚡ Call Transact & Sync</span>
         </button>
@@ -2163,9 +2166,24 @@ export function renderDashboardHtml() {
         document.getElementById('count-rep').innerText = dbData.representatives.length;
         document.getElementById('count-acc').innerText = dbData.accumulatedJuridicalPersons.length;
         renderTable();
+        updateCustomerSelector();
       } catch (err) {
         console.error('Failed to load DB:', err);
       }
+    }
+
+    function updateCustomerSelector() {
+      const select = document.getElementById('sync-customer-select');
+      if (!select || !dbData || !dbData.physicalPersons) return;
+      const currentVal = document.getElementById('sync-personal-code').value;
+      let optionsHtml = '<option value="">-- Or pick customer to sync --</option>';
+      dbData.physicalPersons.forEach(p => {
+        const tId = p.TransactID || p.TransactId ? (' [Transact: ' + (p.TransactID || p.TransactId) + ']') : ' [Not Synced]';
+        const code = p.PersonalCode || '';
+        const name = (p.FirstName || '') + ' ' + (p.LastName || '');
+        optionsHtml += '<option value="' + code + '" ' + (code === currentVal ? 'selected' : '') + '>' + p.McdId + ': ' + name + ' (' + (code || 'No Code') + ')' + tId + '</option>';
+      });
+      select.innerHTML = optionsHtml;
     }
 
     function switchTable(name) {
@@ -2225,7 +2243,8 @@ export function renderDashboardHtml() {
             '<td>' + (p.PrimaryEmail || '-') + '</td>' +
             '<td>' + (p.PrimaryPhoneNumber || '-') + '</td>' +
             '<td>' + minorTag + (p.guardianMcdId ? ' (Guardian: ' + p.guardianMcdId + ')' : '') + '</td>' +
-            '<td><div style="display:flex; gap:6px;">' +
+            '<td><div style="display:flex; gap:6px; align-items:center;">' +
+              (p.PersonalCode ? '<button class="btn btn-sm btn-sync" data-code="' + p.PersonalCode + '" style="background:#0284c7; color:#fff;" title="Sync customer to Transact">⚡ Sync</button>' : '') +
               '<button class="btn btn-sm btn-primary btn-edit">Edit</button>' +
               '<button class="btn btn-sm btn-danger btn-delete">Delete</button>' +
             '</div></td>' +
@@ -2576,10 +2595,26 @@ export function renderDashboardHtml() {
       }
     }
 
+    function quickSync(code) {
+      const input = document.getElementById('sync-personal-code');
+      if (input) input.value = code;
+      const select = document.getElementById('sync-customer-select');
+      if (select) select.value = code;
+      triggerTransactSync();
+    }
+
     function setupTableEvents() {
       const container = document.getElementById('table-display');
       if (!container) return;
       container.addEventListener('click', function(e) {
+        const btnSync = e.target.closest('.btn-sync');
+        if (btnSync) {
+          e.stopPropagation();
+          const pCode = btnSync.getAttribute('data-code');
+          if (pCode) quickSync(pCode);
+          return;
+        }
+
         const btnEdit = e.target.closest('.btn-edit');
         if (btnEdit) {
           e.stopPropagation();
