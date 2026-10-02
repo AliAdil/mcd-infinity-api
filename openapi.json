@@ -2785,7 +2785,7 @@
     "/transact/sync-customer": {
       "post": {
         "summary": "Sync customer to Transact core by Personal Code",
-        "description": "Looks up the customer in MCD database by personalCode, invokes Temenos Transact API (party/customers), extracts the generated Transact ID, and updates the customer's TransactID in MCD database.",
+        "description": "Looks up the customer in MCD database by personalCode. If the customer already has a TransactID, skips calling Transact and returns alreadySynced: true. If not, invokes Temenos Transact API (party/customers), extracts the generated Transact ID, and updates the customer's TransactID in MCD database. Pass force: true to force re-creation.",
         "tags": [
           "transact",
           "persons/physical"
@@ -2804,6 +2804,11 @@
                     "type": "string",
                     "description": "Personal identification code of the customer in MCD database",
                     "example": "38501010001"
+                  },
+                  "force": {
+                    "type": "boolean",
+                    "description": "Optional flag to force re-creation in Transact even if customer already has a TransactID",
+                    "example": false
                   },
                   "mock": {
                     "type": "boolean",

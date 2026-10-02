@@ -324,15 +324,38 @@ await assertTest('GET /persons/physical/by-personal-code/:code', async () => {
   if (res.json.McdId !== 'P1002') throw new Error('McdId mismatch');
 });
 
-await assertTest('POST /transact/sync-customer (Sync with Transact)', async () => {
+await assertTest('POST /transact/sync-customer (Customer already has TransactID -> alreadySynced: true)', async () => {
   const res = await request('POST', '/transact/sync-customer', {
-    personalCode: '48802020002',
-    mock: true // Use mock for deterministic CI/CD unit testing
+    personalCode: '48802020002'
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}: ${JSON.stringify(res.json)}`);
   if (!res.json.success) throw new Error('Sync failed');
-  if (!res.json.transactId) throw new Error('transactId missing');
-  if (res.json.customer.TransactID !== res.json.transactId) throw new Error('TransactID not updated in customer');
+  if (!res.json.alreadySynced) throw new Error('Expected alreadySynced: true');
+  if (!res.json.message.includes('already has TransactID')) throw new Error('Expected already has TransactID message');
+});
+
+await assertTest('POST /transact/sync-customer (Force re-sync with force: true)', async () => {
+  const res = await request('POST', '/transact/sync-customer', {
+    personalCode: '48802020002',
+    force: true,
+    mock: true
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}: ${JSON.stringify(res.json)}`);
+  if (!res.json.success) throw new Error('Sync failed');
+  if (res.json.alreadySynced) throw new Error('Expected alreadySynced to be false on forced sync');
+});
+
+await assertTest('POST /persons/physical (Create prospect with pre-existing TransactID -> skips Transact API)', async () => {
+  const res = await request('POST', '/persons/physical', {
+    firstName: 'Saulius',
+    lastName: 'Prūsaitis',
+    personalCode: '38101010055',
+    TransactID: 'TX-EXISTING-999',
+    countryCode: 'LT'
+  });
+  if (res.status !== 201) throw new Error(`Status ${res.status}`);
+  if (res.json.TransactID !== 'TX-EXISTING-999') throw new Error('Expected TransactID to be preserved');
+  if (!res.json.alreadySynced) throw new Error('Expected alreadySynced: true');
 });
 
 await assertTest('POST /transact/sync-customer (Missing PersonalCode -> 400)', async () => {

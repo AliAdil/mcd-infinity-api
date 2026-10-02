@@ -1,5 +1,5 @@
 {
-  "_lastUpdated": "2026-10-02T09:08:04.164Z",
+  "_lastUpdated": "2026-10-02T09:19:41.419Z",
   "physicalPersons": [
     [
       "P1001",
@@ -260,26 +260,26 @@
       "P1004",
       {
         "McdId": "P1004",
-        "FirstName": "Tadas",
+        "FirstName": "Gintaras",
         "MiddleName": null,
-        "LastName": "Vaitkus",
-        "PersonalCode": "39304040011",
+        "LastName": "Einikis",
+        "PersonalCode": "36909090099",
         "CountryCode": "LT",
         "Gender": "MALE",
         "Status": "Prospect",
-        "TransactID": "10001886",
-        "TransactId": "10001886",
+        "TransactID": "10001777",
+        "TransactId": "10001777",
         "TransactStatus": "Synced",
-        "DateOfBirth": "1993-04-04",
+        "DateOfBirth": "1995-01-01",
         "DateOfDeath": null,
         "BirthCountryCode": "LT",
         "BirthCity": "Vilnius",
         "LanguageCode": "lt",
-        "PrimaryEmail": "tadas.vaitkus@example.com",
-        "PrimaryEmailVerified": true,
+        "PrimaryEmail": null,
+        "PrimaryEmailVerified": false,
         "SecondaryEmail": null,
-        "PrimaryPhoneNumber": "+37068811223",
-        "PrimaryPhoneNumberVerified": true,
+        "PrimaryPhoneNumber": null,
+        "PrimaryPhoneNumberVerified": false,
         "SecondaryPhoneNumber": null,
         "RegistrationAddress": {
           "countryCode": "LT",
@@ -295,7 +295,7 @@
           "ConsentOffers": true,
           "ConsentProfiling": false,
           "ConsentPartnersOffers": false,
-          "Date": "2026-10-02T09:08:03.457Z",
+          "Date": "2026-10-02T09:19:41.419Z",
           "ValidUntil": "2028-12-31"
         },
         "Nationalities": [
@@ -304,10 +304,10 @@
         "IdDocuments": [],
         "OndatoCheckValid": true,
         "AmlScreening": {
-          "LastAmlResultDate": "2026-10-02T09:08:03.457Z",
+          "LastAmlResultDate": "2026-10-02T09:19:41.419Z",
           "AmlResult": "PASSED",
           "SmaApprovalStatus": "APPROVED",
-          "SmaDecisionDate": "2026-10-02T09:08:03.457Z"
+          "SmaDecisionDate": "2026-10-02T09:19:41.419Z"
         },
         "Kyc": {
           "IsKycRequired": false,
@@ -324,112 +324,7 @@
         "IsEmancipatedMinor": false,
         "IsIncapable": false,
         "guardianMcdId": null,
-        "coapplicantMcdId": null,
-        "TransactSyncDate": "2026-10-02T09:08:04.163Z",
-        "transactResponse": {
-          "header": {
-            "transactionStatus": "Live",
-            "audit": {
-              "T24_time": 640,
-              "responseParse_time": 0,
-              "requestParse_time": 16,
-              "versionNumber": "1"
-            },
-            "id": "10001886",
-            "status": "success"
-          },
-          "body": {
-            "customerMnemonic": "XD101429",
-            "lastName": "Vaitkus",
-            "numberOfDependents": 2,
-            "introducer": "DIGITALONBOARDING",
-            "gender": "MALE",
-            "streets": [
-              {
-                "street": "Gedimino pr. 1"
-              }
-            ],
-            "faxIds": [
-              {
-                "faxId": "FAX001"
-              }
-            ],
-            "customerNames": [
-              {
-                "customerNameAdditional": "Vaitkus",
-                "customerName": "Tadas"
-              }
-            ],
-            "language": 1,
-            "title": "MR",
-            "taxIds": [
-              {
-                "taxId": "TAX9150180"
-              }
-            ],
-            "customerStatus": 17,
-            "industryId": 13,
-            "accountOfficerId": 1,
-            "officePhoneNumbers": [
-              {
-                "officePhoneNumber": "+37068811223"
-              }
-            ],
-            "customerCompany": "AU0070001",
-            "amlResult": "NULL",
-            "isSecureMessage": "YES",
-            "sectorId": 1001,
-            "nationalityId": "PK",
-            "givenName": "Tadas",
-            "addressCities": [
-              {
-                "addressCity": "Vilnius"
-              }
-            ],
-            "amlLastResultDate": "20260908",
-            "displayNames": [
-              {
-                "displayName": "Tadas Vaitkus"
-              }
-            ],
-            "dateOfBirth": "1993-04-04",
-            "kycNextSystemReviewDate": "2027-01-15",
-            "countries": [
-              {
-                "country": "PK"
-              }
-            ],
-            "amlCheck": "NULL",
-            "contactDetails": [
-              {
-                "contactData": "68811223",
-                "iddPrefixPhone": "+370",
-                "contactType": "MOBILE"
-              },
-              {
-                "contactData": "tadas.vaitkus@example.com",
-                "contactType": "EMAIL"
-              }
-            ],
-            "residenceId": "PK",
-            "target": 1,
-            "postingRestrictIds": [
-              {
-                "postingRestrictId": 1
-              }
-            ],
-            "otherNationalityIds": [
-              {
-                "otherNationalityId": "PK"
-              }
-            ],
-            "kycNextReviewDate": "2027-01-15",
-            "birthIncorpDate": "1993-04-04",
-            "domicile": "PK",
-            "postCode": 75350,
-            "maritalStatus": "MARRIED"
-          }
-        }
+        "coapplicantMcdId": null
       }
     ]
   ],

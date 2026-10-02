@@ -638,6 +638,14 @@ export function buildTransactPayload(customer, overrides = {}) {
   };
 }
 
+export function hasTransactId(customer) {
+  if (!customer) return false;
+  const tid = customer.TransactID || customer.TransactId;
+  if (!tid) return false;
+  const s = String(tid).trim();
+  return s !== '' && s !== 'null' && s !== 'undefined' && s !== 'None' && s !== 'Pending';
+}
+
 export async function syncCustomerWithTransact(personalCode, options = {}) {
   if (!personalCode) {
     const error = new Error('PersonalCode is required.');
@@ -662,6 +670,20 @@ export async function syncCustomerWithTransact(personalCode, options = {}) {
     error.statusCode = 404;
     error.code = 'CUSTOMER_NOT_FOUND';
     throw error;
+  }
+
+  // If customer already has TransactID, do not call Transact API
+  if (hasTransactId(customer) && !options.force) {
+    const existingId = String(customer.TransactID || customer.TransactId);
+    return {
+      success: true,
+      alreadySynced: true,
+      message: `Customer ${customer.McdId} (${customer.FirstName} ${customer.LastName}) already has TransactID '${existingId}'. No new Transact customer was created.`,
+      personalCode: String(personalCode),
+      mcdId: customer.McdId,
+      transactId: existingId,
+      customer
+    };
   }
 
   // 2. Build Transact payload
@@ -980,7 +1002,8 @@ export async function handleRequest(req, res) {
         const result = await syncCustomerWithTransact(personalCode, {
           token: customToken,
           overrides: body.transactPayloadOverrides || body.body || {},
-          mock: isMock
+          mock: isMock,
+          force: Boolean(body.force === true || query.force === 'true')
         });
         return sendJson(res, 200, result);
       } catch (err) {
@@ -1053,6 +1076,24 @@ export async function handleRequest(req, res) {
         });
       }
 
+      // Check if this personalCode already belongs to an existing MCD customer with a TransactID, or if TransactID was provided in body
+      let existingCustomer = null;
+      for (const [key, p] of db.physicalPersons.entries()) {
+        if (String(p.PersonalCode).trim() === String(body.personalCode).trim()) {
+          existingCustomer = p;
+          break;
+        }
+      }
+
+      const preExistingId = (body.TransactID || body.transactId) ||
+        (existingCustomer && (existingCustomer.TransactID || existingCustomer.TransactId));
+      const hasId = preExistingId &&
+        String(preExistingId).trim() !== '' &&
+        preExistingId !== 'null' &&
+        preExistingId !== 'undefined' &&
+        preExistingId !== 'None' &&
+        preExistingId !== 'Pending';
+
       const newMcdId = 'P' + (physicalSeq++);
       const isMinor = body.dateOfBirth && (new Date().getFullYear() - new Date(body.dateOfBirth).getFullYear() < 18);
       const newPerson = {
@@ -1064,9 +1105,9 @@ export async function handleRequest(req, res) {
         CountryCode: body.countryCode || 'LT',
         Gender: body.gender || 'MALE',
         Status: 'Prospect',
-        TransactID: null,
-        TransactId: null,
-        TransactStatus: 'Pending',
+        TransactID: hasId ? String(preExistingId) : null,
+        TransactId: hasId ? String(preExistingId) : null,
+        TransactStatus: hasId ? 'Synced' : 'Pending',
         DateOfBirth: body.dateOfBirth || '1995-01-01',
         DateOfDeath: null,
         BirthCountryCode: body.countryCode || 'LT',
@@ -1113,6 +1154,13 @@ export async function handleRequest(req, res) {
       db.physicalPersons.set(newMcdId, newPerson);
       syncDbToFile();
 
+      // If customer already has a TransactID, do NOT create or call Transact API
+      if (hasId) {
+        newPerson.alreadySynced = true;
+        newPerson.transactNotice = `Customer already has TransactID '${preExistingId}'. No new Transact customer was created.`;
+        return sendJson(res, 201, newPerson);
+      }
+
       // Automatically sync with Temenos Transact Core Banking API using customer's personal code
       try {
         const syncResult = await syncCustomerWithTransact(newPerson.PersonalCode, {
@@ -1121,9 +1169,15 @@ export async function handleRequest(req, res) {
         if (syncResult && syncResult.transactId) {
           newPerson.TransactID = String(syncResult.transactId);
           newPerson.TransactId = String(syncResult.transactId);
-          newPerson.TransactSyncDate = syncResult.customer.TransactSyncDate;
-          newPerson.TransactStatus = 'Synced';
-          newPerson.transactResponse = syncResult.transactResponse;
+          newPerson.TransactSyncDate = syncResult.customer.TransactSyncDate || new Date().toISOString();
+          newPerson.TransactStatus = syncResult.alreadySynced ? 'Already Synced' : 'Synced';
+          newPerson.alreadySynced = Boolean(syncResult.alreadySynced);
+          if (syncResult.alreadySynced) {
+            newPerson.transactNotice = syncResult.message;
+          }
+          if (syncResult.transactResponse) {
+            newPerson.transactResponse = syncResult.transactResponse;
+          }
           db.physicalPersons.set(newMcdId, newPerson);
           syncDbToFile();
         }
@@ -2622,11 +2676,19 @@ export function renderDashboardHtml() {
         const data = await res.json();
 
         if (res.ok && data.success) {
-          alertBox.style.background = 'rgba(16,185,129,0.15)';
-          alertBox.style.color = '#34d399';
-          alertBox.style.border = '1px solid rgba(16,185,129,0.4)';
-          alertBox.innerText = 'SUCCESS! Transact customer created. ID: ' + data.transactId + ' linked to MCD customer ' + data.mcdId + ' (' + data.customer.FirstName + ' ' + data.customer.LastName + ')';
-          showToast('Synced with Transact! ID: ' + data.transactId);
+          if (data.alreadySynced) {
+            alertBox.style.background = 'rgba(234,179,8,0.15)';
+            alertBox.style.color = '#facc15';
+            alertBox.style.border = '1px solid rgba(234,179,8,0.4)';
+            alertBox.innerText = 'ℹ️ ' + (data.message || ('Customer already has TransactID: ' + data.transactId));
+            showToast('Customer already has TransactID: ' + data.transactId);
+          } else {
+            alertBox.style.background = 'rgba(16,185,129,0.15)';
+            alertBox.style.color = '#34d399';
+            alertBox.style.border = '1px solid rgba(16,185,129,0.4)';
+            alertBox.innerText = 'SUCCESS! Transact customer created. ID: ' + data.transactId + ' linked to MCD customer ' + data.mcdId + ' (' + data.customer.FirstName + ' ' + data.customer.LastName + ')';
+            showToast('Synced with Transact! ID: ' + data.transactId);
+          }
           await loadDatabase();
           if (data.customer) inspectRecord(data.customer);
         } else {
