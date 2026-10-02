@@ -98,9 +98,9 @@
         "x-run-in-apidog": "https://app.apidog.com/web/project/1103365/apis/api-23088152-run"
       },
       "post": {
-        "summary": "Create physical prospect",
+        "summary": "Create physical prospect (with auto Transact sync)",
         "deprecated": false,
-        "description": "Used to create a new prospect in MCD, both for adult and junior clients",
+        "description": "Used to create a new prospect in MCD, both for adult and junior clients. Automatically calls the Temenos Transact Core Banking API (T24) using the provided personalCode, creates the customer record with a unique XD mnemonic, retrieves the assigned T24 customer ID, and populates TransactID.",
         "tags": [
           "persons/physical"
         ],

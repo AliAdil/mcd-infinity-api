@@ -857,6 +857,32 @@ export async function handleRequest(req, res) {
       targetMap.set(id, record);
       syncDbToFile();
 
+      // If adding a physical person with a personalCode, automatically sync with Transact
+      if (colName === 'physical' && (record.PersonalCode || record.personalCode)) {
+        const code = record.PersonalCode || record.personalCode;
+        record.PersonalCode = code;
+        try {
+          const syncRes = await syncCustomerWithTransact(code, {
+            mock: Boolean(body.mock || req.headers['x-mock-transact'] === 'true' || process.env.MOCK_TRANSACT === 'true')
+          });
+          if (syncRes && syncRes.transactId) {
+            record.TransactID = String(syncRes.transactId);
+            record.TransactId = String(syncRes.transactId);
+            record.TransactSyncDate = syncRes.customer.TransactSyncDate;
+            record.TransactStatus = 'Synced';
+            record.transactResponse = syncRes.transactResponse;
+            targetMap.set(id, record);
+            syncDbToFile();
+          }
+        } catch (syncErr) {
+          console.warn(`[POST /admin/db/physical] Transact sync notice: ${syncErr.message}`);
+          record.TransactStatus = 'Sync Failed';
+          record.TransactError = syncErr.message;
+          targetMap.set(id, record);
+          syncDbToFile();
+        }
+      }
+
       return sendJson(res, 201, {
         success: true,
         message: `Record ${id} created in ${colName} successfully`,
@@ -1038,7 +1064,9 @@ export async function handleRequest(req, res) {
         CountryCode: body.countryCode || 'LT',
         Gender: body.gender || 'MALE',
         Status: 'Prospect',
-        TransactID: 'TX-' + Math.floor(10000 + Math.random() * 90000),
+        TransactID: null,
+        TransactId: null,
+        TransactStatus: 'Pending',
         DateOfBirth: body.dateOfBirth || '1995-01-01',
         DateOfDeath: null,
         BirthCountryCode: body.countryCode || 'LT',
@@ -1084,6 +1112,29 @@ export async function handleRequest(req, res) {
 
       db.physicalPersons.set(newMcdId, newPerson);
       syncDbToFile();
+
+      // Automatically sync with Temenos Transact Core Banking API using customer's personal code
+      try {
+        const syncResult = await syncCustomerWithTransact(newPerson.PersonalCode, {
+          mock: Boolean(body.mock || req.headers['x-mock-transact'] === 'true' || process.env.MOCK_TRANSACT === 'true')
+        });
+        if (syncResult && syncResult.transactId) {
+          newPerson.TransactID = String(syncResult.transactId);
+          newPerson.TransactId = String(syncResult.transactId);
+          newPerson.TransactSyncDate = syncResult.customer.TransactSyncDate;
+          newPerson.TransactStatus = 'Synced';
+          newPerson.transactResponse = syncResult.transactResponse;
+          db.physicalPersons.set(newMcdId, newPerson);
+          syncDbToFile();
+        }
+      } catch (transactErr) {
+        console.warn(`[POST /persons/physical] Notice: Transact sync for ${newPerson.PersonalCode} encountered error: ${transactErr.message}`);
+        newPerson.TransactStatus = 'Sync Failed';
+        newPerson.TransactError = transactErr.message;
+        db.physicalPersons.set(newMcdId, newPerson);
+        syncDbToFile();
+      }
+
       return sendJson(res, 201, newPerson);
     }
 

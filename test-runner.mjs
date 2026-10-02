@@ -113,7 +113,7 @@ await assertTest('GET /persons/physical (with filter)', async () => {
   if (res.json.length !== 1 || res.json[0].FirstName !== 'Jonas') throw new Error('Filter failed');
 });
 
-await assertTest('POST /persons/physical (Create prospect)', async () => {
+await assertTest('POST /persons/physical (Create prospect with auto Transact sync)', async () => {
   const res = await request('POST', '/persons/physical', {
     firstName: 'Mantas',
     lastName: 'Jankauskas',
@@ -123,11 +123,13 @@ await assertTest('POST /persons/physical (Create prospect)', async () => {
     emailVerified: true,
     phoneNumber: '+37060099887',
     phoneNumberVerified: true,
-    selectedProducts: [{ ProductCategory: 'ACCOUNTS', ProductId: 'STANDARD' }]
+    selectedProducts: [{ ProductCategory: 'ACCOUNTS', ProductId: 'STANDARD' }],
+    mock: true
   });
   if (res.status !== 201) throw new Error(`Status ${res.status}`);
   if (!res.json.McdId.startsWith('P')) throw new Error('Missing McdId');
   if (res.json.Status !== 'Prospect') throw new Error('Expected Status Prospect');
+  if (!res.json.TransactID) throw new Error('Expected TransactID to be populated by Transact sync');
 });
 
 await assertTest('GET /persons/physical/P1001', async () => {
