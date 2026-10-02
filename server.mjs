@@ -2305,8 +2305,9 @@ export function renderDashboardHtml() {
         <button class="btn btn-secondary btn-sm" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
-        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
-          Modify JSON below. Changes are saved immediately to in-memory state and synced to <code style="color:var(--accent-blue)">db.json</code>.
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <span>Modify JSON below. Changes are saved immediately to in-memory state and synced to <code style="color:var(--accent-blue)">db.json</code>.</span>
+          <button type="button" class="btn btn-sm btn-primary" id="modal-randomize-btn" onclick="randomizeModalPayload()" style="display:none; font-size:11px; padding:4px 10px; background:#0284c7;">🎲 Randomize Data</button>
         </div>
         <textarea id="modal-json-editor" class="json-editor" spellcheck="false"></textarea>
         <div id="modal-error" style="color: #f87171; font-size: 12px; margin-top: 8px; display: none;"></div>
@@ -2510,61 +2511,148 @@ export function renderDashboardHtml() {
       document.getElementById('modal-title').innerText = 'Edit ' + id + ' (' + col + ')';
       document.getElementById('modal-json-editor').value = JSON.stringify(record, null, 2);
       document.getElementById('modal-error').style.display = 'none';
+      const rBtn = document.getElementById('modal-randomize-btn');
+      if (rBtn) rBtn.style.display = 'none';
       document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function getRandomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generateRandomPhysicalRecord() {
+      const maleFirst = ['Lukas', 'Mantas', 'Tomas', 'Dovydas', 'Matas', 'Jonas', 'Paulius', 'Arnas', 'Rytis', 'Gediminas', 'Tadas', 'Mindaugas', 'Karolis', 'Vytautas', 'Andrius'];
+      const femaleFirst = ['Emilija', 'Gabija', 'Kamile', 'Ugne', 'Laura', 'Ieva', 'Austeja', 'Greta', 'Karolina', 'Egle', 'Viktorija', 'Dovile', 'Ruta', 'Simona', 'Justina'];
+      const lastNames = ['Kazlauskas', 'Jankauskas', 'Petrauskas', 'Stankevicius', 'Vasiliauskas', 'Zukauskas', 'Urbonas', 'Kavaliauskas', 'Navickas', 'Balciunas', 'Vaitkus', 'Zemaitis', 'Paulauskas', 'Lukauskas', 'Adomaitis'];
+      const streets = ['Gedimino pr.', 'Konstitucijos pr.', 'Pilies g.', 'Vilniaus g.', 'Ozo g.', 'Saltoniskiu g.', 'Ukmerges g.', 'Savanoriu pr.', 'Didzioji g.', 'Vokieciu g.'];
+      const cities = ['Vilnius', 'Kaunas', 'Klaipeda'];
+
+      const isMale = Math.random() > 0.5;
+      const firstName = isMale ? getRandomItem(maleFirst) : getRandomItem(femaleFirst);
+      const lastName = getRandomItem(lastNames);
+
+      const birthYear = Math.floor(1975 + Math.random() * 28);
+      const birthMonth = String(Math.floor(1 + Math.random() * 12)).padStart(2, '0');
+      const birthDay = String(Math.floor(1 + Math.random() * 28)).padStart(2, '0');
+      const dob = birthYear + '-' + birthMonth + '-' + birthDay;
+
+      let genderDigit = '3';
+      if (birthYear >= 2000) {
+        genderDigit = isMale ? '5' : '6';
+      } else {
+        genderDigit = isMale ? '3' : '4';
+      }
+      const yy = String(birthYear).slice(-2);
+      const rand4 = String(Math.floor(1000 + Math.random() * 9000));
+      const personalCode = genderDigit + yy + birthMonth + birthDay + rand4;
+
+      const cleanFirst = firstName.toLowerCase().replace(/[^a-z]/g, '');
+      const cleanLast = lastName.toLowerCase().replace(/[^a-z]/g, '');
+      const email = cleanFirst + '.' + cleanLast + Math.floor(10 + Math.random() * 90) + '@example.lt';
+      const phone = '+3706' + Math.floor(1000000 + Math.random() * 9000000);
+
+      const city = getRandomItem(cities);
+      const street = getRandomItem(streets);
+      const bldg = Math.floor(1 + Math.random() * 99);
+      const flat = Math.floor(1 + Math.random() * 45);
+
+      return {
+        FirstName: firstName,
+        LastName: lastName,
+        PersonalCode: personalCode,
+        CountryCode: "LT",
+        Gender: isMale ? "MALE" : "FEMALE",
+        Status: "Prospect",
+        DateOfBirth: dob,
+        PrimaryEmail: email,
+        PrimaryEmailVerified: true,
+        PrimaryPhoneNumber: phone,
+        PrimaryPhoneNumberVerified: true,
+        RegistrationAddress: {
+          countryCode: "LT",
+          city: city,
+          street: street + ' ' + bldg + '-' + flat,
+          postCode: String(Math.floor(10000 + Math.random() * 89000))
+        },
+        SelectedProducts: [
+          { ProductCategory: "ACCOUNTS", ProductId: getRandomItem(["STANDARD", "PREMIUM", "CURRENT_ACCOUNT_STANDARD"]) }
+        ]
+      };
+    }
+
+    function generateRandomJuridicalRecord() {
+      const prefixes = ['UAB Baltic', 'UAB Nordic', 'UAB Apex', 'UAB Inovaciju', 'UAB Tech', 'UAB Venture', 'UAB Global', 'UAB Future', 'UAB Prime'];
+      const suffixes = ['Solutions', 'Group', 'Logistika', 'Sistemos', 'Prekyba', 'Verslas', 'Technologies', 'Consulting'];
+      const name = getRandomItem(prefixes) + ' ' + getRandomItem(suffixes);
+      const code = '30' + Math.floor(1000000 + Math.random() * 9000000);
+      const clean = name.toLowerCase().replace(/[^a-z]/g, '');
+      return {
+        FullName: name,
+        CompanyCode: code,
+        CountryCode: "LT",
+        Status: "Prospect",
+        PrimaryEmail: 'info@' + clean.slice(0, 10) + '.lt',
+        PrimaryPhoneNumber: '+3705' + Math.floor(2000000 + Math.random() * 7000000),
+        RepresentativeMcdId: "R3001"
+      };
+    }
+
+    function generateRandomRepRecord() {
+      const firstNames = ['Vytautas', 'Jurgis', 'Tomas', 'Mindaugas', 'Saulius', 'Dainius'];
+      const lastNames = ['Didziulis', 'Petrauskas', 'Vaitkus', 'Kuzminskas', 'Kazlauskas'];
+      const first = getRandomItem(firstNames);
+      const last = getRandomItem(lastNames);
+      const rand4 = String(Math.floor(1000 + Math.random() * 9000));
+      return {
+        FirstName: first,
+        LastName: last,
+        PersonalCode: '38' + Math.floor(10 + Math.random() * 80) + '0101' + rand4,
+        CountryCode: "LT",
+        PrimaryEmail: first.toLowerCase() + '.' + last.toLowerCase() + '@verslas.lt',
+        PrimaryPhoneNumber: '+370600' + Math.floor(10000 + Math.random() * 89000),
+        Status: "Existing"
+      };
+    }
+
+    function generateRandomAccRecord() {
+      const code = 'EST-' + Math.floor(100000 + Math.random() * 900000);
+      const words = ['Inovacija', 'Ateitis', 'Projektas', 'Startas', 'Platforma'];
+      return {
+        FullName: 'UAB Steigiama ' + getRandomItem(words),
+        CompanyCode: code,
+        CountryCode: "LT",
+        Status: "Prospect",
+        RepresentativeMcdId: "R3001",
+        phoneNumber: '+370600' + Math.floor(10000 + Math.random() * 89000)
+      };
+    }
+
+    function getRandomTemplate(type) {
+      if (type === 'physical') return generateRandomPhysicalRecord();
+      if (type === 'juridical') return generateRandomJuridicalRecord();
+      if (type === 'representatives') return generateRandomRepRecord();
+      return generateRandomAccRecord();
     }
 
     function openCreateModal() {
       modalMode = 'create';
       modalRecordId = null;
       document.getElementById('modal-title').innerText = 'Add New Record (' + currentTable + ')';
-      let template = {};
-      if (currentTable === 'physical') {
-        template = {
-          FirstName: "Vardenis",
-          LastName: "Pavardenis",
-          PersonalCode: "39001010099",
-          CountryCode: "LT",
-          Status: "Prospect",
-          DateOfBirth: "1990-01-01",
-          PrimaryEmail: "vardenis@example.lt",
-          PrimaryEmailVerified: true,
-          PrimaryPhoneNumber: "+37060099000",
-          PrimaryPhoneNumberVerified: true,
-          SelectedProducts: [{ ProductCategory: "ACCOUNTS", ProductId: "STANDARD" }]
-        };
-      } else if (currentTable === 'juridical') {
-        template = {
-          FullName: "UAB Naujas Verslas",
-          CompanyCode: "305999111",
-          CountryCode: "LT",
-          Status: "Prospect",
-          PrimaryEmail: "info@verslas.lt",
-          PrimaryPhoneNumber: "+37052999111",
-          RepresentativeMcdId: "R3001"
-        };
-      } else if (currentTable === 'representatives') {
-        template = {
-          FirstName: "Jurgis",
-          LastName: "Didziulis",
-          PersonalCode: "38202020088",
-          CountryCode: "LT",
-          PrimaryEmail: "jurgis@verslas.lt",
-          PrimaryPhoneNumber: "+37060011888",
-          Status: "Existing"
-        };
-      } else {
-        template = {
-          FullName: "UAB Steigiama Imone",
-          CompanyCode: "EST-123456",
-          CountryCode: "LT",
-          Status: "Prospect",
-          RepresentativeMcdId: "R3001",
-          phoneNumber: "+37060022333"
-        };
-      }
+      const template = getRandomTemplate(currentTable);
       document.getElementById('modal-json-editor').value = JSON.stringify(template, null, 2);
       document.getElementById('modal-error').style.display = 'none';
+      const rBtn = document.getElementById('modal-randomize-btn');
+      if (rBtn) rBtn.style.display = 'inline-block';
       document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function randomizeModalPayload() {
+      if (modalMode === 'create') {
+        const template = getRandomTemplate(currentTable);
+        document.getElementById('modal-json-editor').value = JSON.stringify(template, null, 2);
+        document.getElementById('modal-error').style.display = 'none';
+        showToast('Generated fresh random payload!');
+      }
     }
 
     function closeModal() {
