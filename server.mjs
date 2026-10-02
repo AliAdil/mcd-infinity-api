@@ -621,48 +621,135 @@ export function generateCustomerMnemonic(prefix = 'XD') {
   return `${prefix}${mnemonicCounter}${randomSuffix}`.slice(0, 10);
 }
 
+// Generate a valid-format random 9-digit Social Security Number (XXX-XX-XXXX)
+export function generateRandomSsn() {
+  const area = String(Math.floor(100 + Math.random() * 899));
+  const group = String(Math.floor(10 + Math.random() * 89));
+  const serial = String(Math.floor(1000 + Math.random() * 8999));
+  return `${area}-${group}-${serial}`;
+}
+
+// Robust phone parser that accurately separates IDD international dial prefix and local phone number
+export function parsePhoneNumber(rawPhone, defaultCountry = 'LT') {
+  if (!rawPhone) {
+    return defaultCountry === 'PK'
+      ? { idd: '+92', contactData: '3350221182', fullPhone: '+923350221182' }
+      : { idd: '+370', contactData: '60012345', fullPhone: '+37060012345' };
+  }
+  const s = String(rawPhone).trim();
+  if (s.startsWith('+')) {
+    // Match common dial codes: +370, +371, +372, +92, +44, +49, +33, +48, +1, or general 1-3 digits
+    const match = s.match(/^(\+(?:37[012]|92|44|49|33|48|1|\d{1,3}))[\s.-]?(\d+)$/);
+    if (match) {
+      return { idd: match[1], contactData: match[2], fullPhone: match[1] + match[2] };
+    }
+    const idd = s.slice(0, 4);
+    const num = s.slice(4).replace(/\D/g, '') || '60012345';
+    return { idd, contactData: num, fullPhone: idd + num };
+  }
+  const digits = s.replace(/\D/g, '');
+  if (/^03\d{9}$/.test(digits)) {
+    return { idd: '+92', contactData: digits.slice(1), fullPhone: '+92' + digits.slice(1) };
+  }
+  if (/^(?:86|06)\d{7}$/.test(digits)) {
+    return { idd: '+370', contactData: digits.slice(1), fullPhone: '+370' + digits.slice(1) };
+  }
+  if (digits.length >= 8 && digits.startsWith('92')) {
+    return { idd: '+92', contactData: digits.slice(2), fullPhone: '+' + digits };
+  }
+  if (digits.length >= 8 && digits.startsWith('370')) {
+    return { idd: '+370', contactData: digits.slice(3), fullPhone: '+' + digits };
+  }
+  const fallbackIdd = defaultCountry === 'PK' ? '+92' : '+370';
+  return { idd: fallbackIdd, contactData: digits || '60012345', fullPhone: fallbackIdd + (digits || '60012345') };
+}
+
+// Robust DOB extractor and normalizer (YYYY-MM-DD), with Lithuanian PersonalCode fallback
+export function parseDateOfBirth(customer) {
+  const rawDob = customer.DateOfBirth || customer.dateOfBirth || customer.dob || customer.birthDate;
+  if (rawDob) {
+    const str = String(rawDob).split('T')[0].trim().replace(/\//g, '-');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+  }
+  const code = String(customer.PersonalCode || customer.personalCode || '').trim();
+  if (/^[1-6]\d{10}$/.test(code)) {
+    const g = parseInt(code[0], 10);
+    let century = 1900;
+    if (g === 1 || g === 2) century = 1800;
+    else if (g === 3 || g === 4) century = 1900;
+    else if (g === 5 || g === 6) century = 2000;
+    const yy = code.slice(1, 3);
+    const mm = code.slice(3, 5);
+    const dd = code.slice(5, 7);
+    const year = century + parseInt(yy, 10);
+    return `${year}-${mm}-${dd}`;
+  }
+  return '1990-01-01';
+}
+
 export function buildTransactPayload(customer, overrides = {}) {
-  const givenName = toSwiftSafeString(customer.FirstName) || 'Customer';
-  const lastName = toSwiftSafeString(customer.LastName) || 'User';
+  // 1. Names
+  let rawFirst = customer.FirstName || customer.firstName || '';
+  let rawLast = customer.LastName || customer.lastName || '';
+  if (!rawFirst && !rawLast && (customer.FullName || customer.fullName)) {
+    const parts = String(customer.FullName || customer.fullName).trim().split(/\s+/);
+    rawFirst = parts[0] || 'Customer';
+    rawLast = parts.slice(1).join(' ') || 'User';
+  }
+  if (customer.MiddleName || customer.middleName) {
+    rawFirst = `${rawFirst} ${customer.MiddleName || customer.middleName}`.trim();
+  }
+  const givenName = toSwiftSafeString(rawFirst) || 'Customer';
+  const lastName = toSwiftSafeString(rawLast) || 'User';
   const fullName = `${givenName} ${lastName}`.trim();
 
-  // Generate unique mnemonic with XD series prefix (e.g. XD005, XD10123)
+  // 2. Transact customerMnemonic (XD series)
   const mnemonic = overrides.customerMnemonic || generateCustomerMnemonic('XD');
 
-  const dob = customer.DateOfBirth || '1990-01-01';
+  // 3. Date of birth
+  const dob = parseDateOfBirth(customer);
 
-  const fullPhone = customer.PrimaryPhoneNumber || '+37060012345';
-  let idd = '+370';
-  let phone = '60012345';
-  if (fullPhone.startsWith('+')) {
-    idd = fullPhone.slice(0, 4);
-    phone = fullPhone.slice(4).replace(/\D/g, '') || '60012345';
-  } else {
-    phone = fullPhone.replace(/\D/g, '') || '60012345';
-  }
-  const email = toSwiftSafeString(customer.PrimaryEmail, '@_') || `${givenName.toLowerCase()}@example.com`;
+  // 4. Country & Address
+  const addr = customer.RegistrationAddress || customer.registrationAddress || customer.Address || customer.address || {};
+  const country = String(customer.CountryCode || customer.countryCode || addr.countryCode || 'LT').toUpperCase();
+  const street = toSwiftSafeString(addr.fullAddress || addr.street || addr.addressLine1 || 'Gedimino pr. 12-4');
+  const city = toSwiftSafeString(addr.city || addr.town || 'Vilnius');
+  const postCode = parseInt(String(addr.postCode || addr.postalCode || '75350').replace(/\D/g, ''), 10) || 75350;
 
-  const addr = customer.RegistrationAddress || {};
-  const street = toSwiftSafeString(addr.fullAddress || addr.street) || 'Gedimino pr. 12-4';
-  const city = toSwiftSafeString(addr.city) || 'Vilnius';
-  const postCode = parseInt(String(addr.postCode || '75350').replace(/\D/g, ''), 10) || 75350;
-  const country = 'PK';
+  // 5. Phone numbers
+  const rawPhone = customer.PrimaryPhoneNumber || customer.primaryPhoneNumber || customer.phoneNumber || customer.phone || customer.mobile || customer.officePhoneNumber;
+  const parsedPhone = parsePhoneNumber(rawPhone, country);
+
+  // 6. Email
+  const rawEmail = customer.PrimaryEmail || customer.primaryEmail || customer.email || customer.mail || customer.Email;
+  const cleanEmail = rawEmail ? String(rawEmail).trim() : `${givenName.toLowerCase()}.${lastName.toLowerCase()}@example.com`;
+
+  // 7. SSN / Tax ID (Random SSN format XXX-XX-XXXX if not explicitly provided)
+  const ssn = String(customer.Ssn || customer.ssn || customer.TaxId || customer.taxId || overrides.ssn || overrides.taxId || generateRandomSsn()).trim();
+
+  // 8. Gender & Title
+  const gender = (customer.Gender || customer.gender || '').toUpperCase() === 'FEMALE' ? 'FEMALE' : 'MALE';
+  const title = customer.Title || customer.title || (gender === 'FEMALE' ? 'MS' : 'MR');
+
+  // 9. Customer ID references from MCD
+  const mcdCustomerId = String(customer.McdId || customer.mcdId || '').trim();
+  const personalCode = String(customer.PersonalCode || customer.personalCode || '').trim();
 
   return {
     body: {
       displayNames: [{ displayName: fullName }],
       customerNames: [{ customerName: givenName, customerNameAdditional: lastName }],
       faxIds: [{ faxId: 'FAX001' }],
-      officePhoneNumbers: [{ officePhoneNumber: fullPhone }],
+      officePhoneNumbers: [{ officePhoneNumber: parsedPhone.fullPhone }],
       streets: [{ street }],
       addressCities: [{ addressCity: city }],
       countries: [{ country }],
       otherNationalityIds: [{ otherNationalityId: country }],
       postingRestrictIds: [{ postingRestrictId: 1 }],
-      taxIds: [{ taxId: `TAX${Math.floor(1000000 + Math.random() * 9000000)}` }],
+      taxIds: [{ taxId: ssn }],
       contactDetails: [
-        { contactType: 'MOBILE', iddPrefixPhone: idd, contactData: phone },
-        { contactType: 'EMAIL', iddPrefixPhone: '', contactData: email }
+        { contactType: 'MOBILE', iddPrefixPhone: parsedPhone.idd, contactData: parsedPhone.contactData },
+        { contactType: 'EMAIL', iddPrefixPhone: '', contactData: cleanEmail }
       ],
       language: 1,
       dateOfBirth: dob,
@@ -673,7 +760,7 @@ export function buildTransactPayload(customer, overrides = {}) {
       accountOfficerId: 1,
       target: 1,
       sectorId: 1001,
-      gender: customer.Gender === 'FEMALE' ? 'FEMALE' : 'MALE',
+      gender: gender,
       maritalStatus: 'MARRIED',
       industryId: '13',
       postCode,
@@ -681,7 +768,7 @@ export function buildTransactPayload(customer, overrides = {}) {
       kycNextSystemReviewDate: '2027-01-15',
       kycNextReviewDate: '2027-01-15',
       amlLastResultDate: '2026-09-08',
-      title: customer.Gender === 'FEMALE' ? 'MS' : 'MR',
+      title: title,
       isSecureMessage: 'YES',
       lastName,
       givenName,
@@ -694,7 +781,11 @@ export function buildTransactPayload(customer, overrides = {}) {
       extensions: {
         sourceSystem: 'INFINITY',
         channel: 'OLB',
-        customerSegment: 'RETAIL'
+        customerSegment: 'RETAIL',
+        externalCustomerId: mcdCustomerId,
+        mcdCustomerId: mcdCustomerId,
+        personalCode: personalCode,
+        socialSecurityNumber: ssn
       },
       ...overrides
     }
@@ -822,6 +913,7 @@ export async function syncCustomerWithTransact(personalCode, options = {}) {
   customer.TransactId = String(transactId);
   customer.TransactSyncDate = new Date().toISOString();
   customer.TransactStatus = 'Synced';
+  customer.transactResponse = resData;
   db.physicalPersons.set(targetKey, customer);
   syncDbToFile();
 
@@ -1132,7 +1224,11 @@ export async function handleRequest(req, res) {
     // POST /persons/physical - Create physical prospect
     if (method === 'POST' && pathname === '/persons/physical') {
       const body = await parseBody(req);
-      if (!body.firstName || !body.lastName || !body.personalCode) {
+      const firstName = body.FirstName || body.firstName;
+      const lastName = body.LastName || body.lastName;
+      const personalCode = body.PersonalCode || body.personalCode;
+
+      if (!firstName || !lastName || !personalCode) {
         return sendJson(res, 400, {
           ErrorCode: '400001',
           ErrorMessage: 'Missing mandatory fields: firstName, lastName, personalCode'
@@ -1142,7 +1238,7 @@ export async function handleRequest(req, res) {
       // Check if this personalCode already belongs to an existing MCD customer with a TransactID, or if TransactID was provided in body
       let existingCustomer = null;
       for (const [key, p] of db.physicalPersons.entries()) {
-        if (String(p.PersonalCode).trim() === String(body.personalCode).trim()) {
+        if (String(p.PersonalCode).trim() === String(personalCode).trim()) {
           existingCustomer = p;
           break;
         }
@@ -1158,33 +1254,47 @@ export async function handleRequest(req, res) {
         preExistingId !== 'Pending';
 
       const newMcdId = 'P' + (physicalSeq++);
-      const isMinor = body.dateOfBirth && (new Date().getFullYear() - new Date(body.dateOfBirth).getFullYear() < 18);
+      const dob = body.DateOfBirth || body.dateOfBirth || '1995-01-01';
+      const isMinor = dob && (new Date().getFullYear() - new Date(dob).getFullYear() < 18);
+      const email = body.PrimaryEmail || body.primaryEmail || body.email || null;
+      const phone = body.PrimaryPhoneNumber || body.primaryPhoneNumber || body.phoneNumber || null;
+      const countryCode = body.CountryCode || body.countryCode || 'LT';
+      const gender = body.Gender || body.gender || 'MALE';
+      const ssn = body.Ssn || body.ssn || body.TaxId || body.taxId || null;
+
+      const regAddr = body.RegistrationAddress || body.registrationAddress || body.ResidenceAddress || body.residenceAddress || {
+        countryCode: countryCode,
+        city: 'Vilnius',
+        street: 'Gedimino pr. 1'
+      };
+
       const newPerson = {
         McdId: newMcdId,
-        FirstName: body.firstName,
-        MiddleName: body.middleName || null,
-        LastName: body.lastName,
-        PersonalCode: body.personalCode,
-        CountryCode: body.countryCode || 'LT',
-        Gender: body.gender || 'MALE',
+        FirstName: firstName,
+        MiddleName: body.MiddleName || body.middleName || null,
+        LastName: lastName,
+        PersonalCode: personalCode,
+        Ssn: ssn,
+        CountryCode: countryCode,
+        Gender: gender,
         Status: 'Prospect',
         TransactID: hasId ? String(preExistingId) : null,
         TransactId: hasId ? String(preExistingId) : null,
         TransactStatus: hasId ? 'Synced' : 'Pending',
-        DateOfBirth: body.dateOfBirth || '1995-01-01',
+        DateOfBirth: dob,
         DateOfDeath: null,
-        BirthCountryCode: body.countryCode || 'LT',
+        BirthCountryCode: countryCode,
         BirthCity: 'Vilnius',
         LanguageCode: 'lt',
-        PrimaryEmail: body.email || null,
-        PrimaryEmailVerified: Boolean(body.emailVerified),
+        PrimaryEmail: email,
+        PrimaryEmailVerified: Boolean(body.PrimaryEmailVerified ?? body.emailVerified),
         SecondaryEmail: null,
-        PrimaryPhoneNumber: body.phoneNumber || null,
-        PrimaryPhoneNumberVerified: Boolean(body.phoneNumberVerified),
+        PrimaryPhoneNumber: phone,
+        PrimaryPhoneNumberVerified: Boolean(body.PrimaryPhoneNumberVerified ?? body.phoneNumberVerified),
         SecondaryPhoneNumber: null,
-        RegistrationAddress: body.ResidenceAddress || { countryCode: body.countryCode || 'LT', city: 'Vilnius', street: 'Gedimino pr. 1' },
-        ResidenceAddress: body.ResidenceAddress || null,
-        CorrespondenceAddress: body.CorrespondenceAddress || body.ResidenceAddress || { countryCode: body.countryCode || 'LT', city: 'Vilnius' },
+        RegistrationAddress: regAddr,
+        ResidenceAddress: body.ResidenceAddress || body.residenceAddress || null,
+        CorrespondenceAddress: body.CorrespondenceAddress || body.correspondenceAddress || regAddr,
         Consents: {
           ConsentOffers: true,
           ConsentProfiling: false,
@@ -2556,10 +2666,16 @@ export function renderDashboardHtml() {
       const bldg = Math.floor(1 + Math.random() * 99);
       const flat = Math.floor(1 + Math.random() * 45);
 
+      const ssnArea = String(Math.floor(100 + Math.random() * 899));
+      const ssnGroup = String(Math.floor(10 + Math.random() * 89));
+      const ssnSerial = String(Math.floor(1000 + Math.random() * 8999));
+      const ssn = ssnArea + '-' + ssnGroup + '-' + ssnSerial;
+
       return {
         FirstName: firstName,
         LastName: lastName,
         PersonalCode: personalCode,
+        Ssn: ssn,
         CountryCode: "LT",
         Gender: isMale ? "MALE" : "FEMALE",
         Status: "Prospect",

@@ -1,5 +1,5 @@
 {
-  "_lastUpdated": "2026-10-02T09:44:29.333Z",
+  "_lastUpdated": "2026-10-02T10:58:57.272Z",
   "physicalPersons": [
     [
       "P1001",
@@ -608,6 +608,315 @@
             "maritalStatus": "MARRIED"
           }
         }
+      }
+    ],
+    [
+      "P6921",
+      {
+        "FirstName": "Ali",
+        "LastName": "Adil",
+        "PersonalCode": "39001010044",
+        "CountryCode": "LT",
+        "Status": "Prospect",
+        "DateOfBirth": "1990-01-01",
+        "PrimaryEmail": "aliadilg@Gmail.com",
+        "PrimaryEmailVerified": true,
+        "PrimaryPhoneNumber": "+37060099011",
+        "PrimaryPhoneNumberVerified": true,
+        "SelectedProducts": [
+          {
+            "ProductCategory": "ACCOUNTS",
+            "ProductId": "STANDARD"
+          }
+        ],
+        "McdId": "P6921",
+        "TransactID": "10001901",
+        "TransactId": "10001901",
+        "TransactSyncDate": "2026-10-02T10:25:55.581Z",
+        "TransactStatus": "Synced",
+        "transactResponse": {
+          "header": {
+            "transactionStatus": "Live",
+            "audit": {
+              "T24_time": 657,
+              "responseParse_time": 0,
+              "requestParse_time": 0,
+              "versionNumber": "1"
+            },
+            "id": "10001901",
+            "status": "success"
+          },
+          "body": {
+            "customerMnemonic": "XD101662",
+            "lastName": "Adil",
+            "numberOfDependents": 2,
+            "introducer": "DIGITALONBOARDING",
+            "gender": "MALE",
+            "streets": [
+              {
+                "street": "Gedimino pr. 12-4"
+              }
+            ],
+            "faxIds": [
+              {
+                "faxId": "FAX001"
+              }
+            ],
+            "customerNames": [
+              {
+                "customerNameAdditional": "Adil",
+                "customerName": "Ali"
+              }
+            ],
+            "language": 1,
+            "title": "MR",
+            "taxIds": [
+              {
+                "taxId": "TAX3628092"
+              }
+            ],
+            "customerStatus": 17,
+            "industryId": 13,
+            "accountOfficerId": 1,
+            "officePhoneNumbers": [
+              {
+                "officePhoneNumber": "+37060099011"
+              }
+            ],
+            "customerCompany": "AU0070001",
+            "amlResult": "NULL",
+            "isSecureMessage": "YES",
+            "sectorId": 1001,
+            "nationalityId": "PK",
+            "givenName": "Ali",
+            "addressCities": [
+              {
+                "addressCity": "Vilnius"
+              }
+            ],
+            "amlLastResultDate": "20260908",
+            "displayNames": [
+              {
+                "displayName": "Ali Adil"
+              }
+            ],
+            "dateOfBirth": "1990-01-01",
+            "kycNextSystemReviewDate": "2027-01-15",
+            "countries": [
+              {
+                "country": "PK"
+              }
+            ],
+            "amlCheck": "NULL",
+            "contactDetails": [
+              {
+                "contactData": "60099011",
+                "iddPrefixPhone": "+370",
+                "contactType": "MOBILE"
+              },
+              {
+                "contactData": "aliadilg@Gmail.com",
+                "contactType": "EMAIL"
+              }
+            ],
+            "residenceId": "PK",
+            "target": 1,
+            "postingRestrictIds": [
+              {
+                "postingRestrictId": 1
+              }
+            ],
+            "otherNationalityIds": [
+              {
+                "otherNationalityId": "PK"
+              }
+            ],
+            "kycNextReviewDate": "2027-01-15",
+            "birthIncorpDate": "1990-01-01",
+            "domicile": "PK",
+            "postCode": 75350,
+            "maritalStatus": "MARRIED"
+          }
+        }
+      }
+    ],
+    [
+      "P6922",
+      {
+        "McdId": "P6922",
+        "FirstName": "Saulius",
+        "MiddleName": null,
+        "LastName": "Urbonas",
+        "PersonalCode": "38210150991",
+        "Ssn": null,
+        "CountryCode": "LT",
+        "Gender": "MALE",
+        "Status": "Prospect",
+        "TransactID": "10001905",
+        "TransactId": "10001905",
+        "TransactStatus": "Synced",
+        "DateOfBirth": "1982-10-15",
+        "DateOfDeath": null,
+        "BirthCountryCode": "LT",
+        "BirthCity": "Vilnius",
+        "LanguageCode": "lt",
+        "PrimaryEmail": "saulius.urbonas@imone.lt",
+        "PrimaryEmailVerified": false,
+        "SecondaryEmail": null,
+        "PrimaryPhoneNumber": "+37061188223",
+        "PrimaryPhoneNumberVerified": false,
+        "SecondaryPhoneNumber": null,
+        "RegistrationAddress": {
+          "city": "Vilnius",
+          "street": "Vokieciu g. 14-2",
+          "postCode": "01130"
+        },
+        "ResidenceAddress": null,
+        "CorrespondenceAddress": {
+          "city": "Vilnius",
+          "street": "Vokieciu g. 14-2",
+          "postCode": "01130"
+        },
+        "Consents": {
+          "ConsentOffers": true,
+          "ConsentProfiling": false,
+          "ConsentPartnersOffers": false,
+          "Date": "2026-10-02T10:58:56.462Z",
+          "ValidUntil": "2028-12-31"
+        },
+        "Nationalities": [
+          "LT"
+        ],
+        "IdDocuments": [],
+        "OndatoCheckValid": true,
+        "AmlScreening": {
+          "LastAmlResultDate": "2026-10-02T10:58:56.464Z",
+          "AmlResult": "PASSED",
+          "SmaApprovalStatus": "APPROVED",
+          "SmaDecisionDate": "2026-10-02T10:58:56.464Z"
+        },
+        "Kyc": {
+          "IsKycRequired": false,
+          "ExpirationDate": "2027-01-01"
+        },
+        "SelectedProducts": [
+          {
+            "ProductCategory": "ACCOUNTS",
+            "ProductId": "STANDARD"
+          }
+        ],
+        "HasParentalPermissionToManageProducts": null,
+        "IsMinor": false,
+        "IsEmancipatedMinor": false,
+        "IsIncapable": false,
+        "guardianMcdId": null,
+        "coapplicantMcdId": null,
+        "TransactSyncDate": "2026-10-02T10:58:57.270Z",
+        "transactResponse": {
+          "header": {
+            "transactionStatus": "Live",
+            "audit": {
+              "T24_time": 719,
+              "responseParse_time": 0,
+              "requestParse_time": 0,
+              "versionNumber": "1"
+            },
+            "id": "10001905",
+            "status": "success"
+          },
+          "body": {
+            "customerMnemonic": "XD101342",
+            "lastName": "Urbonas",
+            "numberOfDependents": 2,
+            "introducer": "DIGITALONBOARDING",
+            "gender": "MALE",
+            "streets": [
+              {
+                "street": "Vokieciu g. 14-2"
+              }
+            ],
+            "faxIds": [
+              {
+                "faxId": "FAX001"
+              }
+            ],
+            "customerNames": [
+              {
+                "customerNameAdditional": "Urbonas",
+                "customerName": "Saulius"
+              }
+            ],
+            "language": 1,
+            "title": "MR",
+            "taxIds": [
+              {
+                "taxId": "616-41-1561"
+              }
+            ],
+            "customerStatus": 17,
+            "industryId": 13,
+            "accountOfficerId": 1,
+            "officePhoneNumbers": [
+              {
+                "officePhoneNumber": "+37061188223"
+              }
+            ],
+            "customerCompany": "AU0070001",
+            "amlResult": "NULL",
+            "isSecureMessage": "YES",
+            "sectorId": 1001,
+            "nationalityId": "LT",
+            "givenName": "Saulius",
+            "addressCities": [
+              {
+                "addressCity": "Vilnius"
+              }
+            ],
+            "amlLastResultDate": "20260908",
+            "displayNames": [
+              {
+                "displayName": "Saulius Urbonas"
+              }
+            ],
+            "dateOfBirth": "1982-10-15",
+            "kycNextSystemReviewDate": "2027-01-15",
+            "countries": [
+              {
+                "country": "LT"
+              }
+            ],
+            "amlCheck": "NULL",
+            "contactDetails": [
+              {
+                "contactData": "61188223",
+                "iddPrefixPhone": "+370",
+                "contactType": "MOBILE"
+              },
+              {
+                "contactData": "saulius.urbonas@imone.lt",
+                "contactType": "EMAIL"
+              }
+            ],
+            "residenceId": "LT",
+            "target": 1,
+            "postingRestrictIds": [
+              {
+                "postingRestrictId": 1
+              }
+            ],
+            "otherNationalityIds": [
+              {
+                "otherNationalityId": "LT"
+              }
+            ],
+            "kycNextReviewDate": "2027-01-15",
+            "birthIncorpDate": "1982-10-15",
+            "domicile": "LT",
+            "postCode": 1130,
+            "maritalStatus": "MARRIED"
+          }
+        },
+        "alreadySynced": false
       }
     ]
   ],
