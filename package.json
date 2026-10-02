@@ -16,5 +16,8 @@
     "api"
   ],
   "author": "Antigravity",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "docx": "^9.8.1"
+  }
 }
