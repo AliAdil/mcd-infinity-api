@@ -533,6 +533,217 @@ export function getDbSnapshot() {
 }
 
 // -------------------------------------------------------------
+// -------------------------------------------------------------
+// Transact Core Banking API Integration
+// -------------------------------------------------------------
+export const DEFAULT_TRANSACT_API_URL = process.env.TRANSACT_API_URL || 'http://192.168.1.157:8085/irf-provider-container/api/v5.1.0/party/customers';
+export const DEFAULT_TRANSACT_COOKIE = process.env.TRANSACT_COOKIE || 'ApplicationGatewayAffinity=169ff9c6fbc8876c0b34e7b7497e23fe;ApplicationGatewayAffinityCORS=169ff9c6fbc8876c0b34e7b7497e23fe';
+export const DEFAULT_TRANSACT_TOKEN = process.env.TRANSACT_BEARER_TOKEN || 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJWS3lBcGswWExyeC0zQUZUWVBzX1dNOG55SXN1YUFiNFVRbGhmM0VrM2ZBIn0.eyJleHAiOjE3OTA3Njk5OTUsImlhdCI6MTc5MDc2NzI5NSwianRpIjoiZTljZjY5MGItOGIwMi00ZDEzLThjNzItZmE5ZjM0NDkxYjI4IiwiaXNzIjoiaHR0cHM6Ly9pZGVudGl0eS1waWkuemVucHIubm9ucHJvZC50ZW1lbm9zYmFua2luZy5jbG91ZC9hdXRoL3JlYWxtcy9iYW5raW5nY2xvdWQiLCJhdWQiOlsibW5vZ3ctVGRoRGVzaWduZXIiLCJtbm9ndy1zcG90bGlnaHQiLCJyZWFsbS1tYW5hZ2VtZW50IiwibW5vZ3ctVGRoU2NoZWR1bGVyIiwidGVtZW5vcy1ncmFmYW5hLWNsaWVudCIsIm1ub2d3LVRkaHNxbGF1dGgiLCJtbm9ndy1UZGhUTVMiLCJtbm9ndy1UZGhSaXNrU2VydmljZXMiLCJtbm9ndy1UZGhBZG1pbmlzdHJhdG9yIiwiYWNjb3VudCJdLCJzdWIiOiIwZWZlOGE2My01NDQ3LTRlMmYtOTE3My1jZDA0OTYzMDZhMWMiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJtbm9ndy10cmFuc2FjdCIsInNlc3Npb25fc3RhdGUiOiI4NDBiMmVmOS04MjU1LTRmOGUtOGYyMi0zZDM0Njg3NWU0YTYiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbImh0dHBzOi8vYmFua2FzLWRldi56ZW5wci5ub25wcm9kLnRlbWVub3NiYW5raW5nLmNsb3VkIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJyZWxlYXNlX21hbmFnZXIiLCJvZmZsaW5lX2FjY2VzcyIsInJlc3QtYWxsIiwiQWRtaW5pc3RyYXRvcnMiLCJhZG1pbiIsImRlZmF1bHQtcm9sZXMtYmFua2luZ2Nsb3VkIiwiZGV2ZWxvcGVyIiwidW1hX2F1dGhvcml6YXRpb24iLCJraWUtc2VydmVyIiwiVFBNQWRtaW5pc3RyYXRvciJdfSwicmVzb3VyY2VfYWNjZXNzIjp7Im1ub2d3LVRkaERlc2lnbmVyIjp7InJvbGVzIjpbIlRkaERlc2lnbmVyVXNlciIsIlRkaERlc2lnbmVyUmVhZE9ubHkiXX0sIm1ub2d3LXNwb3RsaWdodCI6eyJyb2xlcyI6WyJHQl9DdXN0b21lclNlcnZpY2VBZ2VudCIsIkdCX1N1cGVydmlzb3IiLCJTdXBlciBBZG1pbiJdfSwicmVhbG0tbWFuYWdlbWVudCI6eyJyb2xlcyI6WyJtYW5hZ2UtdXNlcnMiLCJ2aWV3LXVzZXJzIiwicXVlcnktdXNlcnMiLCJxdWVyeS11c2VycyJdfSwibW5vZ3ctVGRoU2NoZWR1bGVyIjp7InJvbGVzIjpbIlRkaFNjaGVkdWxlclVzZXIiLCJUZGhTY2hlZHVsZXJSZWFkT25seSJdfSwidGVtZW5vcy1ncmFmYW5hLWNsaWVudCI6eyJyb2xlcyI6WyJ2aWV3ZXIiXX0sIm1ub2d3LVRkaHNxbGF1dGgiOnsicm9sZXMiOlsiVGRoU3FsYXV0aFVzZXIiXX0sIm1ub2d3LVRkaFRNUyI6eyJyb2xlcyI6WyJUZGhUbXNVc2VyIl19LCJtbm9ndy1UZGhSaXNrU2VydmljZXMiOnsicm9sZXMiOlsiVGRoUmlza1NlcnZpY2VzVXNlciJdfSwibW5vZ3ctVGRoQWRtaW5pc3RyYXRvciI6eyJyb2xlcyI6WyJUZGhBZG1pblVzZXIiLCJUZGhBZG1pblJlYWRPbmx5Il19LCJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic2lkIjoiODQwYjJlZjktODI1NS00ZjhlLThmMjItM2QzNDY4NzVlNGE2IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInJvbGVJZCI6IkFETUlOIiwibmFtZSI6IlRSQU5TQUNUIFNBQVMiLCJTcWxUZGhVc2VyQ2xhaW1OYW1lIjoiU3FsVGRoVXNlckNsYWltTmFtZSIsInQyNHVzZXIiOiJtbm9ndy1zYWFzdXNlciIsInByZWZlcnJlZF91c2VybmFtZSI6Im1ub2d3LXNhYXN1c2VyIiwiZ2l2ZW5fbmFtZSI6IlRSQU5TQUNUIiwiZmFtaWx5X25hbWUiOiJTQUFTIiwiZW1haWwiOiJtbm9ndy1zYWFzdXNlckB0cmFuc2FjdC5jb20ifQ.fnrA990Zbh4YIdCm74hX1XcUZIf6nno1qzvZSMaZyuaCR-Ciq4tg4cWxwVG1OOnj9tuVHOtqI13JrnLT_X6anGcwM0dDAg9QikXXN4Oteeo8IR_j1u93eHbEUmWIbwV8Evm3IQCeYkiWXIU4q9_cZxyVpu3X1AsKYrb-WPhtzo01hwLAWzrVqqKo01Glt_LS9GqE0bXQuczew5cuDuqb5L80L150NZSHzrkNOZjRj27iZ0YuwSM4MzB2HJ-hLQutJcXihCnKXdhYDJzitsYgdu8hgL_VUNp77eEay9CW0CoiJt7fSkXgC06YYAQzdq4KY12d47t-Iwz542TVsUqFEg';
+
+export function toSwiftSafeString(str, allowSpecial = '') {
+  if (!str) return '';
+  const regex = new RegExp('[^a-zA-Z0-9 .,/\'-' + allowSpecial + ']', 'g');
+  return String(str)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(regex, '')
+    .trim();
+}
+
+export function buildTransactPayload(customer, overrides = {}) {
+  const givenName = toSwiftSafeString(customer.FirstName) || 'Customer';
+  const lastName = toSwiftSafeString(customer.LastName) || 'User';
+  const fullName = `${givenName} ${lastName}`.trim();
+
+  // Generate unique mnemonic: 2 letters + 4 random digits (e.g. JK1234)
+  const prefix = ((givenName[0] || 'X') + (lastName[0] || 'D')).toUpperCase().replace(/[^A-Z]/g, 'X');
+  const mnemonic = `${prefix}${Math.floor(1000 + Math.random() * 9000)}`;
+
+  const dob = customer.DateOfBirth || '1990-01-01';
+
+  const fullPhone = customer.PrimaryPhoneNumber || '+37060012345';
+  let idd = '+370';
+  let phone = '60012345';
+  if (fullPhone.startsWith('+')) {
+    idd = fullPhone.slice(0, 4);
+    phone = fullPhone.slice(4).replace(/\D/g, '') || '60012345';
+  } else {
+    phone = fullPhone.replace(/\D/g, '') || '60012345';
+  }
+  const email = toSwiftSafeString(customer.PrimaryEmail, '@_') || `${givenName.toLowerCase()}@example.com`;
+
+  const addr = customer.RegistrationAddress || {};
+  const street = toSwiftSafeString(addr.fullAddress || addr.street) || 'Gedimino pr. 12-4';
+  const city = toSwiftSafeString(addr.city) || 'Vilnius';
+  const postCode = parseInt(String(addr.postCode || '75350').replace(/\D/g, ''), 10) || 75350;
+  const country = 'PK';
+
+  return {
+    body: {
+      displayNames: [{ displayName: fullName }],
+      customerNames: [{ customerName: givenName, customerNameAdditional: lastName }],
+      faxIds: [{ faxId: 'FAX001' }],
+      officePhoneNumbers: [{ officePhoneNumber: fullPhone }],
+      streets: [{ street }],
+      addressCities: [{ addressCity: city }],
+      countries: [{ country }],
+      otherNationalityIds: [{ otherNationalityId: country }],
+      postingRestrictIds: [{ postingRestrictId: 1 }],
+      taxIds: [{ taxId: `TAX${Math.floor(1000000 + Math.random() * 9000000)}` }],
+      contactDetails: [
+        { contactType: 'MOBILE', iddPrefixPhone: idd, contactData: phone },
+        { contactType: 'EMAIL', iddPrefixPhone: '', contactData: email }
+      ],
+      language: 1,
+      dateOfBirth: dob,
+      customerStatus: '17',
+      customerMnemonic: mnemonic,
+      nationalityId: country,
+      residenceId: country,
+      accountOfficerId: 1,
+      target: 1,
+      sectorId: 1001,
+      gender: customer.Gender === 'FEMALE' ? 'FEMALE' : 'MALE',
+      maritalStatus: 'MARRIED',
+      industryId: '13',
+      postCode,
+      introducer: 'DIGITALONBOARDING',
+      kycNextSystemReviewDate: '2027-01-15',
+      kycNextReviewDate: '2027-01-15',
+      amlLastResultDate: '2026-09-08',
+      title: customer.Gender === 'FEMALE' ? 'MS' : 'MR',
+      isSecureMessage: 'YES',
+      lastName,
+      givenName,
+      birthIncorpDate: dob,
+      domicile: country,
+      manualRiskClass: '',
+      overrideReason: '',
+      numberOfDependents: 0,
+      dateOfDeath: '',
+      extensions: {
+        sourceSystem: 'INFINITY',
+        channel: 'OLB',
+        customerSegment: 'RETAIL'
+      },
+      ...overrides
+    }
+  };
+}
+
+export async function syncCustomerWithTransact(personalCode, options = {}) {
+  if (!personalCode) {
+    const error = new Error('PersonalCode is required.');
+    error.statusCode = 400;
+    error.code = 'MISSING_PERSONAL_CODE';
+    throw error;
+  }
+
+  // 1. Locate physical person in MCD database
+  let targetKey = null;
+  let customer = null;
+  for (const [key, p] of db.physicalPersons.entries()) {
+    if (String(p.PersonalCode).trim() === String(personalCode).trim()) {
+      customer = p;
+      targetKey = key;
+      break;
+    }
+  }
+
+  if (!customer) {
+    const error = new Error(`Physical person with PersonalCode '${personalCode}' was not found in MCD database.`);
+    error.statusCode = 404;
+    error.code = 'CUSTOMER_NOT_FOUND';
+    throw error;
+  }
+
+  // 2. Build Transact payload
+  const transactPayload = buildTransactPayload(customer, options.overrides || {});
+  const transactUrl = options.url || DEFAULT_TRANSACT_API_URL;
+  const transactToken = options.token || DEFAULT_TRANSACT_TOKEN;
+  const transactCookie = options.cookie || DEFAULT_TRANSACT_COOKIE;
+
+  // Support offline mock mode if specifically requested
+  if (options.mock === true || process.env.MOCK_TRANSACT === 'true') {
+    const mockId = String(Math.floor(10001000 + Math.random() * 9000));
+    customer.TransactID = mockId;
+    customer.TransactId = mockId;
+    customer.TransactSyncDate = new Date().toISOString();
+    customer.TransactStatus = 'Synced (Mock)';
+    db.physicalPersons.set(targetKey, customer);
+    syncDbToFile();
+    return {
+      success: true,
+      message: `[MOCK] Customer ${customer.McdId} (PersonalCode: ${personalCode}) synced with Transact. TransactID updated to ${mockId}.`,
+      personalCode: String(personalCode),
+      mcdId: customer.McdId,
+      transactId: mockId,
+      customer,
+      transactResponse: { header: { id: mockId, status: 'success', mock: true } }
+    };
+  }
+
+  // 3. Make HTTP request to Transact system
+  let response;
+  let resData;
+  try {
+    response = await fetch(transactUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Cookie': transactCookie,
+        'Authorization': `Bearer ${transactToken}`
+      },
+      body: JSON.stringify(transactPayload),
+      signal: AbortSignal.timeout(options.timeout || 15000)
+    });
+    resData = await response.json();
+  } catch (netErr) {
+    const error = new Error(`Connection to Transact API failed (${transactUrl}): ${netErr.message}`);
+    error.statusCode = 502;
+    error.code = 'TRANSACT_CONNECTION_ERROR';
+    error.details = netErr.message;
+    throw error;
+  }
+
+  // 4. Validate Transact response
+  const isSuccess = response.ok && (
+    resData.header?.status === 'success' ||
+    (resData.header?.id && !resData.error) ||
+    resData.id
+  );
+
+  const transactId = resData.header?.id || resData.id || resData.body?.id || resData.header?.transactionId;
+
+  if (!isSuccess || !transactId) {
+    const error = new Error(`Transact API returned error: ${JSON.stringify(resData.error || resData)}`);
+    error.statusCode = response.status >= 400 ? response.status : 502;
+    error.code = 'TRANSACT_REJECTED';
+    error.transactResponse = resData;
+    error.transactPayload = transactPayload;
+    throw error;
+  }
+
+  // 5. Update MCD customer in database
+  customer.TransactID = String(transactId);
+  customer.TransactId = String(transactId);
+  customer.TransactSyncDate = new Date().toISOString();
+  customer.TransactStatus = 'Synced';
+  db.physicalPersons.set(targetKey, customer);
+  syncDbToFile();
+
+  return {
+    success: true,
+    message: `Customer ${customer.McdId} (PersonalCode: ${personalCode}) successfully synced with Transact. TransactID updated to ${transactId}.`,
+    personalCode: String(personalCode),
+    mcdId: customer.McdId,
+    transactId: String(transactId),
+    customer,
+    transactResponse: resData
+  };
+}
+
 // Request Routing Engine
 // -------------------------------------------------------------
 export async function handleRequest(req, res) {
@@ -707,6 +918,65 @@ export async function handleRequest(req, res) {
     }
 
     // ---------------------------------------------------------
+    
+    // ---------------------------------------------------------
+    // Transact Core Banking Customer Sync Endpoints
+    // ---------------------------------------------------------
+    if (method === 'POST' && (
+      pathname === '/transact/sync-customer' ||
+      pathname === '/persons/physical/sync-transact' ||
+      pathname === '/api/transact/sync' ||
+      pathname.match(/^\/persons\/physical\/by-personal-code\/([^\/]+)\/sync-transact$/)
+    )) {
+      const body = await parseBody(req);
+      const pathMatch = pathname.match(/^\/persons\/physical\/by-personal-code\/([^\/]+)\/sync-transact$/);
+      const personalCode = (pathMatch && decodeURIComponent(pathMatch[1])) || body.personalCode || body.PersonalCode || query.personalCode || query.PersonalCode;
+
+      if (!personalCode) {
+        return sendJson(res, 400, {
+          success: false,
+          error: 'MISSING_PERSONAL_CODE',
+          message: 'personalCode is required in JSON body (e.g. { "personalCode": "38501010001" }) or URL parameter.'
+        });
+      }
+
+      const customToken = req.headers['x-transact-token'] || undefined;
+      const isMock = req.headers['x-mock-transact'] === 'true' || body.mock === true || query.mock === 'true';
+
+      try {
+        const result = await syncCustomerWithTransact(personalCode, {
+          token: customToken,
+          overrides: body.transactPayloadOverrides || body.body || {},
+          mock: isMock
+        });
+        return sendJson(res, 200, result);
+      } catch (err) {
+        return sendJson(res, err.statusCode || 500, {
+          success: false,
+          error: err.code || 'TRANSACT_ERROR',
+          message: err.message,
+          transactResponse: err.transactResponse,
+          transactPayload: err.transactPayload
+        });
+      }
+    }
+
+    // Direct lookup by PersonalCode: GET /persons/physical/by-personal-code/:code
+    const pcMatch = pathname.match(/^\/persons\/physical\/by-personal-code\/([^\/]+)$/);
+    if (method === 'GET' && pcMatch) {
+      const personalCode = decodeURIComponent(pcMatch[1]);
+      for (const p of db.physicalPersons.values()) {
+        if (String(p.PersonalCode).trim() === String(personalCode).trim()) {
+          return sendJson(res, 200, p);
+        }
+      }
+      return sendJson(res, 404, {
+        success: false,
+        error: 'CUSTOMER_NOT_FOUND',
+        message: `Customer with PersonalCode '${personalCode}' was not found in MCD database.`
+      });
+    }
+
     // 1. PHYSICAL PERSONS ENDPOINTS
     // ---------------------------------------------------------
 
@@ -1714,6 +1984,27 @@ export function renderDashboardHtml() {
 
   <!-- TAB 1: DATABASE VIEWER & EDITOR -->
   <div id="tab-content-db">
+    <!-- TRANSACT SYNC CARD -->
+    <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95)); border: 1px solid rgba(56, 189, 248, 0.35);">
+      <div class="card-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:18px;">⚡</span>
+          <span style="font-size:16px; font-weight:700; color:#38bdf8;">Transact Core Banking Sync</span>
+          <span style="font-size:11px; color:var(--text-muted);">(Temenos T24 Customers API)</span>
+        </div>
+        <span style="font-size:11px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:12px; font-family:monospace;">Target: 192.168.1.157:8085</span>
+      </div>
+      <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+        Enter a <strong>Personal Code</strong> below. The system will look up the customer in MCD, call the Transact Customer API (T24), extract the assigned <code>id</code>, and automatically update the customer's <strong>TransactID</strong> in the database!
+      </div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+        <input type="text" id="sync-personal-code" placeholder="Personal Code (e.g. 38501010001, 48802020002, 51503030003)" style="flex:1; min-width:240px; padding:10px 14px; background:#0b1120; border:1px solid var(--border); border-radius:6px; color:#f8fafc; font-family:monospace;" value="38501010001" />
+        <button class="btn btn-primary" id="btn-transact-sync" onclick="triggerTransactSync()" style="display:flex; align-items:center; gap:6px;">
+          <span>⚡ Call Transact & Sync</span>
+        </button>
+      </div>
+      <div id="transact-sync-alert" style="margin-top:12px; display:none; padding:10px 14px; border-radius:6px; font-size:13px; font-family:monospace;"></div>
+    </div>
     <div class="card">
       <div class="card-title">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
@@ -1759,6 +2050,14 @@ export function renderDashboardHtml() {
           <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">All 21 endpoints</span>
         </div>
         <div class="endpoint-list">
+          <div class="endpoint-item" onclick="testEndpoint('POST', '/transact/sync-customer', { personalCode: '38501010001' })">
+            <div><span class="method-tag method-post">POST</span>/transact/sync-customer</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Sync customer to Transact T24</span>
+          </div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/by-personal-code/38501010001')">
+            <div><span class="method-tag method-get">GET</span>/persons/physical/by-personal-code/:code</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Lookup customer by PersonalCode</span>
+          </div>
           <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical')">
             <div><span class="method-tag method-get">GET</span>/persons/physical</div>
             <span style="color: var(--text-muted); font-size: 11px;">Search physical persons</span>
@@ -1904,7 +2203,7 @@ export function renderDashboardHtml() {
       var html = '';
 
       if (currentTable === 'physical') {
-        html = '<table><thead><tr><th>MCD ID</th><th>Full Name</th><th>Personal Code</th><th>Status</th><th>Email</th><th>Phone</th><th>Guardian / Minor</th><th>Actions</th></tr></thead><tbody>';
+        html = '<table><thead><tr><th>MCD ID</th><th>Full Name</th><th>Personal Code</th><th>Transact ID</th><th>Status</th><th>Email</th><th>Phone</th><th>Guardian / Minor</th><th>Actions</th></tr></thead><tbody>';
         var pList = dbData.physicalPersons || [];
         for (var i = 0; i < pList.length; i++) {
           var p = pList[i];
@@ -1914,6 +2213,7 @@ export function renderDashboardHtml() {
             '<td><strong style="color:var(--accent-blue)">' + p.McdId + '</strong></td>' +
             '<td>' + (p.FirstName || '') + ' ' + (p.LastName || '') + '</td>' +
             '<td>' + (p.PersonalCode || '-') + '</td>' +
+            '<td>' + (p.TransactID || p.TransactId ? ('<span style="background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:4px; font-weight:600; font-family:monospace;">' + (p.TransactID || p.TransactId) + '</span>') : '<span style="color:var(--text-muted); font-size:12px;">None</span>') + '</td>' +
             '<td><span class="badge ' + badgeClass + '">' + p.Status + '</span></td>' +
             '<td>' + (p.PrimaryEmail || '-') + '</td>' +
             '<td>' + (p.PrimaryPhoneNumber || '-') + '</td>' +
@@ -2215,6 +2515,58 @@ export function renderDashboardHtml() {
     function clearConsole() {
       document.getElementById('console-output').innerText = '// Console cleared.';
       document.getElementById('response-title').innerText = 'Live Response Console';
+    }
+
+    async function triggerTransactSync() {
+      const codeInput = document.getElementById('sync-personal-code');
+      const alertBox = document.getElementById('transact-sync-alert');
+      const btn = document.getElementById('btn-transact-sync');
+      const code = codeInput ? codeInput.value.trim() : '';
+
+      if (!code) {
+        alert('Please enter a Personal Code');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = 'Calling Transact...';
+      alertBox.style.display = 'block';
+      alertBox.style.background = 'rgba(56,189,248,0.1)';
+      alertBox.style.color = '#38bdf8';
+      alertBox.style.border = '1px solid rgba(56,189,248,0.3)';
+      alertBox.innerText = 'Calling Transact API at 192.168.1.157:8085 for PersonalCode: ' + code + '...';
+
+      try {
+        const res = await fetch('/transact/sync-customer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ personalCode: code })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          alertBox.style.background = 'rgba(16,185,129,0.15)';
+          alertBox.style.color = '#34d399';
+          alertBox.style.border = '1px solid rgba(16,185,129,0.4)';
+          alertBox.innerText = 'SUCCESS! Transact customer created. ID: ' + data.transactId + ' linked to MCD customer ' + data.mcdId + ' (' + data.customer.FirstName + ' ' + data.customer.LastName + ')';
+          showToast('Synced with Transact! ID: ' + data.transactId);
+          await loadDatabase();
+          if (data.customer) inspectRecord(data.customer);
+        } else {
+          alertBox.style.background = 'rgba(239,68,68,0.15)';
+          alertBox.style.color = '#f87171';
+          alertBox.style.border = '1px solid rgba(239,68,68,0.4)';
+          alertBox.innerText = 'FAILED: ' + (data.message || 'Unknown error');
+        }
+      } catch (err) {
+        alertBox.style.background = 'rgba(239,68,68,0.15)';
+        alertBox.style.color = '#f87171';
+        alertBox.style.border = '1px solid rgba(239,68,68,0.4)';
+        alertBox.innerText = 'ERROR: ' + err.message;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>⚡ Call Transact & Sync</span>';
+      }
     }
 
     function setupTableEvents() {

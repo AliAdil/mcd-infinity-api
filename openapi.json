@@ -17,6 +17,10 @@
     },
     {
       "name": "persons/representatives"
+    },
+    {
+      "name": "transact",
+      "description": "Temenos Transact T24 Core Banking Integration Endpoints"
     }
   ],
   "paths": {
@@ -2776,6 +2780,131 @@
         "x-apidog-folder": "persons/representatives",
         "x-apidog-status": "developing",
         "x-run-in-apidog": "https://app.apidog.com/web/project/1103365/apis/api-23739413-run"
+      }
+    },
+    "/transact/sync-customer": {
+      "post": {
+        "summary": "Sync customer to Transact core by Personal Code",
+        "description": "Looks up the customer in MCD database by personalCode, invokes Temenos Transact API (party/customers), extracts the generated Transact ID, and updates the customer's TransactID in MCD database.",
+        "tags": [
+          "transact",
+          "persons/physical"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "personalCode"
+                ],
+                "properties": {
+                  "personalCode": {
+                    "type": "string",
+                    "description": "Personal identification code of the customer in MCD database",
+                    "example": "38501010001"
+                  },
+                  "mock": {
+                    "type": "boolean",
+                    "description": "Optional flag to mock the Transact call if offline",
+                    "example": false
+                  },
+                  "transactPayloadOverrides": {
+                    "type": "object",
+                    "description": "Optional field overrides to pass into Transact body",
+                    "example": {}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer successfully created in Transact and TransactID updated in MCD",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Customer P1001 (PersonalCode: 38501010001) successfully synced with Transact. TransactID updated to 10001874."
+                    },
+                    "personalCode": {
+                      "type": "string",
+                      "example": "38501010001"
+                    },
+                    "mcdId": {
+                      "type": "string",
+                      "example": "P1001"
+                    },
+                    "transactId": {
+                      "type": "string",
+                      "example": "10001874"
+                    },
+                    "customer": {
+                      "type": "object"
+                    },
+                    "transactResponse": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or Transact rejected payload"
+          },
+          "404": {
+            "description": "Customer with given personalCode not found in MCD database"
+          },
+          "502": {
+            "description": "Connection to Transact server failed"
+          }
+        }
+      }
+    },
+    "/persons/physical/by-personal-code/{personalCode}": {
+      "get": {
+        "summary": "Lookup physical person directly by Personal Code",
+        "description": "Retrieves full MCD physical person record matching the provided PersonalCode.",
+        "tags": [
+          "persons/physical"
+        ],
+        "parameters": [
+          {
+            "name": "personalCode",
+            "in": "path",
+            "required": true,
+            "description": "Customer Personal Code",
+            "schema": {
+              "type": "string",
+              "example": "38501010001"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer record found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found"
+          }
+        }
       }
     }
   },

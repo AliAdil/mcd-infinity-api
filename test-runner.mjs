@@ -315,6 +315,36 @@ await assertTest('DELETE /admin/db/physical/P1001 (Direct browser delete)', asyn
   if (!res.json.success) throw new Error('Delete failed');
 });
 
+await assertTest('GET /persons/physical/by-personal-code/:code', async () => {
+  const res = await request('GET', '/persons/physical/by-personal-code/48802020002');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.json.PersonalCode !== '48802020002') throw new Error('PersonalCode mismatch');
+  if (res.json.McdId !== 'P1002') throw new Error('McdId mismatch');
+});
+
+await assertTest('POST /transact/sync-customer (Sync with Transact)', async () => {
+  const res = await request('POST', '/transact/sync-customer', {
+    personalCode: '48802020002',
+    mock: true // Use mock for deterministic CI/CD unit testing
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}: ${JSON.stringify(res.json)}`);
+  if (!res.json.success) throw new Error('Sync failed');
+  if (!res.json.transactId) throw new Error('transactId missing');
+  if (res.json.customer.TransactID !== res.json.transactId) throw new Error('TransactID not updated in customer');
+});
+
+await assertTest('POST /transact/sync-customer (Missing PersonalCode -> 400)', async () => {
+  const res = await request('POST', '/transact/sync-customer', {});
+  if (res.status !== 400) throw new Error(`Status ${res.status} (expected 400)`);
+  if (res.json.success !== false) throw new Error('Expected success: false');
+});
+
+await assertTest('POST /transact/sync-customer (Unknown PersonalCode -> 404)', async () => {
+  const res = await request('POST', '/transact/sync-customer', { personalCode: '00000000000' });
+  if (res.status !== 404) throw new Error(`Status ${res.status} (expected 404)`);
+  if (res.json.success !== false) throw new Error('Expected success: false');
+});
+
 await assertTest('POST /admin/db/reset (Reset to seed)', async () => {
   const res = await request('POST', '/admin/db/reset');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
