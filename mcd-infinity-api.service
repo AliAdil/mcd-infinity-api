@@ -1,0 +1,27 @@
+[Unit]
+Description=MCD Infinity Banking API & Transact Integration Service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/mcd-infinity-api
+ExecStart=/usr/bin/node server.mjs
+Restart=always
+RestartSec=5
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=mcd-infinity-api
+
+# Load environment configuration if available
+EnvironmentFile=-/var/www/mcd-infinity-api/.env
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

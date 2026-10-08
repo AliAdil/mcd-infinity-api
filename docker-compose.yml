@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  mcd-infinity-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcd-infinity-api
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+      - TRANSACT_API_URL=${TRANSACT_API_URL:-http://192.168.1.157:8085/irf-provider-container/api/v5.1.0/party/customers}
+      - TRANSACT_COOKIE=${TRANSACT_COOKIE:-ApplicationGatewayAffinity=169ff9c6fbc8876c0b34e7b7497e23fe;ApplicationGatewayAffinityCORS=169ff9c6fbc8876c0b34e7b7497e23fe}
+      - TRANSACT_BEARER_TOKEN=${TRANSACT_BEARER_TOKEN}
+      - MOCK_TRANSACT=${MOCK_TRANSACT:-false}
+    volumes:
+      # Mount data files to host to retain database state across container updates
+      - ./db.json:/app/db.json
+      - ./db.backup.json:/app/db.backup.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s

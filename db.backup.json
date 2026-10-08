@@ -1,5 +1,5 @@
 {
-  "_lastUpdated": "2026-10-02T11:02:35.440Z",
+  "_lastUpdated": "2026-10-08T06:52:56.195Z",
   "physicalPersons": [
     [
       "P1001",
@@ -1193,6 +1193,355 @@
             "maritalStatus": "MARRIED"
           }
         }
+      }
+    ],
+    [
+      "P8320",
+      {
+        "FirstName": "Kamile",
+        "LastName": "Vaitkus",
+        "PersonalCode": "49407143715",
+        "Ssn": "223-14-4042",
+        "CountryCode": "LT",
+        "Gender": "FEMALE",
+        "Status": "Prospect",
+        "DateOfBirth": "1994-07-14",
+        "PrimaryEmail": "kamile.vaitkus59@example.lt",
+        "PrimaryEmailVerified": true,
+        "PrimaryPhoneNumber": "+37065096446",
+        "PrimaryPhoneNumberVerified": true,
+        "RegistrationAddress": {
+          "countryCode": "LT",
+          "city": "Kaunas",
+          "street": "Ukmerges g. 70-9",
+          "postCode": "79059"
+        },
+        "SelectedProducts": [
+          {
+            "ProductCategory": "ACCOUNTS",
+            "ProductId": "PREMIUM"
+          }
+        ],
+        "McdId": "P8320",
+        "TransactID": "10001908",
+        "TransactId": "10001908",
+        "TransactSyncDate": "2026-10-02T11:42:28.660Z",
+        "TransactStatus": "Synced",
+        "transactResponse": {
+          "header": {
+            "transactionStatus": "Live",
+            "audit": {
+              "T24_time": 687,
+              "responseParse_time": 0,
+              "requestParse_time": 16,
+              "versionNumber": "1"
+            },
+            "id": "10001908",
+            "status": "success"
+          },
+          "body": {
+            "customerMnemonic": "XD104603",
+            "lastName": "Vaitkus",
+            "numberOfDependents": 2,
+            "introducer": "DIGITALONBOARDING",
+            "gender": "FEMALE",
+            "streets": [
+              {
+                "street": "Ukmerges g. 70-9"
+              }
+            ],
+            "faxIds": [
+              {
+                "faxId": "FAX001"
+              }
+            ],
+            "customerNames": [
+              {
+                "customerNameAdditional": "Vaitkus",
+                "customerName": "Kamile"
+              }
+            ],
+            "language": 1,
+            "title": "MS",
+            "taxIds": [
+              {
+                "taxId": "223-14-4042"
+              }
+            ],
+            "customerStatus": 17,
+            "industryId": 13,
+            "accountOfficerId": 1,
+            "officePhoneNumbers": [
+              {
+                "officePhoneNumber": "+37065096446"
+              }
+            ],
+            "customerCompany": "AU0070001",
+            "amlResult": "NULL",
+            "isSecureMessage": "YES",
+            "sectorId": 1001,
+            "nationalityId": "LT",
+            "givenName": "Kamile",
+            "addressCities": [
+              {
+                "addressCity": "Kaunas"
+              }
+            ],
+            "amlLastResultDate": "20260908",
+            "displayNames": [
+              {
+                "displayName": "Kamile Vaitkus"
+              }
+            ],
+            "dateOfBirth": "1994-07-14",
+            "kycNextSystemReviewDate": "2027-01-15",
+            "countries": [
+              {
+                "country": "LT"
+              }
+            ],
+            "amlCheck": "NULL",
+            "contactDetails": [
+              {
+                "contactData": "65096446",
+                "iddPrefixPhone": "+370",
+                "contactType": "MOBILE"
+              },
+              {
+                "contactData": "kamile.vaitkus59@example.lt",
+                "contactType": "EMAIL"
+              }
+            ],
+            "residenceId": "LT",
+            "target": 1,
+            "postingRestrictIds": [
+              {
+                "postingRestrictId": 1
+              }
+            ],
+            "otherNationalityIds": [
+              {
+                "otherNationalityId": "LT"
+              }
+            ],
+            "kycNextReviewDate": "2027-01-15",
+            "birthIncorpDate": "1994-07-14",
+            "domicile": "LT",
+            "postCode": 79059,
+            "maritalStatus": "MARRIED"
+          }
+        }
+      }
+    ],
+    [
+      "P1203",
+      {
+        "FirstName": "Jonas",
+        "LastName": "Petrauskas",
+        "PersonalCode": "50001212325",
+        "Ssn": "925-26-2990",
+        "CountryCode": "LT",
+        "Gender": "MALE",
+        "Status": "Prospect",
+        "DateOfBirth": "2000-01-21",
+        "PrimaryEmail": "jonas.petrauskas26@example.lt",
+        "PrimaryEmailVerified": true,
+        "PrimaryPhoneNumber": "+37061294719",
+        "PrimaryPhoneNumberVerified": true,
+        "RegistrationAddress": {
+          "countryCode": "LT",
+          "city": "Klaipeda",
+          "street": "Gedimino pr. 82-39",
+          "postCode": "22827"
+        },
+        "SelectedProducts": [
+          {
+            "ProductCategory": "ACCOUNTS",
+            "ProductId": "PREMIUM"
+          }
+        ],
+        "McdId": "P1203",
+        "TransactID": "10001909",
+        "TransactId": "10001909",
+        "TransactSyncDate": "2026-10-02T11:47:43.624Z",
+        "TransactStatus": "Synced",
+        "transactResponse": {
+          "header": {
+            "transactionStatus": "Live",
+            "audit": {
+              "T24_time": 875,
+              "responseParse_time": 0,
+              "requestParse_time": 16,
+              "versionNumber": "1"
+            },
+            "id": "10001909",
+            "status": "success"
+          },
+          "body": {
+            "customerMnemonic": "XD105132",
+            "lastName": "Petrauskas",
+            "numberOfDependents": 2,
+            "introducer": "DIGITALONBOARDING",
+            "gender": "MALE",
+            "streets": [
+              {
+                "street": "Gedimino pr. 82-39"
+              }
+            ],
+            "faxIds": [
+              {
+                "faxId": "FAX001"
+              }
+            ],
+            "customerNames": [
+              {
+                "customerNameAdditional": "Petrauskas",
+                "customerName": "Jonas"
+              }
+            ],
+            "language": 1,
+            "title": "MR",
+            "taxIds": [
+              {
+                "taxId": "925-26-2990"
+              }
+            ],
+            "customerStatus": 17,
+            "industryId": 13,
+            "accountOfficerId": 1,
+            "officePhoneNumbers": [
+              {
+                "officePhoneNumber": "+37061294719"
+              }
+            ],
+            "customerCompany": "AU0070001",
+            "amlResult": "NULL",
+            "isSecureMessage": "YES",
+            "sectorId": 1001,
+            "nationalityId": "LT",
+            "givenName": "Jonas",
+            "addressCities": [
+              {
+                "addressCity": "Klaipeda"
+              }
+            ],
+            "amlLastResultDate": "20260908",
+            "displayNames": [
+              {
+                "displayName": "Jonas Petrauskas"
+              }
+            ],
+            "dateOfBirth": "2000-01-21",
+            "kycNextSystemReviewDate": "2027-01-15",
+            "countries": [
+              {
+                "country": "LT"
+              }
+            ],
+            "amlCheck": "NULL",
+            "contactDetails": [
+              {
+                "contactData": "61294719",
+                "iddPrefixPhone": "+370",
+                "contactType": "MOBILE"
+              },
+              {
+                "contactData": "jonas.petrauskas26@example.lt",
+                "contactType": "EMAIL"
+              }
+            ],
+            "residenceId": "LT",
+            "target": 1,
+            "postingRestrictIds": [
+              {
+                "postingRestrictId": 1
+              }
+            ],
+            "otherNationalityIds": [
+              {
+                "otherNationalityId": "LT"
+              }
+            ],
+            "kycNextReviewDate": "2027-01-15",
+            "birthIncorpDate": "2000-01-21",
+            "domicile": "LT",
+            "postCode": 22827,
+            "maritalStatus": "MARRIED"
+          }
+        }
+      }
+    ],
+    [
+      "P6923",
+      {
+        "McdId": "P6923",
+        "FirstName": "Dovile",
+        "MiddleName": null,
+        "LastName": "Naujokaite",
+        "PersonalCode": "49208080008",
+        "Ssn": null,
+        "CountryCode": "LT",
+        "Gender": "MALE",
+        "Status": "Prospect",
+        "TransactID": "10001899",
+        "TransactId": "10001899",
+        "TransactStatus": "Synced",
+        "DateOfBirth": "1992-08-08",
+        "DateOfDeath": null,
+        "BirthCountryCode": "LT",
+        "BirthCity": "Vilnius",
+        "LanguageCode": "lt",
+        "PrimaryEmail": "dovile.n@example.com",
+        "PrimaryEmailVerified": true,
+        "SecondaryEmail": null,
+        "PrimaryPhoneNumber": "+37061122334",
+        "PrimaryPhoneNumberVerified": true,
+        "SecondaryPhoneNumber": null,
+        "RegistrationAddress": {
+          "countryCode": "LT",
+          "city": "Vilnius",
+          "street": "Gedimino pr. 1"
+        },
+        "ResidenceAddress": null,
+        "CorrespondenceAddress": {
+          "countryCode": "LT",
+          "city": "Vilnius",
+          "street": "Gedimino pr. 1"
+        },
+        "Consents": {
+          "ConsentOffers": true,
+          "ConsentProfiling": false,
+          "ConsentPartnersOffers": false,
+          "Date": "2026-10-02T12:04:01.667Z",
+          "ValidUntil": "2028-12-31"
+        },
+        "Nationalities": [
+          "LT"
+        ],
+        "IdDocuments": [],
+        "OndatoCheckValid": true,
+        "AmlScreening": {
+          "LastAmlResultDate": "2026-10-02T12:04:01.667Z",
+          "AmlResult": "PASSED",
+          "SmaApprovalStatus": "APPROVED",
+          "SmaDecisionDate": "2026-10-02T12:04:01.667Z"
+        },
+        "Kyc": {
+          "IsKycRequired": false,
+          "ExpirationDate": "2027-01-01"
+        },
+        "SelectedProducts": [
+          {
+            "ProductCategory": "ACCOUNTS",
+            "ProductId": "CURRENT_ACCOUNT_STANDARD"
+          }
+        ],
+        "HasParentalPermissionToManageProducts": null,
+        "IsMinor": false,
+        "IsEmancipatedMinor": false,
+        "IsIncapable": false,
+        "guardianMcdId": null,
+        "coapplicantMcdId": null
       }
     ]
   ],

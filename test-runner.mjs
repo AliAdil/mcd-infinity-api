@@ -120,7 +120,7 @@ await assertTest('GET /persons/physical', async () => {
 await assertTest('GET /persons/physical (with filter)', async () => {
   const res = await request('GET', '/persons/physical?FirstName=Jonas&CountryCode=LT');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.length !== 1 || res.json[0].FirstName !== 'Jonas') throw new Error('Filter failed');
+  if (res.json.length < 1 || !res.json.every(p => p.FirstName.toLowerCase().includes('jonas') && p.CountryCode === 'LT')) throw new Error('Filter failed');
 });
 
 await assertTest('POST /persons/physical (Create prospect with auto Transact sync)', async () => {
