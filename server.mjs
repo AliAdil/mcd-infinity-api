@@ -537,6 +537,29 @@ process.on('beforeExit', () => {
   try { syncDbToFile(); } catch (e) {}
 });
 
+// Helper: Convert first letter of key to lowercase (camelCase)
+export function lowerFirstKey(key) {
+  if (typeof key !== 'string' || key.length === 0) return key;
+  if (key === 'TransactID' || key === 'TransactId') return 'transactID';
+  if (key === 'McdId') return 'mcdId';
+  return key.charAt(0).toLowerCase() + key.slice(1);
+}
+
+export function lowerFirstKeys(obj) {
+  if (obj === null || typeof obj !== 'object' || obj instanceof Date || (typeof Buffer !== 'undefined' && Buffer.isBuffer(obj))) {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(lowerFirstKeys);
+  }
+  const result = {};
+  for (const [key, value] of Object.entries(obj)) {
+    const newKey = lowerFirstKey(key);
+    result[newKey] = lowerFirstKeys(value);
+  }
+  return result;
+}
+
 // Helper: send JSON response
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
@@ -545,7 +568,8 @@ function sendJson(res, statusCode, data) {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept'
   });
-  res.end(JSON.stringify(data, null, 2));
+  const payload = (data === openapiSpec) ? data : lowerFirstKeys(data);
+  res.end(JSON.stringify(payload, null, 2));
 }
 
 // Helper: send HTML response
@@ -1194,27 +1218,39 @@ export async function handleRequest(req, res) {
     // GET /persons/physical - Search physical persons
     if (method === 'GET' && pathname === '/persons/physical') {
       const results = [];
+      const qFirstName = query.firstName || query.FirstName;
+      const qLastName = query.lastName || query.LastName;
+      const qPersonalCode = query.personalCode || query.PersonalCode;
+      const qCountryCode = query.countryCode || query.CountryCode;
+      const qIsJunior = query.isJunior !== undefined ? query.isJunior : query.IsJunior;
+
       for (const p of db.physicalPersons.values()) {
         let match = true;
-        if (query.FirstName && !p.FirstName.toLowerCase().includes(query.FirstName.toLowerCase())) match = false;
-        if (query.LastName && !p.LastName.toLowerCase().includes(query.LastName.toLowerCase())) match = false;
-        if (query.PersonalCode && p.PersonalCode !== query.PersonalCode) match = false;
-        if (query.CountryCode && p.CountryCode !== query.CountryCode) match = false;
-        if (query.IsJunior !== undefined) {
-          const isJuniorBool = query.IsJunior === 'true';
-          if (Boolean(p.IsMinor) !== isJuniorBool) match = false;
+        const pFirstName = p.firstName || p.FirstName || '';
+        const pLastName = p.lastName || p.LastName || '';
+        const pPersonalCode = p.personalCode || p.PersonalCode || '';
+        const pCountryCode = p.countryCode || p.CountryCode || '';
+        const pIsMinor = Boolean(p.isMinor !== undefined ? p.isMinor : p.IsMinor);
+
+        if (qFirstName && !pFirstName.toLowerCase().includes(qFirstName.toLowerCase())) match = false;
+        if (qLastName && !pLastName.toLowerCase().includes(qLastName.toLowerCase())) match = false;
+        if (qPersonalCode && String(pPersonalCode) !== String(qPersonalCode)) match = false;
+        if (qCountryCode && pCountryCode !== qCountryCode) match = false;
+        if (qIsJunior !== undefined) {
+          const isJuniorBool = qIsJunior === 'true';
+          if (pIsMinor !== isJuniorBool) match = false;
         }
         if (match) {
           results.push({
-            McdId: p.McdId,
-            FirstName: p.FirstName,
-            MiddleName: p.MiddleName,
-            LastName: p.LastName,
-            PersonalCode: p.PersonalCode,
-            CountryCode: p.CountryCode,
-            Status: p.Status,
-            TransactID: p.TransactID,
-            SelectedProducts: p.SelectedProducts
+            mcdId: p.mcdId || p.McdId,
+            firstName: pFirstName,
+            middleName: p.middleName !== undefined ? p.middleName : (p.MiddleName !== undefined ? p.MiddleName : null),
+            lastName: pLastName,
+            personalCode: pPersonalCode,
+            countryCode: pCountryCode,
+            status: p.status || p.Status || 'Prospect',
+            transactID: p.transactID !== undefined ? p.transactID : (p.TransactID !== undefined ? p.TransactID : (p.transactId || null)),
+            selectedProducts: p.selectedProducts || p.SelectedProducts || []
           });
         }
       }
@@ -1406,16 +1442,16 @@ export async function handleRequest(req, res) {
       for (const p of db.physicalPersons.values()) {
         if (p.guardianMcdId === mcdId || (p.IsMinor && p.LastName === person.LastName)) {
           children.push({
-            FirstName: p.FirstName,
-            LastName: p.LastName,
-            PersonalCode: p.PersonalCode,
-            DateOfBirth: p.DateOfBirth,
-            McdId: p.McdId,
-            PhoneNumber: p.PrimaryPhoneNumber,
-            PhoneNumberVerified: p.PrimaryPhoneNumberVerified,
-            Email: p.PrimaryEmail,
-            EmailVerified: p.PrimaryEmailVerified,
-            CountryCode: p.CountryCode,
+            firstName: p.firstName || p.FirstName,
+            lastName: p.lastName || p.LastName,
+            personalCode: p.personalCode || p.PersonalCode,
+            dateOfBirth: p.dateOfBirth || p.DateOfBirth,
+            mcdId: p.mcdId || p.McdId,
+            phoneNumber: p.primaryPhoneNumber || p.PrimaryPhoneNumber,
+            phoneNumberVerified: p.primaryPhoneNumberVerified || p.PrimaryPhoneNumberVerified,
+            email: p.primaryEmail || p.PrimaryEmail,
+            emailVerified: p.primaryEmailVerified || p.PrimaryEmailVerified,
+            countryCode: p.countryCode || p.CountryCode,
             isWard: p.guardianMcdId === mcdId
           });
         }
@@ -1499,12 +1535,12 @@ export async function handleRequest(req, res) {
         const cleanName = acc.FullName.toLowerCase().replace(/['"]/g, '').trim();
         if (!companyNameQuery || cleanName.includes(companyNameQuery)) {
           results.push({
-            McdId: acc.McdId,
-            FullName: acc.FullName,
-            CompanyCode: acc.CompanyCode,
-            CountryCode: acc.CountryCode,
-            Status: acc.Status,
-            TransactId: acc.TransactId
+            mcdId: acc.mcdId || acc.McdId,
+            fullName: acc.fullName || acc.FullName,
+            companyCode: acc.companyCode || acc.CompanyCode,
+            countryCode: acc.countryCode || acc.CountryCode,
+            status: acc.status || acc.Status,
+            transactID: acc.transactID || acc.TransactID || acc.transactId || acc.TransactId || null
           });
         }
       }
@@ -1717,18 +1753,22 @@ export async function handleRequest(req, res) {
     // GET /persons/juridical - Search juridical person
     if (method === 'GET' && pathname === '/persons/juridical') {
       const results = [];
+      const qCompanyCode = query.companyCode || query.CompanyCode;
+      const qCountryCode = query.countryCode || query.CountryCode;
       for (const j of db.juridicalPersons.values()) {
         let match = true;
-        if (query.CompanyCode && j.CompanyCode !== query.CompanyCode) match = false;
-        if (query.CountryCode && j.CountryCode !== query.CountryCode) match = false;
+        const jCompanyCode = j.companyCode || j.CompanyCode;
+        const jCountryCode = j.countryCode || j.CountryCode;
+        if (qCompanyCode && jCompanyCode !== qCompanyCode) match = false;
+        if (qCountryCode && jCountryCode !== qCountryCode) match = false;
         if (match) {
           results.push({
-            McdId: j.McdId,
-            FullName: j.FullName,
-            CompanyCode: j.CompanyCode,
-            CountryCode: j.CountryCode,
-            Status: j.Status,
-            TransactId: j.TransactId
+            mcdId: j.mcdId || j.McdId,
+            fullName: j.fullName || j.FullName,
+            companyCode: j.companyCode || j.CompanyCode,
+            countryCode: j.countryCode || j.CountryCode,
+            status: j.status || j.Status,
+            transactID: j.transactID || j.TransactID || j.transactId || j.TransactId || null
           });
         }
       }
@@ -1844,20 +1884,28 @@ export async function handleRequest(req, res) {
     // GET /persons/representatives - Search representatives
     if (method === 'GET' && pathname === '/persons/representatives') {
       const results = [];
+      const qFirstName = query.firstName || query.FirstName;
+      const qLastName = query.lastName || query.LastName;
+      const qPersonalCode = query.personalCode || query.PersonalCode;
+      const qCountryCode = query.countryCode || query.CountryCode;
       for (const r of db.representatives.values()) {
         let match = true;
-        if (query.FirstName && !r.FirstName.toLowerCase().includes(query.FirstName.toLowerCase())) match = false;
-        if (query.LastName && !r.LastName.toLowerCase().includes(query.LastName.toLowerCase())) match = false;
-        if (query.PersonalCode && r.PersonalCode !== query.PersonalCode) match = false;
-        if (query.CountryCode && r.CountryCode !== query.CountryCode) match = false;
+        const rFirstName = r.firstName || r.FirstName || '';
+        const rLastName = r.lastName || r.LastName || '';
+        const rPersonalCode = r.personalCode || r.PersonalCode || '';
+        const rCountryCode = r.countryCode || r.CountryCode || '';
+        if (qFirstName && !rFirstName.toLowerCase().includes(qFirstName.toLowerCase())) match = false;
+        if (qLastName && !rLastName.toLowerCase().includes(qLastName.toLowerCase())) match = false;
+        if (qPersonalCode && rPersonalCode !== qPersonalCode) match = false;
+        if (qCountryCode && rCountryCode !== qCountryCode) match = false;
         if (match) {
           results.push({
-            McdId: r.McdId,
-            FirstName: r.FirstName,
-            LastName: r.LastName,
-            PersonalCode: r.PersonalCode,
-            CountryCode: r.CountryCode,
-            Status: r.Status || 'Existing'
+            mcdId: r.mcdId || r.McdId,
+            firstName: rFirstName,
+            lastName: rLastName,
+            personalCode: rPersonalCode,
+            countryCode: rCountryCode,
+            status: r.status || r.Status || 'Existing'
           });
         }
       }
@@ -2457,10 +2505,12 @@ export function renderDashboardHtml() {
       const currentVal = document.getElementById('sync-personal-code').value;
       let optionsHtml = '<option value="">-- Or pick customer to sync --</option>';
       dbData.physicalPersons.forEach(p => {
-        const tId = p.TransactID || p.TransactId ? (' [Transact: ' + (p.TransactID || p.TransactId) + ']') : ' [Not Synced]';
-        const code = p.PersonalCode || '';
-        const name = (p.FirstName || '') + ' ' + (p.LastName || '');
-        optionsHtml += '<option value="' + code + '" ' + (code === currentVal ? 'selected' : '') + '>' + p.McdId + ': ' + name + ' (' + (code || 'No Code') + ')' + tId + '</option>';
+        const tIdVal = p.transactID || p.TransactID || p.transactId || p.TransactId;
+        const tId = tIdVal ? (' [Transact: ' + tIdVal + ']') : ' [Not Synced]';
+        const code = p.personalCode || p.PersonalCode || '';
+        const name = (p.firstName || p.FirstName || '') + ' ' + (p.lastName || p.LastName || '');
+        const id = p.mcdId || p.McdId || '';
+        optionsHtml += '<option value="' + code + '" ' + (code === currentVal ? 'selected' : '') + '>' + id + ': ' + name + ' (' + (code || 'No Code') + ')' + tId + '</option>';
       });
       select.innerHTML = optionsHtml;
     }
@@ -2486,7 +2536,7 @@ export function renderDashboardHtml() {
       else if (col === 'representatives') list = dbData.representatives || [];
       else if (col === 'accumulated') list = dbData.accumulatedJuridicalPersons || [];
       for (var i = 0; i < list.length; i++) {
-        if (list[i].McdId === id) return list[i];
+        if ((list[i].mcdId || list[i].McdId) === id) return list[i];
       }
       return null;
     }
@@ -2511,19 +2561,30 @@ export function renderDashboardHtml() {
         var pList = dbData.physicalPersons || [];
         for (var i = 0; i < pList.length; i++) {
           var p = pList[i];
-          var badgeClass = p.Status === 'Existing' ? 'badge-existing' : 'badge-prospect';
-          var minorTag = p.IsMinor ? '<span style="color:var(--accent-orange)">Yes (Minor)</span>' : 'No';
-          html += '<tr data-col="physical" data-id="' + p.McdId + '" style="cursor:pointer;">' +
-            '<td><strong style="color:var(--accent-blue)">' + p.McdId + '</strong></td>' +
-            '<td>' + (p.FirstName || '') + ' ' + (p.LastName || '') + '</td>' +
-            '<td>' + (p.PersonalCode || '-') + '</td>' +
-            '<td>' + (p.TransactID || p.TransactId ? ('<span style="background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:4px; font-weight:600; font-family:monospace;">' + (p.TransactID || p.TransactId) + '</span>') : '<span style="color:var(--text-muted); font-size:12px;">None</span>') + '</td>' +
-            '<td><span class="badge ' + badgeClass + '">' + p.Status + '</span></td>' +
-            '<td>' + (p.PrimaryEmail || '-') + '</td>' +
-            '<td>' + (p.PrimaryPhoneNumber || '-') + '</td>' +
-            '<td>' + minorTag + (p.guardianMcdId ? ' (Guardian: ' + p.guardianMcdId + ')' : '') + '</td>' +
+          var id = p.mcdId || p.McdId || '';
+          var status = p.status || p.Status || 'Prospect';
+          var badgeClass = status === 'Existing' ? 'badge-existing' : 'badge-prospect';
+          var isMinor = Boolean(p.isMinor !== undefined ? p.isMinor : p.IsMinor);
+          var minorTag = isMinor ? '<span style="color:var(--accent-orange)">Yes (Minor)</span>' : 'No';
+          var fName = p.firstName || p.FirstName || '';
+          var lName = p.lastName || p.LastName || '';
+          var pCode = p.personalCode || p.PersonalCode || '-';
+          var tIdVal = p.transactID || p.TransactID || p.transactId || p.TransactId;
+          var tIdSpan = tIdVal ? ('<span style="background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:4px; font-weight:600; font-family:monospace;">' + tIdVal + '</span>') : '<span style="color:var(--text-muted); font-size:12px;">None</span>';
+          var email = p.primaryEmail || p.PrimaryEmail || '-';
+          var phone = p.primaryPhoneNumber || p.PrimaryPhoneNumber || '-';
+          var gId = p.guardianMcdId || p.GuardianMcdId;
+          html += '<tr data-col="physical" data-id="' + id + '" style="cursor:pointer;">' +
+            '<td><strong style="color:var(--accent-blue)">' + id + '</strong></td>' +
+            '<td>' + fName + ' ' + lName + '</td>' +
+            '<td>' + pCode + '</td>' +
+            '<td>' + tIdSpan + '</td>' +
+            '<td><span class="badge ' + badgeClass + '">' + status + '</span></td>' +
+            '<td>' + email + '</td>' +
+            '<td>' + phone + '</td>' +
+            '<td>' + minorTag + (gId ? ' (Guardian: ' + gId + ')' : '') + '</td>' +
             '<td><div style="display:flex; gap:6px; align-items:center;">' +
-              (p.PersonalCode ? '<button class="btn btn-sm btn-sync" data-code="' + p.PersonalCode + '" style="background:#0284c7; color:#fff;" title="Sync customer to Transact">⚡ Sync</button>' : '') +
+              (pCode !== '-' ? '<button class="btn btn-sm btn-sync" data-code="' + pCode + '" style="background:#0284c7; color:#fff;" title="Sync customer to Transact">⚡ Sync</button>' : '') +
               '<button class="btn btn-sm btn-primary btn-edit">Edit</button>' +
               '<button class="btn btn-sm btn-danger btn-delete">Delete</button>' +
             '</div></td>' +
@@ -2535,15 +2596,17 @@ export function renderDashboardHtml() {
         var jList = dbData.juridicalPersons || [];
         for (var j = 0; j < jList.length; j++) {
           var jItem = jList[j];
-          var badgeClass = jItem.Status === 'Existing' ? 'badge-existing' : 'badge-prospect';
-          html += '<tr data-col="juridical" data-id="' + jItem.McdId + '" style="cursor:pointer;">' +
-            '<td><strong style="color:var(--accent-blue)">' + jItem.McdId + '</strong></td>' +
-            '<td>' + (jItem.FullName || '-') + '</td>' +
-            '<td>' + (jItem.CompanyCode || '-') + '</td>' +
-            '<td><span class="badge ' + badgeClass + '">' + jItem.Status + '</span></td>' +
-            '<td>' + (jItem.PrimaryEmail || '-') + '</td>' +
-            '<td>' + (jItem.PrimaryPhoneNumber || '-') + '</td>' +
-            '<td>' + (jItem.RepresentativeMcdId || '-') + '</td>' +
+          var jId = jItem.mcdId || jItem.McdId || '';
+          var jStatus = jItem.status || jItem.Status || 'Prospect';
+          var badgeClass = jStatus === 'Existing' ? 'badge-existing' : 'badge-prospect';
+          html += '<tr data-col="juridical" data-id="' + jId + '" style="cursor:pointer;">' +
+            '<td><strong style="color:var(--accent-blue)">' + jId + '</strong></td>' +
+            '<td>' + (jItem.fullName || jItem.FullName || '-') + '</td>' +
+            '<td>' + (jItem.companyCode || jItem.CompanyCode || '-') + '</td>' +
+            '<td><span class="badge ' + badgeClass + '">' + jStatus + '</span></td>' +
+            '<td>' + (jItem.primaryEmail || jItem.PrimaryEmail || '-') + '</td>' +
+            '<td>' + (jItem.primaryPhoneNumber || jItem.PrimaryPhoneNumber || '-') + '</td>' +
+            '<td>' + (jItem.representativeMcdId || jItem.RepresentativeMcdId || '-') + '</td>' +
             '<td><div style="display:flex; gap:6px;">' +
               '<button class="btn btn-sm btn-primary btn-edit">Edit</button>' +
               '<button class="btn btn-sm btn-danger btn-delete">Delete</button>' +
@@ -2556,13 +2619,14 @@ export function renderDashboardHtml() {
         var rList = dbData.representatives || [];
         for (var r = 0; r < rList.length; r++) {
           var rItem = rList[r];
-          html += '<tr data-col="representatives" data-id="' + rItem.McdId + '" style="cursor:pointer;">' +
-            '<td><strong style="color:var(--accent-blue)">' + rItem.McdId + '</strong></td>' +
-            '<td>' + (rItem.FirstName || '') + ' ' + (rItem.LastName || '') + '</td>' +
-            '<td>' + (rItem.PersonalCode || '-') + '</td>' +
-            '<td>' + (rItem.CountryCode || '-') + '</td>' +
-            '<td>' + (rItem.PrimaryEmail || '-') + '</td>' +
-            '<td>' + (rItem.PrimaryPhoneNumber || '-') + '</td>' +
+          var rId = rItem.mcdId || rItem.McdId || '';
+          html += '<tr data-col="representatives" data-id="' + rId + '" style="cursor:pointer;">' +
+            '<td><strong style="color:var(--accent-blue)">' + rId + '</strong></td>' +
+            '<td>' + (rItem.firstName || rItem.FirstName || '') + ' ' + (rItem.lastName || rItem.LastName || '') + '</td>' +
+            '<td>' + (rItem.personalCode || rItem.PersonalCode || '-') + '</td>' +
+            '<td>' + (rItem.countryCode || rItem.CountryCode || '-') + '</td>' +
+            '<td>' + (rItem.primaryEmail || rItem.PrimaryEmail || '-') + '</td>' +
+            '<td>' + (rItem.primaryPhoneNumber || rItem.PrimaryPhoneNumber || '-') + '</td>' +
             '<td><div style="display:flex; gap:6px;">' +
               '<button class="btn btn-sm btn-primary btn-edit">Edit</button>' +
               '<button class="btn btn-sm btn-danger btn-delete">Delete</button>' +
@@ -2575,12 +2639,13 @@ export function renderDashboardHtml() {
         var aList = dbData.accumulatedJuridicalPersons || [];
         for (var a = 0; a < aList.length; a++) {
           var aItem = aList[a];
-          html += '<tr data-col="accumulated" data-id="' + aItem.McdId + '" style="cursor:pointer;">' +
-            '<td><strong style="color:var(--accent-blue)">' + aItem.McdId + '</strong></td>' +
-            '<td>' + (aItem.FullName || '-') + '</td>' +
-            '<td>' + (aItem.CompanyCode || '-') + '</td>' +
-            '<td>' + (aItem.RepresentativeMcdId || '-') + '</td>' +
-            '<td>' + (aItem.phoneNumber || '-') + '</td>' +
+          var aId = aItem.mcdId || aItem.McdId || '';
+          html += '<tr data-col="accumulated" data-id="' + aId + '" style="cursor:pointer;">' +
+            '<td><strong style="color:var(--accent-blue)">' + aId + '</strong></td>' +
+            '<td>' + (aItem.fullName || aItem.FullName || '-') + '</td>' +
+            '<td>' + (aItem.companyCode || aItem.CompanyCode || '-') + '</td>' +
+            '<td>' + (aItem.representativeMcdId || aItem.RepresentativeMcdId || '-') + '</td>' +
+            '<td>' + (aItem.phoneNumber || aItem.PhoneNumber || '-') + '</td>' +
             '<td><div style="display:flex; gap:6px;">' +
               '<button class="btn btn-sm btn-primary btn-edit">Edit</button>' +
               '<button class="btn btn-sm btn-danger btn-delete">Delete</button>' +
@@ -2595,8 +2660,9 @@ export function renderDashboardHtml() {
 
     function inspectRecord(record) {
       currentlyInspected = record;
-      const title = record.FullName || (record.FirstName + ' ' + record.LastName);
-      document.getElementById('record-inspector-title').innerText = 'Record: ' + record.McdId + ' (' + title + ')';
+      const id = record.mcdId || record.McdId || '';
+      const title = record.fullName || record.FullName || ((record.firstName || record.FirstName || '') + ' ' + (record.lastName || record.LastName || ''));
+      document.getElementById('record-inspector-title').innerText = 'Record: ' + id + ' (' + title + ')';
       document.getElementById('record-inspector').innerText = JSON.stringify(record, null, 2);
       document.getElementById('inspector-actions').style.display = 'flex';
       document.getElementById('inspector-actions').style.gap = '8px';
@@ -2805,11 +2871,11 @@ export function renderDashboardHtml() {
           closeModal();
           showToast(result.message || 'Saved successfully!');
           await loadDatabase();
-          if (modalMode === 'edit' && currentlyInspected && currentlyInspected.McdId === modalRecordId) {
+          if (modalMode === 'edit' && currentlyInspected && (currentlyInspected.mcdId || currentlyInspected.McdId) === modalRecordId) {
             inspectRecord(result.record || payload);
           }
         } else {
-          errBox.innerText = result.ErrorMessage || 'Failed to save';
+          errBox.innerText = result.errorMessage || result.ErrorMessage || 'Failed to save';
           errBox.style.display = 'block';
         }
       } catch (err) {
@@ -2825,7 +2891,7 @@ export function renderDashboardHtml() {
         const result = await res.json();
         if (res.ok) {
           showToast('Deleted ' + id);
-          if (currentlyInspected && currentlyInspected.McdId === id) {
+          if (currentlyInspected && (currentlyInspected.mcdId || currentlyInspected.McdId) === id) {
             currentlyInspected = null;
             document.getElementById('record-inspector-title').innerText = 'Record Details Inspector';
             document.getElementById('record-inspector').innerText = '// Record deleted.';
@@ -2833,7 +2899,7 @@ export function renderDashboardHtml() {
           }
           await loadDatabase();
         } else {
-          alert('Delete failed: ' + (result.ErrorMessage || 'Unknown error'));
+          alert('Delete failed: ' + (result.errorMessage || result.ErrorMessage || 'Unknown error'));
         }
       } catch (err) {
         alert('Delete failed: ' + err.message);

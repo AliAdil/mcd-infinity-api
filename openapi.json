@@ -84,7 +84,20 @@
                   "items": {
                     "$ref": "#/components/schemas/PhysicalPersonCoreDetails"
                   }
-                }
+                },
+                "example": [
+                  {
+                    "mcdId": "F00011636",
+                    "firstName": "Mohtashim",
+                    "middleName": null,
+                    "lastName": "Waheed",
+                    "personalCode": "29909168028",
+                    "countryCode": "EE",
+                    "status": "Prospect",
+                    "transactID": null,
+                    "selectedProducts": []
+                  }
+                ]
               }
             },
             "headers": {},
@@ -158,11 +171,11 @@
                     "description": "Used in 0-7 junior onboarding flow to specify the client who is doing the onboarding",
                     "nullable": true
                   },
-                  "ResidenceAddress": {
+                  "residenceAddress": {
                     "$ref": "#/components/schemas/AddressDetails",
                     "nullable": true
                   },
-                  "CorrespondenceAddress": {
+                  "correspondenceAddress": {
                     "$ref": "#/components/schemas/AddressDetails",
                     "nullable": true
                   }
@@ -180,8 +193,8 @@
                   "phoneNumberVerified",
                   "selectedProducts",
                   "onboardingClientMcdId",
-                  "ResidenceAddress",
-                  "CorrespondenceAddress"
+                  "residenceAddress",
+                  "correspondenceAddress"
                 ],
                 "required": [
                   "firstName",
@@ -210,36 +223,36 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "McdId": {
+                    "mcdId": {
                       "type": "string",
                       "x-apidog-mock": "F111"
                     },
-                    "FirstName": {
+                    "firstName": {
                       "type": "string",
                       "x-apidog-mock": "John"
                     },
-                    "MiddleName": {
+                    "middleName": {
                       "type": "string",
                       "x-apidog-mock": "Doe",
                       "nullable": true
                     },
-                    "LastName": {
+                    "lastName": {
                       "type": "string",
                       "x-apidog-mock": "Markus"
                     },
-                    "PersonalCode": {
+                    "personalCode": {
                       "type": "string",
                       "x-apidog-mock": "30000000000"
                     },
-                    "CountryCode": {
+                    "countryCode": {
                       "type": "string",
                       "x-apidog-mock": "LT"
                     },
-                    "Gender": {
+                    "gender": {
                       "type": "string",
                       "nullable": true
                     },
-                    "Status": {
+                    "status": {
                       "type": "string",
                       "enum": [
                         "Prospect",
@@ -271,110 +284,110 @@
                       ],
                       "x-apidog-mock": "Prospect"
                     },
-                    "TransactID": {
+                    "transactID": {
                       "type": "string",
                       "x-apidog-mock": "12345",
                       "nullable": true
                     },
-                    "DateOfBirth": {
+                    "dateOfBirth": {
                       "type": "string"
                     },
-                    "DateOfDeath": {
+                    "dateOfDeath": {
                       "type": "string",
                       "nullable": true
                     },
-                    "BirthCountryCode": {
+                    "birthCountryCode": {
                       "type": "string",
                       "nullable": true
                     },
-                    "BirthCity": {
+                    "birthCity": {
                       "type": "string",
                       "nullable": true
                     },
-                    "LanguageCode": {
+                    "languageCode": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryEmail": {
+                    "primaryEmail": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryEmailVerified": {
+                    "primaryEmailVerified": {
                       "type": "boolean"
                     },
-                    "SecondaryEmail": {
+                    "secondaryEmail": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryPhoneNumber": {
+                    "primaryPhoneNumber": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryPhoneNumberVerified": {
+                    "primaryPhoneNumberVerified": {
                       "type": "boolean"
                     },
-                    "SecondaryPhoneNumber": {
+                    "secondaryPhoneNumber": {
                       "type": "string",
                       "nullable": true
                     },
-                    "RegistrationAddress": {
+                    "registrationAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "ResidenceAddress": {
+                    "residenceAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "CorrespondenceAddress": {
+                    "correspondenceAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "Consents": {
+                    "consents": {
                       "$ref": "#/components/schemas/ConsentDetails",
                       "nullable": true
                     },
-                    "Nationalities": {
+                    "nationalities": {
                       "type": "array",
                       "items": {
                         "type": "string"
                       }
                     },
-                    "IdDocuments": {
+                    "idDocuments": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/IdDocumentDetails"
                       }
                     },
-                    "OndatoCheckValid": {
+                    "ondatoCheckValid": {
                       "type": "boolean",
                       "description": "The value \"False\" is sent: \n - when the last Ondata screening time was recorded the previous day (i.e. today is 27th, and the last check was at any time during 26th), and the customer's status is \"Prospect\". \n- When the customer's status is \"Existing\" and all documents “Expiration date” < Current date. "
                     },
-                    "AmlScreening": {
+                    "amlScreening": {
                       "$ref": "#/components/schemas/AmlScreeningDetails",
                       "nullable": true
                     },
-                    "Kyc": {
+                    "kyc": {
                       "$ref": "#/components/schemas/KycDetails"
                     },
-                    "SelectedProducts": {
+                    "selectedProducts": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/SelectedProductDetails"
                       }
                     },
-                    "HasParentalPermissionToManageProducts": {
+                    "hasParentalPermissionToManageProducts": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "IsMinor": {
+                    "isMinor": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "IsEmancipatedMinor": {
+                    "isEmancipatedMinor": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "IsIncapable": {
+                    "isIncapable": {
                       "type": "boolean",
                       "nullable": true
                     }
@@ -383,20 +396,20 @@
                     "01K83C10SZ6G4F1JZ76RPQ7Y92"
                   ],
                   "required": [
-                    "McdId",
-                    "FirstName",
-                    "LastName",
-                    "PersonalCode",
-                    "CountryCode",
-                    "Status",
-                    "DateOfBirth",
-                    "PrimaryEmailVerified",
-                    "PrimaryPhoneNumberVerified",
-                    "Nationalities",
-                    "IdDocuments",
-                    "OndatoCheckValid",
-                    "Kyc",
-                    "SelectedProducts"
+                    "mcdId",
+                    "firstName",
+                    "lastName",
+                    "personalCode",
+                    "countryCode",
+                    "status",
+                    "dateOfBirth",
+                    "primaryEmailVerified",
+                    "primaryPhoneNumberVerified",
+                    "nationalities",
+                    "idDocuments",
+                    "ondatoCheckValid",
+                    "kyc",
+                    "selectedProducts"
                   ],
                   "x-apidog-refs": {
                     "01K83C10SZ6G4F1JZ76RPQ7Y92": {
@@ -493,36 +506,36 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "McdId": {
+                    "mcdId": {
                       "type": "string",
                       "x-apidog-mock": "F111"
                     },
-                    "FirstName": {
+                    "firstName": {
                       "type": "string",
                       "x-apidog-mock": "John"
                     },
-                    "MiddleName": {
+                    "middleName": {
                       "type": "string",
                       "x-apidog-mock": "Doe",
                       "nullable": true
                     },
-                    "LastName": {
+                    "lastName": {
                       "type": "string",
                       "x-apidog-mock": "Markus"
                     },
-                    "PersonalCode": {
+                    "personalCode": {
                       "type": "string",
                       "x-apidog-mock": "30000000000"
                     },
-                    "CountryCode": {
+                    "countryCode": {
                       "type": "string",
                       "x-apidog-mock": "LT"
                     },
-                    "Gender": {
+                    "gender": {
                       "type": "string",
                       "nullable": true
                     },
-                    "Status": {
+                    "status": {
                       "type": "string",
                       "enum": [
                         "Prospect",
@@ -554,114 +567,114 @@
                       ],
                       "x-apidog-mock": "Prospect"
                     },
-                    "TransactID": {
+                    "transactID": {
                       "type": "string",
                       "x-apidog-mock": "12345",
                       "nullable": true
                     },
-                    "DateOfBirth": {
+                    "dateOfBirth": {
                       "type": "string"
                     },
-                    "DateOfDeath": {
+                    "dateOfDeath": {
                       "type": "string",
                       "nullable": true
                     },
-                    "BirthCountryCode": {
+                    "birthCountryCode": {
                       "type": "string",
                       "nullable": true
                     },
-                    "BirthCity": {
+                    "birthCity": {
                       "type": "string",
                       "nullable": true
                     },
-                    "LanguageCode": {
+                    "languageCode": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryEmail": {
+                    "primaryEmail": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryEmailVerified": {
+                    "primaryEmailVerified": {
                       "type": "boolean"
                     },
-                    "SecondaryEmail": {
+                    "secondaryEmail": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryPhoneNumber": {
+                    "primaryPhoneNumber": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryPhoneNumberVerified": {
+                    "primaryPhoneNumberVerified": {
                       "type": "boolean"
                     },
-                    "SecondaryPhoneNumber": {
+                    "secondaryPhoneNumber": {
                       "type": "string",
                       "nullable": true
                     },
-                    "RegistrationAddress": {
+                    "registrationAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "ResidenceAddress": {
+                    "residenceAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "CorrespondenceAddress": {
+                    "correspondenceAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "Consents": {
+                    "consents": {
                       "$ref": "#/components/schemas/ConsentDetails",
                       "nullable": true
                     },
-                    "Nationalities": {
+                    "nationalities": {
                       "type": "array",
                       "items": {
                         "type": "string"
                       }
                     },
-                    "IdDocuments": {
+                    "idDocuments": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/IdDocumentDetails"
                       }
                     },
-                    "OndatoCheckValid": {
+                    "ondatoCheckValid": {
                       "type": "boolean",
                       "description": "The value \"False\" is sent: \n - when the last Ondata screening time was recorded the previous day (i.e. today is 27th, and the last check was at any time during 26th), and the customer's status is \"Prospect\". \n- When the customer's status is \"Existing\" and all documents “Expiration date” < Current date. "
                     },
-                    "AmlScreening": {
+                    "amlScreening": {
                       "$ref": "#/components/schemas/AmlScreeningDetails",
                       "nullable": true
                     },
-                    "Kyc": {
+                    "kyc": {
                       "$ref": "#/components/schemas/KycDetails"
                     },
-                    "SelectedProducts": {
+                    "selectedProducts": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/SelectedProductDetails"
                       }
                     },
-                    "HasParentalPermissionToManageProducts": {
+                    "hasParentalPermissionToManageProducts": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "IsMinor": {
+                    "isMinor": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "IsEmancipatedMinor": {
+                    "isEmancipatedMinor": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "IsIncapable": {
+                    "isIncapable": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "Restrictions": {
+                    "restrictions": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/RestrictionDetails"
@@ -670,7 +683,7 @@
                   },
                   "x-apidog-orders": [
                     "01K83NX4JDAQDNHM124CNZRBQH",
-                    "Restrictions"
+                    "restrictions"
                   ],
                   "x-apidog-refs": {
                     "01K83NX4JDAQDNHM124CNZRBQH": {
@@ -678,21 +691,21 @@
                     }
                   },
                   "required": [
-                    "Restrictions",
-                    "McdId",
-                    "FirstName",
-                    "LastName",
-                    "PersonalCode",
-                    "CountryCode",
-                    "Status",
-                    "DateOfBirth",
-                    "PrimaryEmailVerified",
-                    "PrimaryPhoneNumberVerified",
-                    "Nationalities",
-                    "IdDocuments",
-                    "OndatoCheckValid",
-                    "Kyc",
-                    "SelectedProducts"
+                    "restrictions",
+                    "mcdId",
+                    "firstName",
+                    "lastName",
+                    "personalCode",
+                    "countryCode",
+                    "status",
+                    "dateOfBirth",
+                    "primaryEmailVerified",
+                    "primaryPhoneNumberVerified",
+                    "nationalities",
+                    "idDocuments",
+                    "ondatoCheckValid",
+                    "kyc",
+                    "selectedProducts"
                   ],
                   "x-apidog-ignore-properties": [
                     "McdId",
@@ -780,78 +793,78 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "LanguageCode": {
+                  "languageCode": {
                     "type": "string"
                   },
-                  "ResidenceAddress": {
+                  "residenceAddress": {
                     "$ref": "#/components/schemas/AddressDetails"
                   },
-                  "CorrespondenceAddress": {
+                  "correspondenceAddress": {
                     "$ref": "#/components/schemas/AddressDetails"
                   },
-                  "Nationalities": {
+                  "nationalities": {
                     "type": "array",
                     "items": {
                       "type": "string"
                     }
                   },
-                  "PrimaryEmail": {
+                  "primaryEmail": {
                     "type": "string"
                   },
-                  "PrimaryEmailVerified": {
+                  "primaryEmailVerified": {
                     "type": "boolean"
                   },
-                  "SecondaryEmail": {
+                  "secondaryEmail": {
                     "type": "string",
                     "nullable": true
                   },
-                  "PrimaryPhoneNumber": {
+                  "primaryPhoneNumber": {
                     "type": "string"
                   },
-                  "PrimaryPhoneNumberVerified": {
+                  "primaryPhoneNumberVerified": {
                     "type": "boolean"
                   },
-                  "SecondaryPhoneNumber": {
+                  "secondaryPhoneNumber": {
                     "type": "string",
                     "nullable": true
                   },
-                  "SelectedProducts": {
+                  "selectedProducts": {
                     "type": "array",
                     "items": {
                       "$ref": "#/components/schemas/SelectedProductDetails"
                     }
                   },
-                  "HasParentalPermissionToManageProducts": {
+                  "hasParentalPermissionToManageProducts": {
                     "type": "boolean",
                     "description": "Not confirmed whether Infinity will set this directly - might be set automatically after agreement signing.",
                     "nullable": true
                   }
                 },
                 "x-apidog-orders": [
-                  "LanguageCode",
-                  "ResidenceAddress",
-                  "CorrespondenceAddress",
-                  "Nationalities",
-                  "PrimaryEmail",
-                  "PrimaryEmailVerified",
-                  "SecondaryEmail",
-                  "PrimaryPhoneNumber",
-                  "PrimaryPhoneNumberVerified",
-                  "SecondaryPhoneNumber",
-                  "SelectedProducts",
-                  "HasParentalPermissionToManageProducts"
+                  "languageCode",
+                  "residenceAddress",
+                  "correspondenceAddress",
+                  "nationalities",
+                  "primaryEmail",
+                  "primaryEmailVerified",
+                  "secondaryEmail",
+                  "primaryPhoneNumber",
+                  "primaryPhoneNumberVerified",
+                  "secondaryPhoneNumber",
+                  "selectedProducts",
+                  "hasParentalPermissionToManageProducts"
                 ],
                 "x-apidog-refs": {},
                 "required": [
-                  "LanguageCode",
-                  "ResidenceAddress",
-                  "CorrespondenceAddress",
-                  "Nationalities",
-                  "PrimaryEmail",
-                  "PrimaryPhoneNumber",
-                  "PrimaryEmailVerified",
-                  "PrimaryPhoneNumberVerified",
-                  "SelectedProducts"
+                  "languageCode",
+                  "residenceAddress",
+                  "correspondenceAddress",
+                  "nationalities",
+                  "primaryEmail",
+                  "primaryPhoneNumber",
+                  "primaryEmailVerified",
+                  "primaryPhoneNumberVerified",
+                  "selectedProducts"
                 ],
                 "x-apidog-ignore-properties": []
               },
@@ -868,36 +881,36 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "McdId": {
+                    "mcdId": {
                       "type": "string",
                       "x-apidog-mock": "F111"
                     },
-                    "FirstName": {
+                    "firstName": {
                       "type": "string",
                       "x-apidog-mock": "John"
                     },
-                    "MiddleName": {
+                    "middleName": {
                       "type": "string",
                       "x-apidog-mock": "Doe",
                       "nullable": true
                     },
-                    "LastName": {
+                    "lastName": {
                       "type": "string",
                       "x-apidog-mock": "Markus"
                     },
-                    "PersonalCode": {
+                    "personalCode": {
                       "type": "string",
                       "x-apidog-mock": "30000000000"
                     },
-                    "CountryCode": {
+                    "countryCode": {
                       "type": "string",
                       "x-apidog-mock": "LT"
                     },
-                    "Gender": {
+                    "gender": {
                       "type": "string",
                       "nullable": true
                     },
-                    "Status": {
+                    "status": {
                       "type": "string",
                       "enum": [
                         "Prospect",
@@ -929,110 +942,110 @@
                       ],
                       "x-apidog-mock": "Prospect"
                     },
-                    "TransactID": {
+                    "transactID": {
                       "type": "string",
                       "x-apidog-mock": "12345",
                       "nullable": true
                     },
-                    "DateOfBirth": {
+                    "dateOfBirth": {
                       "type": "string"
                     },
-                    "DateOfDeath": {
+                    "dateOfDeath": {
                       "type": "string",
                       "nullable": true
                     },
-                    "BirthCountryCode": {
+                    "birthCountryCode": {
                       "type": "string",
                       "nullable": true
                     },
-                    "BirthCity": {
+                    "birthCity": {
                       "type": "string",
                       "nullable": true
                     },
-                    "LanguageCode": {
+                    "languageCode": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryEmail": {
+                    "primaryEmail": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryEmailVerified": {
+                    "primaryEmailVerified": {
                       "type": "boolean"
                     },
-                    "SecondaryEmail": {
+                    "secondaryEmail": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryPhoneNumber": {
+                    "primaryPhoneNumber": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryPhoneNumberVerified": {
+                    "primaryPhoneNumberVerified": {
                       "type": "boolean"
                     },
-                    "SecondaryPhoneNumber": {
+                    "secondaryPhoneNumber": {
                       "type": "string",
                       "nullable": true
                     },
-                    "RegistrationAddress": {
+                    "registrationAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "ResidenceAddress": {
+                    "residenceAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "CorrespondenceAddress": {
+                    "correspondenceAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "Consents": {
+                    "consents": {
                       "$ref": "#/components/schemas/ConsentDetails",
                       "nullable": true
                     },
-                    "Nationalities": {
+                    "nationalities": {
                       "type": "array",
                       "items": {
                         "type": "string"
                       }
                     },
-                    "IdDocuments": {
+                    "idDocuments": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/IdDocumentDetails"
                       }
                     },
-                    "OndatoCheckValid": {
+                    "ondatoCheckValid": {
                       "type": "boolean",
                       "description": "The value \"False\" is sent: \n - when the last Ondata screening time was recorded the previous day (i.e. today is 27th, and the last check was at any time during 26th), and the customer's status is \"Prospect\". \n- When the customer's status is \"Existing\" and all documents “Expiration date” < Current date. "
                     },
-                    "AmlScreening": {
+                    "amlScreening": {
                       "$ref": "#/components/schemas/AmlScreeningDetails",
                       "nullable": true
                     },
-                    "Kyc": {
+                    "kyc": {
                       "$ref": "#/components/schemas/KycDetails"
                     },
-                    "SelectedProducts": {
+                    "selectedProducts": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/SelectedProductDetails"
                       }
                     },
-                    "HasParentalPermissionToManageProducts": {
+                    "hasParentalPermissionToManageProducts": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "IsMinor": {
+                    "isMinor": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "IsEmancipatedMinor": {
+                    "isEmancipatedMinor": {
                       "type": "boolean",
                       "nullable": true
                     },
-                    "IsIncapable": {
+                    "isIncapable": {
                       "type": "boolean",
                       "nullable": true
                     }
@@ -1041,20 +1054,20 @@
                     "01K83CGKQ40AVZKRYB0J9RQ0TT"
                   ],
                   "required": [
-                    "McdId",
-                    "FirstName",
-                    "LastName",
-                    "PersonalCode",
-                    "CountryCode",
-                    "Status",
-                    "DateOfBirth",
-                    "PrimaryEmailVerified",
-                    "PrimaryPhoneNumberVerified",
-                    "Nationalities",
-                    "IdDocuments",
-                    "OndatoCheckValid",
-                    "Kyc",
-                    "SelectedProducts"
+                    "mcdId",
+                    "firstName",
+                    "lastName",
+                    "personalCode",
+                    "countryCode",
+                    "status",
+                    "dateOfBirth",
+                    "primaryEmailVerified",
+                    "primaryPhoneNumberVerified",
+                    "nationalities",
+                    "idDocuments",
+                    "ondatoCheckValid",
+                    "kyc",
+                    "selectedProducts"
                   ],
                   "x-apidog-refs": {
                     "01K83CGKQ40AVZKRYB0J9RQ0TT": {
@@ -1142,25 +1155,25 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "ConsentOffers": {
+                  "consentOffers": {
                     "type": "boolean"
                   },
-                  "ConsentProfiling": {
+                  "consentProfiling": {
                     "type": "boolean"
                   },
-                  "ConsentPartnersOffers": {
+                  "consentPartnersOffers": {
                     "type": "boolean"
                   }
                 },
                 "x-apidog-orders": [
-                  "ConsentOffers",
-                  "ConsentProfiling",
-                  "ConsentPartnersOffers"
+                  "consentOffers",
+                  "consentProfiling",
+                  "consentPartnersOffers"
                 ],
                 "required": [
-                  "ConsentOffers",
-                  "ConsentProfiling",
-                  "ConsentPartnersOffers"
+                  "consentOffers",
+                  "consentProfiling",
+                  "consentPartnersOffers"
                 ],
                 "x-apidog-refs": {},
                 "x-apidog-ignore-properties": []
@@ -1178,36 +1191,36 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "ConsentOffers": {
+                    "consentOffers": {
                       "type": "boolean"
                     },
-                    "ConsentProfiling": {
+                    "consentProfiling": {
                       "type": "boolean"
                     },
-                    "ConsentPartnersOffers": {
+                    "consentPartnersOffers": {
                       "type": "boolean"
                     },
-                    "Date": {
+                    "date": {
                       "type": "string"
                     },
-                    "ValidUntil": {
+                    "validUntil": {
                       "type": "string",
                       "nullable": true
                     }
                   },
                   "x-apidog-orders": [
-                    "ConsentOffers",
-                    "ConsentProfiling",
-                    "ConsentPartnersOffers",
-                    "Date",
-                    "ValidUntil"
+                    "consentOffers",
+                    "consentProfiling",
+                    "consentPartnersOffers",
+                    "date",
+                    "validUntil"
                   ],
                   "required": [
-                    "ConsentOffers",
-                    "ConsentProfiling",
-                    "ConsentPartnersOffers",
-                    "Date",
-                    "ValidUntil"
+                    "consentOffers",
+                    "consentProfiling",
+                    "consentPartnersOffers",
+                    "date",
+                    "validUntil"
                   ],
                   "x-apidog-refs": {},
                   "x-apidog-ignore-properties": []
@@ -1391,40 +1404,40 @@
                   "items": {
                     "type": "object",
                     "properties": {
-                      "FirstName": {
+                      "firstName": {
                         "type": "string"
                       },
-                      "LastName": {
+                      "lastName": {
                         "type": "string"
                       },
-                      "PersonalCode": {
+                      "personalCode": {
                         "type": "string"
                       },
-                      "DateOfBirth": {
+                      "dateOfBirth": {
                         "type": "string",
                         "nullable": true
                       },
-                      "McdId": {
+                      "mcdId": {
                         "type": "string",
                         "nullable": true
                       },
-                      "PhoneNumber": {
+                      "phoneNumber": {
                         "type": "string",
                         "nullable": true
                       },
-                      "PhoneNumberVerified": {
+                      "phoneNumberVerified": {
                         "type": "boolean",
                         "nullable": true
                       },
-                      "Email": {
+                      "email": {
                         "type": "string",
                         "nullable": true
                       },
-                      "EmailVerified": {
+                      "emailVerified": {
                         "type": "boolean",
                         "nullable": true
                       },
-                      "CountryCode": {
+                      "countryCode": {
                         "type": "string",
                         "nullable": true
                       },
@@ -1433,22 +1446,22 @@
                       }
                     },
                     "x-apidog-orders": [
-                      "FirstName",
-                      "LastName",
-                      "PersonalCode",
-                      "DateOfBirth",
-                      "McdId",
-                      "PhoneNumber",
-                      "PhoneNumberVerified",
-                      "Email",
-                      "EmailVerified",
-                      "CountryCode",
+                      "firstName",
+                      "lastName",
+                      "personalCode",
+                      "dateOfBirth",
+                      "mcdId",
+                      "phoneNumber",
+                      "phoneNumberVerified",
+                      "email",
+                      "emailVerified",
+                      "countryCode",
                       "isWard"
                     ],
                     "required": [
-                      "FirstName",
-                      "LastName",
-                      "PersonalCode",
+                      "firstName",
+                      "lastName",
+                      "personalCode",
                       "isWard"
                     ],
                     "x-apidog-ignore-properties": []
@@ -1746,24 +1759,24 @@
                     }
                   },
                   "properties": {
-                    "McdId": {
+                    "mcdId": {
                       "type": "string",
                       "x-apidog-mock": "J111"
                     },
-                    "FullName": {
+                    "fullName": {
                       "type": "string",
                       "x-apidog-mock": "UAB Test"
                     },
-                    "CompanyCode": {
+                    "companyCode": {
                       "type": "string",
                       "x-apidog-mock": "12345",
                       "nullable": true
                     },
-                    "CountryCode": {
+                    "countryCode": {
                       "type": "string",
                       "x-apidog-mock": "LT"
                     },
-                    "Status": {
+                    "status": {
                       "type": "string",
                       "x-apidog-mock": "Prospect",
                       "enum": [
@@ -1807,66 +1820,66 @@
                         }
                       ]
                     },
-                    "TransactId": {
+                    "transactID": {
                       "type": "string",
                       "x-apidog-mock": "12345",
                       "nullable": true
                     },
-                    "PrimaryEmail": {
+                    "primaryEmail": {
                       "type": "string"
                     },
-                    "PrimaryEmailVerified": {
+                    "primaryEmailVerified": {
                       "type": "boolean"
                     },
-                    "SecondaryEmail": {
+                    "secondaryEmail": {
                       "type": "string",
                       "nullable": true
                     },
-                    "PrimaryPhoneNumber": {
+                    "primaryPhoneNumber": {
                       "type": "string"
                     },
-                    "PrimaryPhoneNumberVerified": {
+                    "primaryPhoneNumberVerified": {
                       "type": "boolean"
                     },
-                    "SecondaryPhoneNumber": {
+                    "secondaryPhoneNumber": {
                       "type": "string",
                       "nullable": true
                     },
-                    "RegistrationAddress": {
+                    "registrationAddress": {
                       "$ref": "#/components/schemas/AddressDetails"
                     },
-                    "ResidenceAddress": {
+                    "residenceAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "CorrespondenceAddress": {
+                    "correspondenceAddress": {
                       "$ref": "#/components/schemas/AddressDetails",
                       "nullable": true
                     },
-                    "Consents": {
+                    "consents": {
                       "$ref": "#/components/schemas/JuridicalPersonConsentDetails",
                       "nullable": true
                     },
-                    "AmlScreening": {
+                    "amlScreening": {
                       "$ref": "#/components/schemas/AmlScreeningDetails",
                       "nullable": true
                     },
-                    "Kyc": {
+                    "kyc": {
                       "$ref": "#/components/schemas/KycDetails"
                     },
-                    "SelectedProducts": {
+                    "selectedProducts": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/SelectedProductDetails"
                       },
                       "nullable": true
                     },
-                    "FinalBeneficiariesMissing": {
+                    "finalBeneficiariesMissing": {
                       "type": "boolean",
                       "x-apidog-mock": "false",
                       "description": "Set to true if beneficiaries must be listed for this client, but are missing (i.e. were missing in the JANGIS integration)"
                     },
-                    "Restrictions": {
+                    "restrictions": {
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/RestrictionDetails"
@@ -1874,22 +1887,22 @@
                     }
                   },
                   "required": [
-                    "Restrictions",
-                    "McdId",
-                    "FullName",
-                    "CountryCode",
-                    "Status",
-                    "PrimaryEmail",
-                    "PrimaryEmailVerified",
-                    "PrimaryPhoneNumber",
-                    "PrimaryPhoneNumberVerified",
-                    "RegistrationAddress",
-                    "Kyc",
-                    "FinalBeneficiariesMissing"
+                    "restrictions",
+                    "mcdId",
+                    "fullName",
+                    "countryCode",
+                    "status",
+                    "primaryEmail",
+                    "primaryEmailVerified",
+                    "primaryPhoneNumber",
+                    "primaryPhoneNumberVerified",
+                    "registrationAddress",
+                    "kyc",
+                    "finalBeneficiariesMissing"
                   ],
                   "x-apidog-orders": [
                     "01KEXW78TFV709TJRK43Z4GF9Z",
-                    "Restrictions"
+                    "restrictions"
                   ],
                   "x-apidog-ignore-properties": [
                     "McdId",
@@ -1950,81 +1963,81 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "FullName": {
+                  "fullName": {
                     "type": "string",
                     "x-apidog-mock": "UAB Test"
                   },
-                  "CountryCode": {
+                  "countryCode": {
                     "type": "string",
                     "x-apidog-mock": "LT"
                   },
-                  "PrimaryEmail": {
+                  "primaryEmail": {
                     "type": "string"
                   },
-                  "PrimaryEmailVerified": {
+                  "primaryEmailVerified": {
                     "type": "boolean"
                   },
-                  "SecondaryEmail": {
+                  "secondaryEmail": {
                     "type": "string",
                     "nullable": true
                   },
-                  "PrimaryPhoneNumber": {
+                  "primaryPhoneNumber": {
                     "type": "string"
                   },
-                  "PrimaryPhoneNumberVerified": {
+                  "primaryPhoneNumberVerified": {
                     "type": "boolean"
                   },
-                  "SecondaryPhoneNumber": {
+                  "secondaryPhoneNumber": {
                     "type": "string",
                     "nullable": true
                   },
-                  "RegistrationAddress": {
+                  "registrationAddress": {
                     "$ref": "#/components/schemas/AddressDetails"
                   },
-                  "ResidenceAddress": {
+                  "residenceAddress": {
                     "$ref": "#/components/schemas/AddressDetails",
                     "nullable": true
                   },
-                  "CorrespondenceAddress": {
+                  "correspondenceAddress": {
                     "$ref": "#/components/schemas/AddressDetails"
                   },
-                  "SelectedProducts": {
+                  "selectedProducts": {
                     "type": "array",
                     "items": {
                       "$ref": "#/components/schemas/SelectedProductDetails"
                     }
                   },
-                  "RepresentativeMcdId": {
+                  "representativeMcdId": {
                     "type": "string"
                   }
                 },
                 "x-apidog-refs": {},
                 "x-apidog-orders": [
-                  "FullName",
-                  "CountryCode",
-                  "PrimaryEmail",
-                  "PrimaryEmailVerified",
-                  "SecondaryEmail",
-                  "PrimaryPhoneNumber",
-                  "PrimaryPhoneNumberVerified",
-                  "SecondaryPhoneNumber",
-                  "RegistrationAddress",
-                  "ResidenceAddress",
-                  "CorrespondenceAddress",
-                  "SelectedProducts",
-                  "RepresentativeMcdId"
+                  "fullName",
+                  "countryCode",
+                  "primaryEmail",
+                  "primaryEmailVerified",
+                  "secondaryEmail",
+                  "primaryPhoneNumber",
+                  "primaryPhoneNumberVerified",
+                  "secondaryPhoneNumber",
+                  "registrationAddress",
+                  "residenceAddress",
+                  "correspondenceAddress",
+                  "selectedProducts",
+                  "representativeMcdId"
                 ],
                 "required": [
-                  "CountryCode",
-                  "FullName",
-                  "SelectedProducts",
-                  "PrimaryEmail",
-                  "PrimaryEmailVerified",
-                  "PrimaryPhoneNumber",
-                  "PrimaryPhoneNumberVerified",
-                  "RegistrationAddress",
-                  "CorrespondenceAddress",
-                  "RepresentativeMcdId"
+                  "countryCode",
+                  "fullName",
+                  "selectedProducts",
+                  "primaryEmail",
+                  "primaryEmailVerified",
+                  "primaryPhoneNumber",
+                  "primaryPhoneNumberVerified",
+                  "registrationAddress",
+                  "correspondenceAddress",
+                  "representativeMcdId"
                 ],
                 "x-apidog-ignore-properties": []
               },
@@ -2098,20 +2111,20 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "ConsentOffers": {
+                  "consentOffers": {
                     "type": "boolean"
                   },
-                  "ConsentPartnersOffers": {
+                  "consentPartnersOffers": {
                     "type": "boolean"
                   }
                 },
                 "x-apidog-orders": [
-                  "ConsentOffers",
-                  "ConsentPartnersOffers"
+                  "consentOffers",
+                  "consentPartnersOffers"
                 ],
                 "required": [
-                  "ConsentOffers",
-                  "ConsentPartnersOffers"
+                  "consentOffers",
+                  "consentPartnersOffers"
                 ],
                 "x-apidog-refs": {},
                 "x-apidog-ignore-properties": []
@@ -2689,64 +2702,64 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "LanguageCode": {
+                  "languageCode": {
                     "type": "string"
                   },
-                  "ResidenceAddress": {
+                  "residenceAddress": {
                     "$ref": "#/components/schemas/AddressDetails"
                   },
-                  "CorrespondenceAddress": {
+                  "correspondenceAddress": {
                     "$ref": "#/components/schemas/AddressDetails"
                   },
-                  "Nationalities": {
+                  "nationalities": {
                     "type": "array",
                     "items": {
                       "type": "string"
                     }
                   },
-                  "PrimaryEmail": {
+                  "primaryEmail": {
                     "type": "string"
                   },
-                  "PrimaryEmailVerified": {
+                  "primaryEmailVerified": {
                     "type": "boolean"
                   },
-                  "SecondaryEmail": {
+                  "secondaryEmail": {
                     "type": "string",
                     "nullable": true
                   },
-                  "PrimaryPhoneNumber": {
+                  "primaryPhoneNumber": {
                     "type": "string"
                   },
-                  "PrimaryPhoneNumberVerified": {
+                  "primaryPhoneNumberVerified": {
                     "type": "boolean"
                   },
-                  "SecondaryPhoneNumber": {
+                  "secondaryPhoneNumber": {
                     "type": "string",
                     "nullable": true
                   }
                 },
                 "x-apidog-orders": [
-                  "LanguageCode",
-                  "ResidenceAddress",
-                  "CorrespondenceAddress",
-                  "Nationalities",
-                  "PrimaryEmail",
-                  "PrimaryEmailVerified",
-                  "SecondaryEmail",
-                  "PrimaryPhoneNumber",
-                  "PrimaryPhoneNumberVerified",
-                  "SecondaryPhoneNumber"
+                  "languageCode",
+                  "residenceAddress",
+                  "correspondenceAddress",
+                  "nationalities",
+                  "primaryEmail",
+                  "primaryEmailVerified",
+                  "secondaryEmail",
+                  "primaryPhoneNumber",
+                  "primaryPhoneNumberVerified",
+                  "secondaryPhoneNumber"
                 ],
                 "x-apidog-refs": {},
                 "required": [
-                  "LanguageCode",
-                  "ResidenceAddress",
-                  "CorrespondenceAddress",
-                  "Nationalities",
-                  "PrimaryEmail",
-                  "PrimaryPhoneNumber",
-                  "PrimaryEmailVerified",
-                  "PrimaryPhoneNumberVerified"
+                  "languageCode",
+                  "residenceAddress",
+                  "correspondenceAddress",
+                  "nationalities",
+                  "primaryEmail",
+                  "primaryPhoneNumber",
+                  "primaryEmailVerified",
+                  "primaryPhoneNumberVerified"
                 ],
                 "x-apidog-ignore-properties": []
               },
@@ -2918,32 +2931,38 @@
       "PhysicalPersonCoreDetails": {
         "type": "object",
         "properties": {
-          "McdId": {
+          "mcdId": {
             "type": "string",
-            "x-apidog-mock": "F111"
+            "example": "F00011636",
+            "x-apidog-mock": "F00011636"
           },
-          "FirstName": {
+          "firstName": {
             "type": "string",
-            "x-apidog-mock": "John"
+            "example": "Mohtashim",
+            "x-apidog-mock": "Mohtashim"
           },
-          "MiddleName": {
+          "middleName": {
             "type": "string",
-            "x-apidog-mock": "Doe",
+            "example": null,
+            "x-apidog-mock": null,
             "nullable": true
           },
-          "LastName": {
+          "lastName": {
             "type": "string",
-            "x-apidog-mock": "Markus"
+            "example": "Waheed",
+            "x-apidog-mock": "Waheed"
           },
-          "PersonalCode": {
+          "personalCode": {
             "type": "string",
-            "x-apidog-mock": "30000000000"
+            "example": "29909168028",
+            "x-apidog-mock": "29909168028"
           },
-          "CountryCode": {
+          "countryCode": {
             "type": "string",
-            "x-apidog-mock": "LT"
+            "example": "EE",
+            "x-apidog-mock": "EE"
           },
-          "Status": {
+          "status": {
             "type": "string",
             "enum": [
               "Prospect",
@@ -2951,61 +2970,42 @@
               "Exit",
               "Deceased"
             ],
-            "x-apidog-enum": [
-              {
-                "value": "Prospect",
-                "name": "",
-                "description": ""
-              },
-              {
-                "value": "Existing",
-                "name": "",
-                "description": ""
-              },
-              {
-                "value": "Exit",
-                "name": "",
-                "description": ""
-              },
-              {
-                "value": "Deceased",
-                "name": "",
-                "description": ""
-              }
-            ],
+            "example": "Prospect",
             "x-apidog-mock": "Prospect"
           },
-          "TransactID": {
+          "transactID": {
             "type": "string",
-            "x-apidog-mock": "12345",
+            "example": null,
+            "x-apidog-mock": null,
             "nullable": true
           },
-          "SelectedProducts": {
+          "selectedProducts": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/SelectedProductDetails"
-            }
+              "": "#/components/schemas/SelectedProductDetails"
+            },
+            "example": []
           }
         },
         "x-apidog-orders": [
-          "McdId",
-          "FirstName",
-          "MiddleName",
-          "LastName",
-          "PersonalCode",
-          "CountryCode",
-          "Status",
-          "TransactID",
-          "SelectedProducts"
+          "mcdId",
+          "firstName",
+          "middleName",
+          "lastName",
+          "personalCode",
+          "countryCode",
+          "status",
+          "transactID",
+          "selectedProducts"
         ],
         "required": [
-          "FirstName",
-          "LastName",
-          "McdId",
-          "PersonalCode",
-          "CountryCode",
-          "Status",
-          "SelectedProducts"
+          "firstName",
+          "lastName",
+          "mcdId",
+          "personalCode",
+          "countryCode",
+          "status",
+          "selectedProducts"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3013,36 +3013,36 @@
       "PhysicalPersonFullDetails": {
         "type": "object",
         "properties": {
-          "McdId": {
+          "mcdId": {
             "type": "string",
             "x-apidog-mock": "F111"
           },
-          "FirstName": {
+          "firstName": {
             "type": "string",
             "x-apidog-mock": "John"
           },
-          "MiddleName": {
+          "middleName": {
             "type": "string",
             "x-apidog-mock": "Doe",
             "nullable": true
           },
-          "LastName": {
+          "lastName": {
             "type": "string",
             "x-apidog-mock": "Markus"
           },
-          "PersonalCode": {
+          "personalCode": {
             "type": "string",
             "x-apidog-mock": "30000000000"
           },
-          "CountryCode": {
+          "countryCode": {
             "type": "string",
             "x-apidog-mock": "LT"
           },
-          "Gender": {
+          "gender": {
             "type": "string",
             "nullable": true
           },
-          "Status": {
+          "status": {
             "type": "string",
             "enum": [
               "Prospect",
@@ -3074,165 +3074,165 @@
             ],
             "x-apidog-mock": "Prospect"
           },
-          "TransactID": {
+          "transactID": {
             "type": "string",
             "x-apidog-mock": "12345",
             "nullable": true
           },
-          "DateOfBirth": {
+          "dateOfBirth": {
             "type": "string"
           },
-          "DateOfDeath": {
+          "dateOfDeath": {
             "type": "string",
             "nullable": true
           },
-          "BirthCountryCode": {
+          "birthCountryCode": {
             "type": "string",
             "nullable": true
           },
-          "BirthCity": {
+          "birthCity": {
             "type": "string",
             "nullable": true
           },
-          "LanguageCode": {
+          "languageCode": {
             "type": "string",
             "nullable": true
           },
-          "PrimaryEmail": {
+          "primaryEmail": {
             "type": "string",
             "nullable": true
           },
-          "PrimaryEmailVerified": {
+          "primaryEmailVerified": {
             "type": "boolean"
           },
-          "SecondaryEmail": {
+          "secondaryEmail": {
             "type": "string",
             "nullable": true
           },
-          "PrimaryPhoneNumber": {
+          "primaryPhoneNumber": {
             "type": "string",
             "nullable": true
           },
-          "PrimaryPhoneNumberVerified": {
+          "primaryPhoneNumberVerified": {
             "type": "boolean"
           },
-          "SecondaryPhoneNumber": {
+          "secondaryPhoneNumber": {
             "type": "string",
             "nullable": true
           },
-          "RegistrationAddress": {
+          "registrationAddress": {
             "$ref": "#/components/schemas/AddressDetails",
             "nullable": true
           },
-          "ResidenceAddress": {
+          "residenceAddress": {
             "$ref": "#/components/schemas/AddressDetails",
             "nullable": true
           },
-          "CorrespondenceAddress": {
+          "correspondenceAddress": {
             "$ref": "#/components/schemas/AddressDetails",
             "nullable": true
           },
-          "Consents": {
+          "consents": {
             "$ref": "#/components/schemas/ConsentDetails",
             "nullable": true
           },
-          "Nationalities": {
+          "nationalities": {
             "type": "array",
             "items": {
               "type": "string"
             }
           },
-          "IdDocuments": {
+          "idDocuments": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/IdDocumentDetails"
             }
           },
-          "OndatoCheckValid": {
+          "ondatoCheckValid": {
             "type": "boolean",
             "description": "The value \"False\" is sent: \n - when the last Ondata screening time was recorded the previous day (i.e. today is 27th, and the last check was at any time during 26th), and the customer's status is \"Prospect\". \n- When the customer's status is \"Existing\" and all documents “Expiration date” < Current date. "
           },
-          "AmlScreening": {
+          "amlScreening": {
             "$ref": "#/components/schemas/AmlScreeningDetails",
             "nullable": true
           },
-          "Kyc": {
+          "kyc": {
             "$ref": "#/components/schemas/KycDetails"
           },
-          "SelectedProducts": {
+          "selectedProducts": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SelectedProductDetails"
             }
           },
-          "HasParentalPermissionToManageProducts": {
+          "hasParentalPermissionToManageProducts": {
             "type": "boolean",
             "nullable": true
           },
-          "IsMinor": {
+          "isMinor": {
             "type": "boolean",
             "nullable": true
           },
-          "IsEmancipatedMinor": {
+          "isEmancipatedMinor": {
             "type": "boolean",
             "nullable": true
           },
-          "IsIncapable": {
+          "isIncapable": {
             "type": "boolean",
             "nullable": true
           }
         },
         "x-apidog-orders": [
-          "McdId",
-          "FirstName",
-          "MiddleName",
-          "LastName",
-          "PersonalCode",
-          "CountryCode",
-          "Gender",
-          "Status",
-          "TransactID",
-          "DateOfBirth",
-          "DateOfDeath",
-          "BirthCountryCode",
-          "BirthCity",
-          "LanguageCode",
-          "PrimaryEmail",
-          "PrimaryEmailVerified",
-          "SecondaryEmail",
-          "PrimaryPhoneNumber",
-          "PrimaryPhoneNumberVerified",
-          "SecondaryPhoneNumber",
-          "RegistrationAddress",
-          "ResidenceAddress",
-          "CorrespondenceAddress",
-          "Consents",
-          "Nationalities",
-          "IdDocuments",
-          "OndatoCheckValid",
-          "AmlScreening",
-          "Kyc",
-          "SelectedProducts",
-          "HasParentalPermissionToManageProducts",
-          "IsMinor",
-          "IsEmancipatedMinor",
-          "IsIncapable"
+          "mcdId",
+          "firstName",
+          "middleName",
+          "lastName",
+          "personalCode",
+          "countryCode",
+          "gender",
+          "status",
+          "transactID",
+          "dateOfBirth",
+          "dateOfDeath",
+          "birthCountryCode",
+          "birthCity",
+          "languageCode",
+          "primaryEmail",
+          "primaryEmailVerified",
+          "secondaryEmail",
+          "primaryPhoneNumber",
+          "primaryPhoneNumberVerified",
+          "secondaryPhoneNumber",
+          "registrationAddress",
+          "residenceAddress",
+          "correspondenceAddress",
+          "consents",
+          "nationalities",
+          "idDocuments",
+          "ondatoCheckValid",
+          "amlScreening",
+          "kyc",
+          "selectedProducts",
+          "hasParentalPermissionToManageProducts",
+          "isMinor",
+          "isEmancipatedMinor",
+          "isIncapable"
         ],
         "required": [
-          "FirstName",
-          "LastName",
-          "McdId",
-          "PersonalCode",
-          "CountryCode",
-          "Status",
-          "DateOfBirth",
-          "Nationalities",
-          "IdDocuments",
-          "OndatoCheckValid",
-          "PrimaryEmailVerified",
-          "Kyc",
-          "PrimaryPhoneNumberVerified",
-          "SelectedProducts"
+          "firstName",
+          "lastName",
+          "mcdId",
+          "personalCode",
+          "countryCode",
+          "status",
+          "dateOfBirth",
+          "nationalities",
+          "idDocuments",
+          "ondatoCheckValid",
+          "primaryEmailVerified",
+          "kyc",
+          "primaryPhoneNumberVerified",
+          "selectedProducts"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3312,35 +3312,35 @@
       "ConsentDetails": {
         "type": "object",
         "properties": {
-          "ConsentOffers": {
+          "consentOffers": {
             "type": "boolean",
             "nullable": true
           },
-          "ConsentProfiling": {
+          "consentProfiling": {
             "type": "boolean",
             "nullable": true
           },
-          "ConsentPartnersOffers": {
+          "consentPartnersOffers": {
             "type": "boolean",
             "nullable": true
           },
-          "Date": {
+          "date": {
             "type": "string"
           },
-          "ValidUntil": {
+          "validUntil": {
             "type": "string",
             "nullable": true
           }
         },
         "x-apidog-orders": [
-          "ConsentOffers",
-          "ConsentProfiling",
-          "ConsentPartnersOffers",
-          "Date",
-          "ValidUntil"
+          "consentOffers",
+          "consentProfiling",
+          "consentPartnersOffers",
+          "date",
+          "validUntil"
         ],
         "required": [
-          "Date"
+          "date"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3348,51 +3348,51 @@
       "IdDocumentDetails": {
         "type": "object",
         "properties": {
-          "Id": {
+          "id": {
             "type": "string",
             "x-apidog-mock": "{{$string.uuid}}"
           },
-          "Number": {
+          "number": {
             "type": "string"
           },
-          "TypeCode": {
+          "typeCode": {
             "type": "string"
           },
-          "IssuerCountryCode": {
+          "issuerCountryCode": {
             "type": "string"
           },
-          "IssueDate": {
+          "issueDate": {
             "type": "string"
           },
-          "ExpirationDate": {
+          "expirationDate": {
             "type": "string"
           },
-          "FormpipeFileId": {
+          "formpipeFileId": {
             "type": "string",
             "nullable": true
           },
-          "NationalIdentifier": {
+          "nationalIdentifier": {
             "$ref": "#/components/schemas/NationalIdentifierDetails"
           }
         },
         "x-apidog-orders": [
-          "Id",
-          "Number",
-          "TypeCode",
-          "IssuerCountryCode",
-          "IssueDate",
-          "ExpirationDate",
-          "FormpipeFileId",
-          "NationalIdentifier"
+          "id",
+          "number",
+          "typeCode",
+          "issuerCountryCode",
+          "issueDate",
+          "expirationDate",
+          "formpipeFileId",
+          "nationalIdentifier"
         ],
         "required": [
-          "Id",
-          "Number",
-          "TypeCode",
-          "IssuerCountryCode",
-          "IssueDate",
-          "ExpirationDate",
-          "NationalIdentifier"
+          "id",
+          "number",
+          "typeCode",
+          "issuerCountryCode",
+          "issueDate",
+          "expirationDate",
+          "nationalIdentifier"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3400,30 +3400,30 @@
       "NationalIdentifierDetails": {
         "type": "object",
         "properties": {
-          "Number": {
+          "number": {
             "type": "string"
           },
-          "Name": {
+          "name": {
             "type": "string"
           },
-          "Rank": {
+          "rank": {
             "type": "integer"
           },
-          "CountryCode": {
+          "countryCode": {
             "type": "string"
           }
         },
         "x-apidog-orders": [
-          "Number",
-          "Name",
-          "Rank",
-          "CountryCode"
+          "number",
+          "name",
+          "rank",
+          "countryCode"
         ],
         "required": [
-          "Number",
-          "Name",
-          "Rank",
-          "CountryCode"
+          "number",
+          "name",
+          "rank",
+          "countryCode"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3431,31 +3431,31 @@
       "AmlScreeningDetails": {
         "type": "object",
         "properties": {
-          "LastAmlResultDate": {
+          "lastAmlResultDate": {
             "type": "string",
             "description": "Date of the last AML screening",
             "nullable": true
           },
-          "AmlResult": {
+          "amlResult": {
             "type": "string",
             "description": "Negative – continue onboarding \nPositive – stop onboarding \nReferred – continue onboarding/ waiting SMA Decision \nPending – waiting answer from LN/manual decision management \nError – waiting, manual decision management \nNull ",
             "nullable": true
           },
-          "SmaApprovalStatus": {
+          "smaApprovalStatus": {
             "type": "string",
             "description": "This field indicates if the person is currently or has previously been in the SMA process. \n\nNegative – continue onboarding \n\nPositive – stop onboarding \n\nOnReview – continue onboarding \n\nRevoke – customer dropped out durint the SMA process \n\nNull ",
             "nullable": true
           },
-          "SmaDecisionDate": {
+          "smaDecisionDate": {
             "type": "string",
             "nullable": true
           }
         },
         "x-apidog-orders": [
-          "LastAmlResultDate",
-          "AmlResult",
-          "SmaApprovalStatus",
-          "SmaDecisionDate"
+          "lastAmlResultDate",
+          "amlResult",
+          "smaApprovalStatus",
+          "smaDecisionDate"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3463,20 +3463,20 @@
       "KycDetails": {
         "type": "object",
         "properties": {
-          "IsKycRequired": {
+          "isKycRequired": {
             "type": "boolean"
           },
-          "ExpirationDate": {
+          "expirationDate": {
             "type": "string",
             "nullable": true
           }
         },
         "x-apidog-orders": [
-          "IsKycRequired",
-          "ExpirationDate"
+          "isKycRequired",
+          "expirationDate"
         ],
         "required": [
-          "IsKycRequired"
+          "isKycRequired"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3484,47 +3484,47 @@
       "ErrorDetails": {
         "type": "object",
         "properties": {
-          "Code": {
+          "code": {
             "type": "string",
             "description": "Code for the overall error"
           },
-          "Message": {
+          "message": {
             "type": "string",
             "description": "Message for the overall error"
           },
-          "Errors": {
+          "errors": {
             "type": "array",
             "items": {
               "type": "object",
               "properties": {
-                "Code": {
+                "code": {
                   "type": "string",
                   "description": "Specific error code"
                 },
-                "Message": {
+                "message": {
                   "type": "string",
                   "description": "Specific error message"
                 },
-                "Field": {
+                "field": {
                   "type": "string",
                   "description": "The field for which validation has failed",
                   "nullable": true
                 },
-                "Value": {
+                "value": {
                   "type": "string",
                   "description": "Value which triggered the specific error",
                   "nullable": true
                 }
               },
               "x-apidog-orders": [
-                "Code",
-                "Message",
-                "Field",
-                "Value"
+                "code",
+                "message",
+                "field",
+                "value"
               ],
               "required": [
-                "Code",
-                "Message"
+                "code",
+                "message"
               ],
               "x-apidog-ignore-properties": []
             },
@@ -3533,13 +3533,13 @@
           }
         },
         "x-apidog-orders": [
-          "Code",
-          "Message",
-          "Errors"
+          "code",
+          "message",
+          "errors"
         ],
         "required": [
-          "Code",
-          "Message"
+          "code",
+          "message"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3547,7 +3547,7 @@
       "SelectedProductDetails": {
         "type": "object",
         "properties": {
-          "ProductCategory": {
+          "productCategory": {
             "type": "string",
             "enum": [
               "Card",
@@ -3573,18 +3573,18 @@
             ],
             "description": "Product group (card, leasing agreement etc)"
           },
-          "ProductId": {
+          "productId": {
             "type": "string",
             "description": "Specific product ID (i.e. for Golden Card)"
           }
         },
         "x-apidog-orders": [
-          "ProductCategory",
-          "ProductId"
+          "productCategory",
+          "productId"
         ],
         "required": [
-          "ProductCategory",
-          "ProductId"
+          "productCategory",
+          "productId"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3592,23 +3592,23 @@
       "JuridicalPersonCoreDetails": {
         "type": "object",
         "properties": {
-          "McdId": {
+          "mcdId": {
             "type": "string",
             "x-apidog-mock": "J111"
           },
-          "FullName": {
+          "fullName": {
             "type": "string",
             "x-apidog-mock": "UAB Test"
           },
-          "CompanyCode": {
+          "companyCode": {
             "type": "string",
             "x-apidog-mock": "12345"
           },
-          "CountryCode": {
+          "countryCode": {
             "type": "string",
             "x-apidog-mock": "LT"
           },
-          "Status": {
+          "status": {
             "type": "string",
             "x-apidog-mock": "Prospect",
             "enum": [
@@ -3652,12 +3652,12 @@
               }
             ]
           },
-          "TransactId": {
+          "transactID": {
             "type": "string",
             "x-apidog-mock": "12345",
             "nullable": true
           },
-          "SelectedProducts": {
+          "selectedProducts": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SelectedProductDetails"
@@ -3665,21 +3665,21 @@
           }
         },
         "x-apidog-orders": [
-          "McdId",
-          "FullName",
-          "CompanyCode",
-          "CountryCode",
-          "Status",
-          "TransactId",
-          "SelectedProducts"
+          "mcdId",
+          "fullName",
+          "companyCode",
+          "countryCode",
+          "status",
+          "transactID",
+          "selectedProducts"
         ],
         "required": [
-          "McdId",
-          "CompanyCode",
-          "CountryCode",
-          "FullName",
-          "Status",
-          "SelectedProducts"
+          "mcdId",
+          "companyCode",
+          "countryCode",
+          "fullName",
+          "status",
+          "selectedProducts"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3687,24 +3687,24 @@
       "JuridicalPersonFullDetails": {
         "type": "object",
         "properties": {
-          "McdId": {
+          "mcdId": {
             "type": "string",
             "x-apidog-mock": "J111"
           },
-          "FullName": {
+          "fullName": {
             "type": "string",
             "x-apidog-mock": "UAB Test"
           },
-          "CompanyCode": {
+          "companyCode": {
             "type": "string",
             "x-apidog-mock": "12345",
             "nullable": true
           },
-          "CountryCode": {
+          "countryCode": {
             "type": "string",
             "x-apidog-mock": "LT"
           },
-          "Status": {
+          "status": {
             "type": "string",
             "x-apidog-mock": "Prospect",
             "enum": [
@@ -3748,100 +3748,100 @@
               }
             ]
           },
-          "TransactId": {
+          "transactID": {
             "type": "string",
             "x-apidog-mock": "12345",
             "nullable": true
           },
-          "PrimaryEmail": {
+          "primaryEmail": {
             "type": "string"
           },
-          "PrimaryEmailVerified": {
+          "primaryEmailVerified": {
             "type": "boolean"
           },
-          "SecondaryEmail": {
+          "secondaryEmail": {
             "type": "string",
             "nullable": true
           },
-          "PrimaryPhoneNumber": {
+          "primaryPhoneNumber": {
             "type": "string"
           },
-          "PrimaryPhoneNumberVerified": {
+          "primaryPhoneNumberVerified": {
             "type": "boolean"
           },
-          "SecondaryPhoneNumber": {
+          "secondaryPhoneNumber": {
             "type": "string",
             "nullable": true
           },
-          "RegistrationAddress": {
+          "registrationAddress": {
             "$ref": "#/components/schemas/AddressDetails"
           },
-          "ResidenceAddress": {
+          "residenceAddress": {
             "$ref": "#/components/schemas/AddressDetails",
             "nullable": true
           },
-          "CorrespondenceAddress": {
+          "correspondenceAddress": {
             "$ref": "#/components/schemas/AddressDetails",
             "nullable": true
           },
-          "Consents": {
+          "consents": {
             "$ref": "#/components/schemas/JuridicalPersonConsentDetails",
             "nullable": true
           },
-          "AmlScreening": {
+          "amlScreening": {
             "$ref": "#/components/schemas/AmlScreeningDetails",
             "nullable": true
           },
-          "Kyc": {
+          "kyc": {
             "$ref": "#/components/schemas/KycDetails"
           },
-          "SelectedProducts": {
+          "selectedProducts": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SelectedProductDetails"
             },
             "nullable": true
           },
-          "FinalBeneficiariesMissing": {
+          "finalBeneficiariesMissing": {
             "type": "boolean",
             "x-apidog-mock": "false",
             "description": "Set to true if beneficiaries must be listed for this client, but are missing (i.e. were missing in the JANGIS integration)"
           }
         },
         "x-apidog-orders": [
-          "McdId",
-          "FullName",
-          "CompanyCode",
-          "CountryCode",
-          "Status",
-          "TransactId",
-          "PrimaryEmail",
-          "PrimaryEmailVerified",
-          "SecondaryEmail",
-          "PrimaryPhoneNumber",
-          "PrimaryPhoneNumberVerified",
-          "SecondaryPhoneNumber",
-          "RegistrationAddress",
-          "ResidenceAddress",
-          "CorrespondenceAddress",
-          "Consents",
-          "AmlScreening",
-          "Kyc",
-          "SelectedProducts",
-          "FinalBeneficiariesMissing"
+          "mcdId",
+          "fullName",
+          "companyCode",
+          "countryCode",
+          "status",
+          "transactID",
+          "primaryEmail",
+          "primaryEmailVerified",
+          "secondaryEmail",
+          "primaryPhoneNumber",
+          "primaryPhoneNumberVerified",
+          "secondaryPhoneNumber",
+          "registrationAddress",
+          "residenceAddress",
+          "correspondenceAddress",
+          "consents",
+          "amlScreening",
+          "kyc",
+          "selectedProducts",
+          "finalBeneficiariesMissing"
         ],
         "required": [
-          "McdId",
-          "CountryCode",
-          "FullName",
-          "Status",
-          "Kyc",
-          "PrimaryEmail",
-          "PrimaryEmailVerified",
-          "PrimaryPhoneNumber",
-          "PrimaryPhoneNumberVerified",
-          "FinalBeneficiariesMissing",
-          "RegistrationAddress"
+          "mcdId",
+          "countryCode",
+          "fullName",
+          "status",
+          "kyc",
+          "primaryEmail",
+          "primaryEmailVerified",
+          "primaryPhoneNumber",
+          "primaryPhoneNumberVerified",
+          "finalBeneficiariesMissing",
+          "registrationAddress"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3849,32 +3849,32 @@
       "RepresentativeCoreDetails": {
         "type": "object",
         "properties": {
-          "McdId": {
+          "mcdId": {
             "type": "string",
             "x-apidog-mock": "F111"
           },
-          "FirstName": {
+          "firstName": {
             "type": "string",
             "x-apidog-mock": "John"
           },
-          "MiddleName": {
+          "middleName": {
             "type": "string",
             "x-apidog-mock": "Doe",
             "nullable": true
           },
-          "LastName": {
+          "lastName": {
             "type": "string",
             "x-apidog-mock": "Markus"
           },
-          "PersonalCode": {
+          "personalCode": {
             "type": "string",
             "x-apidog-mock": "30000000000"
           },
-          "CountryCode": {
+          "countryCode": {
             "type": "string",
             "x-apidog-mock": "LT"
           },
-          "Status": {
+          "status": {
             "type": "string",
             "x-apidog-mock": "Prospect",
             "enum": [
@@ -3909,20 +3909,20 @@
           }
         },
         "x-apidog-orders": [
-          "McdId",
-          "FirstName",
-          "MiddleName",
-          "LastName",
-          "PersonalCode",
-          "CountryCode",
-          "Status"
+          "mcdId",
+          "firstName",
+          "middleName",
+          "lastName",
+          "personalCode",
+          "countryCode",
+          "status"
         ],
         "required": [
-          "FirstName",
-          "LastName",
-          "McdId",
-          "PersonalCode",
-          "CountryCode"
+          "firstName",
+          "lastName",
+          "mcdId",
+          "personalCode",
+          "countryCode"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -3930,113 +3930,113 @@
       "RepresentativeFullDetails": {
         "type": "object",
         "properties": {
-          "McdId": {
+          "mcdId": {
             "type": "string",
             "x-apidog-mock": "F111"
           },
-          "FirstName": {
+          "firstName": {
             "type": "string",
             "x-apidog-mock": "John"
           },
-          "MiddleName": {
+          "middleName": {
             "type": "string",
             "x-apidog-mock": "Doe",
             "nullable": true
           },
-          "LastName": {
+          "lastName": {
             "type": "string",
             "x-apidog-mock": "Markus"
           },
-          "PersonalCode": {
+          "personalCode": {
             "type": "string",
             "x-apidog-mock": "30000000000"
           },
-          "CountryCode": {
+          "countryCode": {
             "type": "string",
             "x-apidog-mock": "LT"
           },
-          "Gender": {
+          "gender": {
             "type": "string",
             "nullable": true
           },
-          "DateOfBirth": {
+          "dateOfBirth": {
             "type": "string",
             "nullable": true
           },
-          "BirthCountryCode": {
+          "birthCountryCode": {
             "type": "string",
             "nullable": true
           },
-          "BirthCity": {
+          "birthCity": {
             "type": "string",
             "nullable": true
           },
-          "LanguageCode": {
+          "languageCode": {
             "type": "string",
             "nullable": true
           },
-          "PrimaryEmail": {
+          "primaryEmail": {
             "type": "string",
             "nullable": true
           },
-          "PrimaryEmailVerified": {
+          "primaryEmailVerified": {
             "type": "boolean"
           },
-          "SecondaryEmail": {
+          "secondaryEmail": {
             "type": "string",
             "nullable": true
           },
-          "PrimaryPhoneNumber": {
+          "primaryPhoneNumber": {
             "type": "string",
             "nullable": true
           },
-          "PrimaryPhoneNumberVerified": {
+          "primaryPhoneNumberVerified": {
             "type": "boolean"
           },
-          "SecondaryPhoneNumber": {
+          "secondaryPhoneNumber": {
             "type": "string",
             "nullable": true
           },
-          "RegistrationAddress": {
+          "registrationAddress": {
             "$ref": "#/components/schemas/AddressDetails",
             "nullable": true
           },
-          "ResidenceAddress": {
+          "residenceAddress": {
             "$ref": "#/components/schemas/AddressDetails",
             "nullable": true
           },
-          "CorrespondenceAddress": {
+          "correspondenceAddress": {
             "$ref": "#/components/schemas/AddressDetails",
             "nullable": true
           },
-          "Consents": {
+          "consents": {
             "$ref": "#/components/schemas/ConsentDetails",
             "nullable": true
           },
-          "Nationalities": {
+          "nationalities": {
             "type": "array",
             "items": {
               "type": "string"
             }
           },
-          "IdDocuments": {
+          "idDocuments": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/IdDocumentDetails"
             }
           },
-          "OndatoCheckValid": {
+          "ondatoCheckValid": {
             "type": "boolean",
             "description": "The value \"False\" is sent: \n - when the last Ondata screening time was recorded the previous day (i.e. today is 27th, and the last check was at any time during 26th), and the customer's status is \"Prospect\". \n- When the customer's status is \"Existing\" and all documents “Expiration date” < Current date. "
           },
-          "AmlScreening": {
+          "amlScreening": {
             "$ref": "#/components/schemas/AmlScreeningDetails",
             "nullable": true
           },
-          "Kyc": {
+          "kyc": {
             "$ref": "#/components/schemas/KycDetails"
           },
-          "Status": {
+          "status": {
             "type": "string",
             "x-apidog-mock": "Prospect",
             "enum": [
@@ -4071,46 +4071,46 @@
           }
         },
         "x-apidog-orders": [
-          "McdId",
-          "FirstName",
-          "MiddleName",
-          "LastName",
-          "PersonalCode",
-          "CountryCode",
-          "Gender",
-          "DateOfBirth",
-          "BirthCountryCode",
-          "BirthCity",
-          "LanguageCode",
-          "PrimaryEmail",
-          "PrimaryEmailVerified",
-          "SecondaryEmail",
-          "PrimaryPhoneNumber",
-          "PrimaryPhoneNumberVerified",
-          "SecondaryPhoneNumber",
-          "RegistrationAddress",
-          "ResidenceAddress",
-          "CorrespondenceAddress",
-          "Consents",
-          "Nationalities",
-          "IdDocuments",
-          "OndatoCheckValid",
-          "AmlScreening",
-          "Kyc",
-          "Status"
+          "mcdId",
+          "firstName",
+          "middleName",
+          "lastName",
+          "personalCode",
+          "countryCode",
+          "gender",
+          "dateOfBirth",
+          "birthCountryCode",
+          "birthCity",
+          "languageCode",
+          "primaryEmail",
+          "primaryEmailVerified",
+          "secondaryEmail",
+          "primaryPhoneNumber",
+          "primaryPhoneNumberVerified",
+          "secondaryPhoneNumber",
+          "registrationAddress",
+          "residenceAddress",
+          "correspondenceAddress",
+          "consents",
+          "nationalities",
+          "idDocuments",
+          "ondatoCheckValid",
+          "amlScreening",
+          "kyc",
+          "status"
         ],
         "required": [
-          "FirstName",
-          "LastName",
-          "McdId",
-          "PersonalCode",
-          "CountryCode",
-          "Nationalities",
-          "IdDocuments",
-          "OndatoCheckValid",
-          "PrimaryEmailVerified",
-          "Kyc",
-          "PrimaryPhoneNumberVerified"
+          "firstName",
+          "lastName",
+          "mcdId",
+          "personalCode",
+          "countryCode",
+          "nationalities",
+          "idDocuments",
+          "ondatoCheckValid",
+          "primaryEmailVerified",
+          "kyc",
+          "primaryPhoneNumberVerified"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -4118,30 +4118,30 @@
       "JuridicalPersonConsentDetails": {
         "type": "object",
         "properties": {
-          "ConsentOffers": {
+          "consentOffers": {
             "type": "boolean",
             "nullable": true
           },
-          "ConsentPartnersOffers": {
+          "consentPartnersOffers": {
             "type": "boolean",
             "nullable": true
           },
-          "Date": {
+          "date": {
             "type": "string"
           },
-          "ValidUntil": {
+          "validUntil": {
             "type": "string",
             "nullable": true
           }
         },
         "x-apidog-orders": [
-          "ConsentOffers",
-          "ConsentPartnersOffers",
-          "Date",
-          "ValidUntil"
+          "consentOffers",
+          "consentPartnersOffers",
+          "date",
+          "validUntil"
         ],
         "required": [
-          "Date"
+          "date"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -4149,24 +4149,24 @@
       "AccumulatedJuridicalPersonCoreDetails": {
         "type": "object",
         "properties": {
-          "McdId": {
+          "mcdId": {
             "type": "string",
             "x-apidog-mock": "J111"
           },
-          "FullName": {
+          "fullName": {
             "type": "string",
             "x-apidog-mock": "UAB Test"
           },
-          "CompanyCode": {
+          "companyCode": {
             "type": "string",
             "x-apidog-mock": "12345",
             "nullable": true
           },
-          "CountryCode": {
+          "countryCode": {
             "type": "string",
             "x-apidog-mock": "LT"
           },
-          "Status": {
+          "status": {
             "type": "string",
             "x-apidog-mock": "Prospect",
             "enum": [
@@ -4211,24 +4211,24 @@
             ],
             "nullable": true
           },
-          "TransactId": {
+          "transactID": {
             "type": "string",
             "x-apidog-mock": "12345",
             "nullable": true
           }
         },
         "x-apidog-orders": [
-          "McdId",
-          "FullName",
-          "CompanyCode",
-          "CountryCode",
-          "Status",
-          "TransactId"
+          "mcdId",
+          "fullName",
+          "companyCode",
+          "countryCode",
+          "status",
+          "transactID"
         ],
         "required": [
-          "McdId",
-          "CountryCode",
-          "FullName"
+          "mcdId",
+          "countryCode",
+          "fullName"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""
@@ -4236,7 +4236,7 @@
       "RestrictionDetails": {
         "type": "object",
         "properties": {
-          "RestrictionType": {
+          "restrictionType": {
             "type": "string",
             "description": "SB - SB restriction, Post - Post restriction",
             "enum": [
@@ -4256,24 +4256,24 @@
               }
             ]
           },
-          "Code": {
+          "code": {
             "type": "integer",
             "description": "Restriction code"
           },
-          "Name": {
+          "name": {
             "type": "string",
             "description": "Restriction name"
           }
         },
         "x-apidog-orders": [
-          "RestrictionType",
-          "Code",
-          "Name"
+          "restrictionType",
+          "code",
+          "name"
         ],
         "required": [
-          "Code",
-          "Name",
-          "RestrictionType"
+          "code",
+          "name",
+          "restrictionType"
         ],
         "x-apidog-ignore-properties": [],
         "x-apidog-folder": ""

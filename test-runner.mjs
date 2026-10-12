@@ -117,10 +117,21 @@ await assertTest('GET /persons/physical', async () => {
   if (!Array.isArray(res.json) || res.json.length < 3) throw new Error('Expected array of persons');
 });
 
+await assertTest('GET /persons/physical (verify camelCase keys format)', async () => {
+  const res = await request('GET', '/persons/physical');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  const first = res.json[0];
+  const requiredKeys = ['mcdId', 'firstName', 'middleName', 'lastName', 'personalCode', 'countryCode', 'status', 'transactID', 'selectedProducts'];
+  for (const k of requiredKeys) {
+    if (!(k in first)) throw new Error(`Missing expected camelCase key '${k}' in GET /persons/physical response`);
+  }
+  if ('McdId' in first || 'FirstName' in first) throw new Error('Response still contains PascalCase keys');
+});
+
 await assertTest('GET /persons/physical (with filter)', async () => {
   const res = await request('GET', '/persons/physical?FirstName=Jonas&CountryCode=LT');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.length < 1 || !res.json.every(p => p.FirstName.toLowerCase().includes('jonas') && p.CountryCode === 'LT')) throw new Error('Filter failed');
+  if (res.json.length < 1 || !res.json.every(p => (p.firstName || p.FirstName).toLowerCase().includes('jonas') && (p.countryCode || p.CountryCode) === 'LT')) throw new Error('Filter failed');
 });
 
 await assertTest('POST /persons/physical (Create prospect with auto Transact sync)', async () => {
@@ -137,15 +148,16 @@ await assertTest('POST /persons/physical (Create prospect with auto Transact syn
     mock: true
   });
   if (res.status !== 201) throw new Error(`Status ${res.status}`);
-  if (!res.json.McdId.startsWith('P')) throw new Error('Missing McdId');
-  if (res.json.Status !== 'Prospect') throw new Error('Expected Status Prospect');
-  if (!res.json.TransactID) throw new Error('Expected TransactID to be populated by Transact sync');
+  const mcdId = res.json.mcdId || res.json.McdId;
+  if (!mcdId || !mcdId.startsWith('P')) throw new Error('Missing McdId');
+  if ((res.json.status || res.json.Status) !== 'Prospect') throw new Error('Expected Status Prospect');
+  if (!(res.json.transactID || res.json.TransactID)) throw new Error('Expected TransactID to be populated by Transact sync');
 });
 
 await assertTest('GET /persons/physical/P1001', async () => {
   const res = await request('GET', '/persons/physical/P1001');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.FirstName !== 'Jonas') throw new Error('Wrong person returned');
+  if ((res.json.firstName || res.json.FirstName) !== 'Jonas') throw new Error('Wrong person returned');
 });
 
 await assertTest('PUT /persons/physical/P1001', async () => {
@@ -153,7 +165,7 @@ await assertTest('PUT /persons/physical/P1001', async () => {
     PrimaryEmail: 'jonas.updated@example.com'
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.PrimaryEmail !== 'jonas.updated@example.com') throw new Error('Update failed');
+  if ((res.json.primaryEmail || res.json.PrimaryEmail) !== 'jonas.updated@example.com') throw new Error('Update failed');
 });
 
 await assertTest('POST /persons/physical/P1001/consent', async () => {
@@ -163,7 +175,7 @@ await assertTest('POST /persons/physical/P1001/consent', async () => {
     ConsentPartnersOffers: true
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (!res.json.ConsentOffers) throw new Error('ConsentOffers false');
+  if (!(res.json.consentOffers || res.json.ConsentOffers)) throw new Error('ConsentOffers false');
 });
 
 await assertTest('GET /persons/physical/P1003/potentialGuardians', async () => {
@@ -181,7 +193,7 @@ await assertTest('PUT /persons/physical/P1003/guardian/P1001', async () => {
 await assertTest('GET /persons/physical/P1001/children', async () => {
   const res = await request('GET', '/persons/physical/P1001/children');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.length === 0 || res.json[0].FirstName !== 'Lukas') throw new Error('Children lookup failed');
+  if (res.json.length === 0 || (res.json[0].firstName || res.json[0].FirstName) !== 'Lukas') throw new Error('Children lookup failed');
 });
 
 await assertTest('PUT /persons/physical/P1001/coapplicant/P1002', async () => {
@@ -200,7 +212,7 @@ await assertTest('GET /persons/juridical', async () => {
 await assertTest('GET /persons/juridical (by CompanyCode)', async () => {
   const res = await request('GET', '/persons/juridical?CompanyCode=305123456');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.length !== 1 || res.json[0].CompanyCode !== '305123456') throw new Error('Query failed');
+  if (res.json.length !== 1 || (res.json[0].companyCode || res.json[0].CompanyCode) !== '305123456') throw new Error('Query failed');
 });
 
 await assertTest('PUT /persons/juridical (Ensure prospect)', async () => {
@@ -215,7 +227,7 @@ await assertTest('PUT /persons/juridical (Ensure prospect)', async () => {
 await assertTest('GET /persons/juridical/J2001', async () => {
   const res = await request('GET', '/persons/juridical/J2001');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.CompanyCode !== '305123456') throw new Error('Wrong juridical entity');
+  if ((res.json.companyCode || res.json.CompanyCode) !== '305123456') throw new Error('Wrong juridical entity');
 });
 
 await assertTest('PUT /persons/juridical/J2001', async () => {
@@ -223,7 +235,7 @@ await assertTest('PUT /persons/juridical/J2001', async () => {
     FullName: 'UAB Baltijos Technologijos Group'
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.FullName !== 'UAB Baltijos Technologijos Group') throw new Error('Update failed');
+  if ((res.json.fullName || res.json.FullName) !== 'UAB Baltijos Technologijos Group') throw new Error('Update failed');
 });
 
 await assertTest('POST /persons/juridical/J2001/consent', async () => {
@@ -232,7 +244,7 @@ await assertTest('POST /persons/juridical/J2001/consent', async () => {
     ConsentPartnersOffers: true
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (!res.json.ConsentOffers) throw new Error('Consent offers update failed');
+  if (!(res.json.consentOffers || res.json.ConsentOffers)) throw new Error('Consent offers update failed');
 });
 
 await assertTest('PUT /persons/juridical/accumulated', async () => {
@@ -252,7 +264,8 @@ await assertTest('PUT /persons/juridical/accumulated', async () => {
     }
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (!res.json.juridicalPerson.McdId.startsWith('A')) throw new Error('Invalid accumulated McdId');
+  const aId = res.json.juridicalPerson.mcdId || res.json.juridicalPerson.McdId;
+  if (!aId || !aId.startsWith('A')) throw new Error('Invalid accumulated McdId');
 });
 
 await assertTest('GET /persons/juridical/accumulated', async () => {
@@ -267,13 +280,14 @@ await assertTest('POST /persons/juridical/A4001/transformFromAccumulated', async
     representativeDetails: { firstName: 'Vytautas', lastName: 'Petrauskas', personalCode: '37905050005', countryCode: 'LT' }
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (!res.json.juridicalPerson.McdId.startsWith('J')) throw new Error('Expected new Juridical McdId');
+  const jId = res.json.juridicalPerson.mcdId || res.json.juridicalPerson.McdId;
+  if (!jId || !jId.startsWith('J')) throw new Error('Expected new Juridical McdId');
 });
 
 await assertTest('GET /persons/juridical/J2001/representatives/R3001', async () => {
   const res = await request('GET', '/persons/juridical/J2001/representatives/R3001');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.McdId !== 'R3001') throw new Error('Validation failed');
+  if ((res.json.mcdId || res.json.McdId) !== 'R3001') throw new Error('Validation failed');
 });
 
 // 4. Representatives
@@ -286,7 +300,7 @@ await assertTest('GET /persons/representatives', async () => {
 await assertTest('GET /persons/representatives/R3001', async () => {
   const res = await request('GET', '/persons/representatives/R3001');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.FirstName !== 'Vytautas') throw new Error('Wrong representative returned');
+  if ((res.json.firstName || res.json.FirstName) !== 'Vytautas') throw new Error('Wrong representative returned');
 });
 
 await assertTest('PUT /persons/representatives/R3001', async () => {
@@ -295,7 +309,7 @@ await assertTest('PUT /persons/representatives/R3001', async () => {
     PrimaryEmail: 'v.petrauskas.updated@example.com'
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.LanguageCode !== 'en') throw new Error('Update failed');
+  if ((res.json.languageCode || res.json.LanguageCode) !== 'en') throw new Error('Update failed');
 });
 
 // 5. Admin DB Direct Browser Edit Endpoints
@@ -306,7 +320,7 @@ await assertTest('PUT /admin/db/physical/P1001 (Direct browser update)', async (
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if (!res.json.success) throw new Error('Update failed');
-  if (res.json.record.FirstName !== 'Jonas-Edited') throw new Error('Field not updated');
+  if ((res.json.record.firstName || res.json.record.FirstName) !== 'Jonas-Edited') throw new Error('Field not updated');
 });
 
 await assertTest('POST /admin/db/physical (Direct browser add)', async () => {
@@ -330,8 +344,8 @@ await assertTest('DELETE /admin/db/physical/P1001 (Direct browser delete)', asyn
 await assertTest('GET /persons/physical/by-personal-code/:code', async () => {
   const res = await request('GET', '/persons/physical/by-personal-code/48802020002');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.json.PersonalCode !== '48802020002') throw new Error('PersonalCode mismatch');
-  if (res.json.McdId !== 'P1002') throw new Error('McdId mismatch');
+  if ((res.json.personalCode || res.json.PersonalCode) !== '48802020002') throw new Error('PersonalCode mismatch');
+  if ((res.json.mcdId || res.json.McdId) !== 'P1002') throw new Error('McdId mismatch');
 });
 
 await assertTest('POST /transact/sync-customer (Customer already has TransactID -> alreadySynced: true)', async () => {
@@ -364,7 +378,7 @@ await assertTest('POST /persons/physical (Create prospect with pre-existing Tran
     countryCode: 'LT'
   });
   if (res.status !== 201) throw new Error(`Status ${res.status}`);
-  if (res.json.TransactID !== 'TX-EXISTING-999') throw new Error('Expected TransactID to be preserved');
+  if ((res.json.transactID || res.json.TransactID) !== 'TX-EXISTING-999') throw new Error('Expected TransactID to be preserved');
   if (!res.json.alreadySynced) throw new Error('Expected alreadySynced: true');
 });
 
