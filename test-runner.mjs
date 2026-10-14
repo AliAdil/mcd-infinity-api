@@ -149,27 +149,34 @@ await assertTest('POST /persons/physical (Create prospect with auto Transact syn
   });
   if (res.status !== 201) throw new Error(`Status ${res.status}`);
   const mcdId = res.json.mcdId || res.json.McdId;
-  if (!mcdId || !mcdId.startsWith('P')) throw new Error('Missing McdId');
+  if (!mcdId || !/^F\d{8}$/.test(mcdId)) throw new Error(`Expected physical McdId to match /^F\\d{8}$/, got: ${mcdId}`);
   if ((res.json.status || res.json.Status) !== 'Prospect') throw new Error('Expected Status Prospect');
   if (!(res.json.transactID || res.json.TransactID)) throw new Error('Expected TransactID to be populated by Transact sync');
 });
 
-await assertTest('GET /persons/physical/P1001', async () => {
-  const res = await request('GET', '/persons/physical/P1001');
+await assertTest('GET /persons/physical/F20014528', async () => {
+  const res = await request('GET', '/persons/physical/F20014528');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if ((res.json.firstName || res.json.FirstName) !== 'Jonas') throw new Error('Wrong person returned');
 });
 
-await assertTest('PUT /persons/physical/P1001', async () => {
-  const res = await request('PUT', '/persons/physical/P1001', {
+await assertTest('GET /persons/physical/P1001 (Legacy ID backwards compatibility)', async () => {
+  const res = await request('GET', '/persons/physical/P1001');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if ((res.json.firstName || res.json.FirstName) !== 'Jonas') throw new Error('Legacy lookup failed');
+  if ((res.json.mcdId || res.json.McdId) !== 'F20014528') throw new Error('Expected new mcdId F20014528');
+});
+
+await assertTest('PUT /persons/physical/F20014528', async () => {
+  const res = await request('PUT', '/persons/physical/F20014528', {
     PrimaryEmail: 'jonas.updated@example.com'
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if ((res.json.primaryEmail || res.json.PrimaryEmail) !== 'jonas.updated@example.com') throw new Error('Update failed');
 });
 
-await assertTest('POST /persons/physical/P1001/consent', async () => {
-  const res = await request('POST', '/persons/physical/P1001/consent', {
+await assertTest('POST /persons/physical/F20014528/consent', async () => {
+  const res = await request('POST', '/persons/physical/F20014528/consent', {
     ConsentOffers: true,
     ConsentProfiling: true,
     ConsentPartnersOffers: true
@@ -178,26 +185,26 @@ await assertTest('POST /persons/physical/P1001/consent', async () => {
   if (!(res.json.consentOffers || res.json.ConsentOffers)) throw new Error('ConsentOffers false');
 });
 
-await assertTest('GET /persons/physical/P1003/potentialGuardians', async () => {
-  const res = await request('GET', '/persons/physical/P1003/potentialGuardians');
+await assertTest('GET /persons/physical/F20014530/potentialGuardians', async () => {
+  const res = await request('GET', '/persons/physical/F20014530/potentialGuardians');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if (!Array.isArray(res.json) || res.json.length === 0) throw new Error('Expected guardians list');
 });
 
-await assertTest('PUT /persons/physical/P1003/guardian/P1001', async () => {
-  const res = await request('PUT', '/persons/physical/P1003/guardian/P1001');
+await assertTest('PUT /persons/physical/F20014530/guardian/F20014528', async () => {
+  const res = await request('PUT', '/persons/physical/F20014530/guardian/F20014528');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if (!res.json.success) throw new Error('Setting guardian failed');
 });
 
-await assertTest('GET /persons/physical/P1001/children', async () => {
-  const res = await request('GET', '/persons/physical/P1001/children');
+await assertTest('GET /persons/physical/F20014528/children', async () => {
+  const res = await request('GET', '/persons/physical/F20014528/children');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if (res.json.length === 0 || (res.json[0].firstName || res.json[0].FirstName) !== 'Lukas') throw new Error('Children lookup failed');
 });
 
-await assertTest('PUT /persons/physical/P1001/coapplicant/P1002', async () => {
-  const res = await request('PUT', '/persons/physical/P1001/coapplicant/P1002');
+await assertTest('PUT /persons/physical/F20014528/coapplicant/F20014529', async () => {
+  const res = await request('PUT', '/persons/physical/F20014528/coapplicant/F20014529');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if (!res.json.success) throw new Error('Linking coapplicant failed');
 });
@@ -224,22 +231,29 @@ await assertTest('PUT /persons/juridical (Ensure prospect)', async () => {
   if (!res.json.juridicalPerson || !res.json.representative) throw new Error('Missing returned entities');
 });
 
-await assertTest('GET /persons/juridical/J2001', async () => {
-  const res = await request('GET', '/persons/juridical/J2001');
+await assertTest('GET /persons/juridical/J20014528', async () => {
+  const res = await request('GET', '/persons/juridical/J20014528');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if ((res.json.companyCode || res.json.CompanyCode) !== '305123456') throw new Error('Wrong juridical entity');
 });
 
-await assertTest('PUT /persons/juridical/J2001', async () => {
-  const res = await request('PUT', '/persons/juridical/J2001', {
+await assertTest('GET /persons/juridical/J2001 (Legacy ID backwards compatibility)', async () => {
+  const res = await request('GET', '/persons/juridical/J2001');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if ((res.json.companyCode || res.json.CompanyCode) !== '305123456') throw new Error('Legacy lookup failed');
+  if ((res.json.mcdId || res.json.McdId) !== 'J20014528') throw new Error('Expected new mcdId J20014528');
+});
+
+await assertTest('PUT /persons/juridical/J20014528', async () => {
+  const res = await request('PUT', '/persons/juridical/J20014528', {
     FullName: 'UAB Baltijos Technologijos Group'
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if ((res.json.fullName || res.json.FullName) !== 'UAB Baltijos Technologijos Group') throw new Error('Update failed');
 });
 
-await assertTest('POST /persons/juridical/J2001/consent', async () => {
-  const res = await request('POST', '/persons/juridical/J2001/consent', {
+await assertTest('POST /persons/juridical/J20014528/consent', async () => {
+  const res = await request('POST', '/persons/juridical/J20014528/consent', {
     ConsentOffers: true,
     ConsentPartnersOffers: true
   });
@@ -281,11 +295,11 @@ await assertTest('POST /persons/juridical/A4001/transformFromAccumulated', async
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   const jId = res.json.juridicalPerson.mcdId || res.json.juridicalPerson.McdId;
-  if (!jId || !jId.startsWith('J')) throw new Error('Expected new Juridical McdId');
+  if (!jId || !/^J\d{8}$/.test(jId)) throw new Error(`Expected new Juridical McdId to match /^J\\d{8}$/, got: ${jId}`);
 });
 
-await assertTest('GET /persons/juridical/J2001/representatives/R3001', async () => {
-  const res = await request('GET', '/persons/juridical/J2001/representatives/R3001');
+await assertTest('GET /persons/juridical/J20014528/representatives/R3001', async () => {
+  const res = await request('GET', '/persons/juridical/J20014528/representatives/R3001');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if ((res.json.mcdId || res.json.McdId) !== 'R3001') throw new Error('Validation failed');
 });
@@ -313,8 +327,8 @@ await assertTest('PUT /persons/representatives/R3001', async () => {
 });
 
 // 5. Admin DB Direct Browser Edit Endpoints
-await assertTest('PUT /admin/db/physical/P1001 (Direct browser update)', async () => {
-  const res = await request('PUT', '/admin/db/physical/P1001', {
+await assertTest('PUT /admin/db/physical/F20014528 (Direct browser update)', async () => {
+  const res = await request('PUT', '/admin/db/physical/F20014528', {
     FirstName: 'Jonas-Edited',
     PrimaryEmail: 'jonas.edited@example.com'
   });
@@ -335,8 +349,8 @@ await assertTest('POST /admin/db/physical (Direct browser add)', async () => {
   if (!res.json.success) throw new Error('Add failed');
 });
 
-await assertTest('DELETE /admin/db/physical/P1001 (Direct browser delete)', async () => {
-  const res = await request('DELETE', '/admin/db/physical/P1001');
+await assertTest('DELETE /admin/db/physical/F20014528 (Direct browser delete)', async () => {
+  const res = await request('DELETE', '/admin/db/physical/F20014528');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if (!res.json.success) throw new Error('Delete failed');
 });
@@ -345,7 +359,7 @@ await assertTest('GET /persons/physical/by-personal-code/:code', async () => {
   const res = await request('GET', '/persons/physical/by-personal-code/48802020002');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if ((res.json.personalCode || res.json.PersonalCode) !== '48802020002') throw new Error('PersonalCode mismatch');
-  if ((res.json.mcdId || res.json.McdId) !== 'P1002') throw new Error('McdId mismatch');
+  if ((res.json.mcdId || res.json.McdId) !== 'F20014529') throw new Error('McdId mismatch');
 });
 
 await assertTest('POST /transact/sync-customer (Customer already has TransactID -> alreadySynced: true)', async () => {

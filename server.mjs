@@ -21,8 +21,9 @@ try {
 // Initial seed data
 const initialSeedData = {
   physicalPersons: [
-    ['P1001', {
-      McdId: 'P1001',
+    ['F20014528', {
+      McdId: 'F20014528',
+      mcdId: 'F20014528',
       FirstName: 'Jonas',
       MiddleName: null,
       LastName: 'Kazlauskas',
@@ -117,8 +118,9 @@ const initialSeedData = {
       guardianMcdId: null,
       coapplicantMcdId: null
     }],
-    ['P1002', {
-      McdId: 'P1002',
+    ['F20014529', {
+      McdId: 'F20014529',
+      mcdId: 'F20014529',
       FirstName: 'Ieva',
       MiddleName: null,
       LastName: 'Kazlauskienė',
@@ -187,8 +189,9 @@ const initialSeedData = {
       guardianMcdId: null,
       coapplicantMcdId: null
     }],
-    ['P1003', {
-      McdId: 'P1003',
+    ['F20014530', {
+      McdId: 'F20014530',
+      mcdId: 'F20014530',
       FirstName: 'Lukas',
       MiddleName: null,
       LastName: 'Kazlauskas',
@@ -249,14 +252,15 @@ const initialSeedData = {
       IsMinor: true,
       IsEmancipatedMinor: false,
       IsIncapable: false,
-      guardianMcdId: 'P1001',
+      guardianMcdId: 'F20014528',
       coapplicantMcdId: null
     }]
   ],
 
   juridicalPersons: [
-    ['J2001', {
-      McdId: 'J2001',
+    ['J20014528', {
+      McdId: 'J20014528',
+      mcdId: 'J20014528',
       FullName: 'UAB Baltijos Technologijos',
       CompanyCode: '305123456',
       CountryCode: 'LT',
@@ -432,9 +436,33 @@ export function getCollection(name) {
   return null;
 }
 
-// Sequence counters
-export let physicalSeq = 1004;
-export let juridicalSeq = 2002;
+// Helper: look up physical person with fallback for legacy IDs
+export function getPhysicalPerson(id) {
+  if (!id) return null;
+  let p = db.physicalPersons.get(id);
+  if (!p) {
+    if (id === 'P1001') p = db.physicalPersons.get('F20014528');
+    else if (id === 'P1002') p = db.physicalPersons.get('F20014529');
+    else if (id === 'P1003') p = db.physicalPersons.get('F20014530');
+    else if (id === 'P1004') p = db.physicalPersons.get('F20014531');
+    else if (id === 'P1005') p = db.physicalPersons.get('F20014532');
+  }
+  return p;
+}
+
+// Helper: look up juridical person with fallback for legacy IDs
+export function getJuridicalPerson(id) {
+  if (!id) return null;
+  let j = db.juridicalPersons.get(id);
+  if (!j && id === 'J2001') {
+    j = db.juridicalPersons.get('J20014528');
+  }
+  return j;
+}
+
+// Sequence counters (8 digits)
+export let physicalSeq = 20014533;
+export let juridicalSeq = 20014529;
 export let repSeq = 3002;
 export let accSeq = 4002;
 
@@ -455,6 +483,18 @@ export function recalculateSequenceCounters() {
     const num = parseInt(String(key).replace(/\D/g, ''), 10);
     if (!isNaN(num) && num >= accSeq) accSeq = num + 1;
   }
+}
+
+// Generate physical person MCD ID: 'F' followed by 8 numbers (e.g. F20014528)
+export function generatePhysicalMcdId() {
+  const seq = physicalSeq++;
+  return 'F' + String(seq).padStart(8, '0');
+}
+
+// Generate juridical person MCD ID: 'J' followed by 8 numbers (e.g. J20014528)
+export function generateJuridicalMcdId() {
+  const seq = juridicalSeq++;
+  return 'J' + String(seq).padStart(8, '0');
 }
 
 // Sync database to db.json file atomically and update backup
@@ -1051,9 +1091,19 @@ export async function handleRequest(req, res) {
       }
 
       const body = await parseBody(req);
-      const prefix = colName.startsWith('p') ? 'P' : colName.startsWith('j') ? 'J' : colName.startsWith('r') ? 'R' : 'A';
-      const id = body.McdId || (prefix + Math.floor(1000 + Math.random() * 9000));
-      const record = { ...body, McdId: id };
+      let id = body.McdId || body.mcdId;
+      if (!id) {
+        if (colName.startsWith('p')) {
+          id = generatePhysicalMcdId();
+        } else if (colName.startsWith('j')) {
+          id = generateJuridicalMcdId();
+        } else if (colName.startsWith('r')) {
+          id = 'R' + (repSeq++);
+        } else {
+          id = 'A' + (accSeq++);
+        }
+      }
+      const record = { ...body, McdId: id, mcdId: id };
 
       targetMap.set(id, record);
       syncDbToFile();
@@ -1289,7 +1339,7 @@ export async function handleRequest(req, res) {
         preExistingId !== 'None' &&
         preExistingId !== 'Pending';
 
-      const newMcdId = 'P' + (physicalSeq++);
+      const newMcdId = generatePhysicalMcdId();
       const dob = body.DateOfBirth || body.dateOfBirth || '1995-01-01';
       const isMinor = dob && (new Date().getFullYear() - new Date(dob).getFullYear() < 18);
       const email = body.PrimaryEmail || body.primaryEmail || body.email || null;
@@ -1306,6 +1356,7 @@ export async function handleRequest(req, res) {
 
       const newPerson = {
         McdId: newMcdId,
+        mcdId: newMcdId,
         FirstName: firstName,
         MiddleName: body.MiddleName || body.middleName || null,
         LastName: lastName,
@@ -1405,14 +1456,14 @@ export async function handleRequest(req, res) {
     let m = pathname.match(/^\/persons\/physical\/([^\/]+)\/potentialGuardians$/);
     if (method === 'GET' && m) {
       const mcdId = m[1];
-      const person = db.physicalPersons.get(mcdId);
+      const person = getPhysicalPerson(mcdId);
       if (!person) {
         return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Physical person ${mcdId} not found` });
       }
       const potentialGuardians = [
-        { mcdId: 'P1001', firstName: 'Jonas', lastName: 'Kazlauskas', personalCode: '38501010001' },
-        { mcdId: 'P1002', firstName: 'Ieva', lastName: 'Kazlauskienė', personalCode: '48802020002' }
-      ].filter(g => g.mcdId !== mcdId);
+        { mcdId: 'F20014528', firstName: 'Jonas', lastName: 'Kazlauskas', personalCode: '38501010001' },
+        { mcdId: 'F20014529', firstName: 'Ieva', lastName: 'Kazlauskienė', personalCode: '48802020002' }
+      ].filter(g => g.mcdId !== (person.mcdId || person.McdId));
 
       return sendJson(res, 200, potentialGuardians);
     }
@@ -1421,12 +1472,12 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/physical\/([^\/]+)\/guardian\/([^\/]+)$/);
     if (method === 'PUT' && m) {
       const [, mcdId, guardianMcdId] = m;
-      const person = db.physicalPersons.get(mcdId);
-      const guardian = db.physicalPersons.get(guardianMcdId);
+      const person = getPhysicalPerson(mcdId);
+      const guardian = getPhysicalPerson(guardianMcdId);
       if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Child person ${mcdId} not found` });
       if (!guardian) return sendJson(res, 404, { ErrorCode: '404002', ErrorMessage: `Guardian person ${guardianMcdId} not found` });
 
-      person.guardianMcdId = guardianMcdId;
+      person.guardianMcdId = guardian.mcdId || guardian.McdId;
       syncDbToFile();
       return sendJson(res, 200, { success: true, message: `Guardian ${guardianMcdId} set for junior ${mcdId}` });
     }
@@ -1435,12 +1486,13 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/physical\/([^\/]+)\/children$/);
     if (method === 'GET' && m) {
       const mcdId = m[1];
-      const person = db.physicalPersons.get(mcdId);
+      const person = getPhysicalPerson(mcdId);
       if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Person ${mcdId} not found` });
+      const targetId = person.mcdId || person.McdId;
 
       const children = [];
       for (const p of db.physicalPersons.values()) {
-        if (p.guardianMcdId === mcdId || (p.IsMinor && p.LastName === person.LastName)) {
+        if (p.guardianMcdId === targetId || p.guardianMcdId === mcdId || (p.IsMinor && p.LastName === person.LastName)) {
           children.push({
             firstName: p.firstName || p.FirstName,
             lastName: p.lastName || p.LastName,
@@ -1452,7 +1504,7 @@ export async function handleRequest(req, res) {
             email: p.primaryEmail || p.PrimaryEmail,
             emailVerified: p.primaryEmailVerified || p.PrimaryEmailVerified,
             countryCode: p.countryCode || p.CountryCode,
-            isWard: p.guardianMcdId === mcdId
+            isWard: p.guardianMcdId === targetId || p.guardianMcdId === mcdId
           });
         }
       }
@@ -1463,13 +1515,13 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/physical\/([^\/]+)\/coapplicant\/([^\/]+)$/);
     if (method === 'PUT' && m) {
       const [, mcdId, coapplicantMcdId] = m;
-      const person = db.physicalPersons.get(mcdId);
-      const coapplicant = db.physicalPersons.get(coapplicantMcdId);
+      const person = getPhysicalPerson(mcdId);
+      const coapplicant = getPhysicalPerson(coapplicantMcdId);
       if (!person || !coapplicant) {
         return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: 'Person or coapplicant not found' });
       }
-      person.coapplicantMcdId = coapplicantMcdId;
-      coapplicant.coapplicantMcdId = mcdId;
+      person.coapplicantMcdId = coapplicant.mcdId || coapplicant.McdId;
+      coapplicant.coapplicantMcdId = person.mcdId || person.McdId;
       syncDbToFile();
       return sendJson(res, 200, { success: true, message: `Coapplicants ${mcdId} and ${coapplicantMcdId} linked` });
     }
@@ -1478,7 +1530,7 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/physical\/([^\/]+)\/consent$/);
     if (method === 'POST' && m) {
       const mcdId = m[1];
-      const person = db.physicalPersons.get(mcdId);
+      const person = getPhysicalPerson(mcdId);
       if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Person ${mcdId} not found` });
 
       const body = await parseBody(req);
@@ -1497,7 +1549,7 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/physical\/([^\/]+)$/);
     if (method === 'GET' && m) {
       const mcdId = m[1];
-      const person = db.physicalPersons.get(mcdId);
+      const person = getPhysicalPerson(mcdId);
       if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Physical person ${mcdId} not found` });
       return sendJson(res, 200, person);
     }
@@ -1506,7 +1558,7 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/physical\/([^\/]+)$/);
     if (method === 'PUT' && m) {
       const mcdId = m[1];
-      const person = db.physicalPersons.get(mcdId);
+      const person = getPhysicalPerson(mcdId);
       if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Physical person ${mcdId} not found` });
 
       const body = await parseBody(req);
@@ -1650,9 +1702,10 @@ export async function handleRequest(req, res) {
         db.representatives.set(rId, rep);
       }
 
-      const newJurId = 'J' + (juridicalSeq++);
+      const newJurId = generateJuridicalMcdId();
       const newJur = {
         McdId: newJurId,
+        mcdId: newJurId,
         FullName: acc.FullName,
         CompanyCode: compCode,
         CountryCode: 'LT',
@@ -1714,7 +1767,7 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/juridical\/([^\/]+)\/representatives\/([^\/]+)$/);
     if (method === 'GET' && m) {
       const [, mcdId, representativeMcdId] = m;
-      const jur = db.juridicalPersons.get(mcdId);
+      const jur = getJuridicalPerson(mcdId);
       const rep = db.representatives.get(representativeMcdId);
       if (!jur || !rep) {
         return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: 'Company or representative not found' });
@@ -1738,7 +1791,7 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/juridical\/([^\/]+)\/consent$/);
     if (method === 'POST' && m) {
       const mcdId = m[1];
-      const jur = db.juridicalPersons.get(mcdId);
+      const jur = getJuridicalPerson(mcdId);
       if (!jur) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Juridical person ${mcdId} not found` });
 
       const body = await parseBody(req);
@@ -1809,9 +1862,10 @@ export async function handleRequest(req, res) {
         }
       }
       if (!juridical) {
-        const jId = 'J' + (juridicalSeq++);
+        const jId = generateJuridicalMcdId();
         juridical = {
           McdId: jId,
+          mcdId: jId,
           FullName: jur.fullName || 'UAB Nauja Kompanija',
           CompanyCode: jur.companyCode || ('305' + Math.floor(100000 + Math.random() * 900000)),
           CountryCode: jur.countryCode || 'LT',
@@ -1853,7 +1907,7 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/juridical\/([^\/]+)$/);
     if (method === 'GET' && m) {
       const mcdId = m[1];
-      const jur = db.juridicalPersons.get(mcdId);
+      const jur = getJuridicalPerson(mcdId);
       if (!jur) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Juridical person ${mcdId} not found` });
       return sendJson(res, 200, jur);
     }
@@ -1862,7 +1916,7 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/juridical\/([^\/]+)$/);
     if (method === 'PUT' && m) {
       const mcdId = m[1];
-      const jur = db.juridicalPersons.get(mcdId);
+      const jur = getJuridicalPerson(mcdId);
       if (!jur) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Juridical person ${mcdId} not found` });
 
       const body = await parseBody(req);
@@ -2291,12 +2345,12 @@ export function renderDashboardHtml() {
     <div class="stat-card" onclick="switchTable('physical')">
       <div class="stat-label">Physical Persons</div>
       <div class="stat-value" id="count-physical">${db.physicalPersons.size}</div>
-      <div class="stat-hint">Retail, Juniors, Guardians (e.g. P1001, P1002, P1003)</div>
+      <div class="stat-hint">Retail, Juniors, Guardians (e.g. F20014528, F20014529, F20014530)</div>
     </div>
     <div class="stat-card" onclick="switchTable('juridical')">
       <div class="stat-label">Juridical (SME)</div>
       <div class="stat-value" id="count-juridical">${db.juridicalPersons.size}</div>
-      <div class="stat-hint">Corporate clients & JAR validation (e.g. J2001)</div>
+      <div class="stat-hint">Corporate clients & JAR validation (e.g. J20014528)</div>
     </div>
     <div class="stat-card" onclick="switchTable('representatives')">
       <div class="stat-label">Representatives</div>
@@ -2398,40 +2452,40 @@ export function renderDashboardHtml() {
             <div><span class="method-tag method-get">GET</span>/persons/physical</div>
             <span style="color: var(--text-muted); font-size: 11px;">Search physical persons</span>
           </div>
-          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/P1001')">
-            <div><span class="method-tag method-get">GET</span>/persons/physical/P1001</div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/F20014528')">
+            <div><span class="method-tag method-get">GET</span>/persons/physical/F20014528</div>
             <span style="color: var(--text-muted); font-size: 11px;">Get Jonas Kazlauskas</span>
           </div>
-          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/P1003/potentialGuardians')">
-            <div><span class="method-tag method-get">GET</span>/persons/physical/P1003/potentialGuardians</div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/F20014530/potentialGuardians')">
+            <div><span class="method-tag method-get">GET</span>/persons/physical/F20014530/potentialGuardians</div>
             <span style="color: var(--text-muted); font-size: 11px;">Get junior guardians</span>
           </div>
-          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/P1001/children')">
-            <div><span class="method-tag method-get">GET</span>/persons/physical/P1001/children</div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/physical/F20014528/children')">
+            <div><span class="method-tag method-get">GET</span>/persons/physical/F20014528/children</div>
             <span style="color: var(--text-muted); font-size: 11px;">Get client's children</span>
           </div>
           <div class="endpoint-item" onclick="testEndpoint('POST', '/persons/physical', sampleProspect)">
             <div><span class="method-tag method-post">POST</span>/persons/physical</div>
             <span style="color: var(--text-muted); font-size: 11px;">Create physical prospect</span>
           </div>
-          <div class="endpoint-item" onclick="testEndpoint('POST', '/persons/physical/P1001/consent', { ConsentOffers: true, ConsentProfiling: true, ConsentPartnersOffers: true })">
-            <div><span class="method-tag method-post">POST</span>/persons/physical/P1001/consent</div>
+          <div class="endpoint-item" onclick="testEndpoint('POST', '/persons/physical/F20014528/consent', { ConsentOffers: true, ConsentProfiling: true, ConsentPartnersOffers: true })">
+            <div><span class="method-tag method-post">POST</span>/persons/physical/F20014528/consent</div>
             <span style="color: var(--text-muted); font-size: 11px;">Update consents</span>
           </div>
           <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical')">
             <div><span class="method-tag method-get">GET</span>/persons/juridical</div>
             <span style="color: var(--text-muted); font-size: 11px;">Search SME clients</span>
           </div>
-          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical/J2001')">
-            <div><span class="method-tag method-get">GET</span>/persons/juridical/J2001</div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical/J20014528')">
+            <div><span class="method-tag method-get">GET</span>/persons/juridical/J20014528</div>
             <span style="color: var(--text-muted); font-size: 11px;">Get juridical person</span>
           </div>
           <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical/accumulated')">
             <div><span class="method-tag method-get">GET</span>/persons/juridical/accumulated</div>
             <span style="color: var(--text-muted); font-size: 11px;">Search accumulated acc.</span>
           </div>
-          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical/J2001/representatives/R3001')">
-            <div><span class="method-tag method-get">GET</span>/persons/juridical/J2001/representatives/R3001</div>
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/juridical/J20014528/representatives/R3001')">
+            <div><span class="method-tag method-get">GET</span>/persons/juridical/J20014528/representatives/R3001</div>
             <span style="color: var(--text-muted); font-size: 11px;">Validate legal rep</span>
           </div>
           <div class="endpoint-item" onclick="testEndpoint('GET', '/persons/representatives')">

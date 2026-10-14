@@ -2852,7 +2852,7 @@
                     },
                     "message": {
                       "type": "string",
-                      "example": "Customer P1001 (PersonalCode: 38501010001) successfully synced with Transact. TransactID updated to 10001874."
+                      "example": "Customer F20014528 (PersonalCode: 38501010001) successfully synced with Transact. TransactID updated to 10001874."
                     },
                     "personalCode": {
                       "type": "string",
@@ -2860,7 +2860,7 @@
                     },
                     "mcdId": {
                       "type": "string",
-                      "example": "P1001"
+                      "example": "F20014528"
                     },
                     "transactId": {
                       "type": "string",
