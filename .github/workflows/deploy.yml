@@ -1,0 +1,21 @@
+name: Deploy to MCD server
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: mcd-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, mcd]
+    timeout-minutes: 10
+    steps:
+      - name: Deploy latest main
+        run: sudo /usr/local/bin/mcd-deploy.sh
+
+      - name: Health check
+        run: curl -fsS http://localhost:3000/health
