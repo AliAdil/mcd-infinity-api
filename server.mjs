@@ -2019,21 +2019,87 @@ export function renderDashboardHtml() {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MCD Infinity API - Live Server & Database Explorer</title>
   <link rel="icon" href="https://assets.apidog.com/app/project-icon/builtin/15.jpg">
+  <script>
+    (function() {
+      var savedTheme = localStorage.getItem('mcd-theme');
+      if (savedTheme === 'light') {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
   <style>
     :root {
       --primary: #9373ee;
       --primary-dark: #6e4bc5;
       --bg: #0f172a;
       --card-bg: #1e293b;
+      --card-inner: #0f172a;
       --border: #334155;
       --text: #f8fafc;
       --text-muted: #94a3b8;
+      --text-heading: #ffffff;
+      --btn-secondary-bg: #334155;
+      --btn-secondary-hover: #475569;
+      --btn-secondary-color: #ffffff;
+      --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+      --terminal-bg: #090d16;
+      --terminal-border: #1e293b;
+      --terminal-color: #38bdf8;
+      --table-header: #1e293b;
+      --table-row-hover: rgba(147, 115, 238, 0.08);
+      --input-bg: #0b1120;
+      --input-border: #334155;
+      --input-color: #f8fafc;
+      --sync-gradient: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95));
+      --sync-border: rgba(56, 189, 248, 0.35);
+      --sync-title: #38bdf8;
+      --sync-badge-bg: rgba(56, 189, 248, 0.15);
+      --sync-badge-color: #38bdf8;
       --accent-green: #10b981;
       --accent-blue: #38bdf8;
       --accent-orange: #f59e0b;
       --accent-purple: #c084fc;
       --accent-red: #ef4444;
+      --modal-card-bg: #1e293b;
+      --modal-footer-bg: #0f172a;
     }
+
+    [data-theme="light"] {
+      --primary: #7c3aed;
+      --primary-dark: #6d28d9;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-inner: #f1f5f9;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --text-heading: #0f172a;
+      --btn-secondary-bg: #f1f5f9;
+      --btn-secondary-hover: #e2e8f0;
+      --btn-secondary-color: #1e293b;
+      --card-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+      --terminal-bg: #0f172a;
+      --terminal-border: #334155;
+      --terminal-color: #38bdf8;
+      --table-header: #f8fafc;
+      --table-row-hover: rgba(124, 58, 237, 0.05);
+      --input-bg: #ffffff;
+      --input-border: #cbd5e1;
+      --input-color: #0f172a;
+      --sync-gradient: linear-gradient(135deg, #f0f9ff, #ffffff);
+      --sync-border: rgba(2, 132, 199, 0.25);
+      --sync-title: #0284c7;
+      --sync-badge-bg: rgba(2, 132, 199, 0.1);
+      --sync-badge-color: #0284c7;
+      --accent-green: #059669;
+      --accent-blue: #0284c7;
+      --accent-orange: #d97706;
+      --accent-purple: #7c3aed;
+      --accent-red: #dc2626;
+      --modal-card-bg: #ffffff;
+      --modal-footer-bg: #f8fafc;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -2041,6 +2107,7 @@ export function renderDashboardHtml() {
       color: var(--text);
       line-height: 1.5;
       padding: 24px;
+      transition: background 0.2s, color 0.2s;
     }
     .header {
       display: flex;
@@ -2054,7 +2121,7 @@ export function renderDashboardHtml() {
     }
     .brand { display: flex; align-items: center; gap: 16px; }
     .brand img { width: 48px; height: 48px; border-radius: 12px; }
-    .title h1 { font-size: 24px; font-weight: 700; color: #fff; }
+    .title h1 { font-size: 24px; font-weight: 700; color: var(--text-heading); }
     .title p { font-size: 14px; color: var(--text-muted); }
     .badge-status {
       background: rgba(16, 185, 129, 0.15);
@@ -2076,7 +2143,7 @@ export function renderDashboardHtml() {
       background: var(--accent-green);
       display: inline-block;
     }
-    .nav-links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .nav-links { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .btn {
       background: var(--primary);
       color: #fff;
@@ -2090,11 +2157,11 @@ export function renderDashboardHtml() {
       gap: 6px;
       border: none;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
     }
     .btn:hover { background: var(--primary-dark); }
-    .btn-secondary { background: #334155; }
-    .btn-secondary:hover { background: #475569; }
+    .btn-secondary { background: var(--btn-secondary-bg); color: var(--btn-secondary-color); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--btn-secondary-hover); }
     .btn-success { background: #059669; }
     .btn-success:hover { background: #047857; }
     .btn-danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
@@ -2114,14 +2181,15 @@ export function renderDashboardHtml() {
       border-radius: 12px;
       padding: 16px;
       cursor: pointer;
-      transition: transform 0.15s, border-color 0.15s;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.15s, border-color 0.15s, background 0.2s;
     }
     .stat-card:hover {
       transform: translateY(-2px);
       border-color: var(--primary);
     }
     .stat-label { font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
-    .stat-value { font-size: 28px; font-weight: 700; margin-top: 4px; color: #fff; }
+    .stat-value { font-size: 28px; font-weight: 700; margin-top: 4px; color: var(--text-heading); }
     .stat-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
     .tab-nav {
@@ -2158,11 +2226,14 @@ export function renderDashboardHtml() {
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 20px;
+      box-shadow: var(--card-shadow);
+      transition: background 0.2s, border-color 0.2s;
     }
     .card-title {
       font-size: 18px;
       font-weight: 700;
       margin-bottom: 16px;
+      color: var(--text-heading);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -2174,15 +2245,16 @@ export function renderDashboardHtml() {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #0f172a;
+      background: var(--card-inner);
       border: 1px solid var(--border);
       padding: 10px 14px;
       border-radius: 8px;
       font-size: 13px;
+      color: var(--text);
       cursor: pointer;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, background 0.2s;
     }
-    .endpoint-item:hover { border-color: var(--primary); }
+    .endpoint-item:hover { border-color: var(--primary); background: var(--table-row-hover); }
     .method-tag {
       font-size: 11px;
       font-weight: 700;
@@ -2196,13 +2268,13 @@ export function renderDashboardHtml() {
     .method-put { background: rgba(245, 158, 11, 0.15); color: var(--accent-orange); }
 
     .terminal {
-      background: #090d16;
-      border: 1px solid #1e293b;
+      background: var(--terminal-bg);
+      border: 1px solid var(--terminal-border);
       border-radius: 8px;
       padding: 16px;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 13px;
-      color: #38bdf8;
+      color: var(--terminal-color);
       max-height: 480px;
       overflow-y: auto;
       white-space: pre-wrap;
@@ -2212,7 +2284,7 @@ export function renderDashboardHtml() {
     /* Database Table Styling */
     .table-container {
       overflow-x: auto;
-      background: #0f172a;
+      background: var(--card-inner);
       border-radius: 8px;
       border: 1px solid var(--border);
       margin-top: 16px;
@@ -2222,19 +2294,20 @@ export function renderDashboardHtml() {
       border-collapse: collapse;
       text-align: left;
       font-size: 13px;
+      color: var(--text);
     }
     th, td {
       padding: 12px 14px;
       border-bottom: 1px solid var(--border);
     }
     th {
-      background: #1e293b;
+      background: var(--table-header);
       color: var(--text-muted);
       font-weight: 600;
       font-size: 12px;
       text-transform: uppercase;
     }
-    tr:hover { background: rgba(147, 115, 238, 0.05); }
+    tr:hover { background: var(--table-row-hover); }
     .badge {
       display: inline-block;
       padding: 2px 8px;
@@ -2258,8 +2331,8 @@ export function renderDashboardHtml() {
       padding: 20px;
     }
     .modal-card {
-      background: #1e293b;
-      border: 1px solid #3b82f6;
+      background: var(--modal-card-bg);
+      border: 1px solid var(--primary);
       border-radius: 14px;
       width: 100%;
       max-width: 750px;
@@ -2275,7 +2348,7 @@ export function renderDashboardHtml() {
       align-items: center;
       justify-content: space-between;
     }
-    .modal-header h3 { font-size: 18px; color: #fff; }
+    .modal-header h3 { font-size: 18px; color: var(--text-heading); }
     .modal-body {
       padding: 20px;
       overflow-y: auto;
@@ -2287,15 +2360,15 @@ export function renderDashboardHtml() {
       display: flex;
       justify-content: flex-end;
       gap: 12px;
-      background: #0f172a;
+      background: var(--modal-footer-bg);
       border-bottom-left-radius: 14px;
       border-bottom-right-radius: 14px;
     }
     .json-editor {
       width: 100%;
       height: 380px;
-      background: #090d16;
-      color: #38bdf8;
+      background: var(--terminal-bg);
+      color: var(--terminal-color);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 14px;
@@ -2334,6 +2407,9 @@ export function renderDashboardHtml() {
     <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
       <span class="badge-status">Server Port :${PORT}</span>
       <div class="nav-links">
+        <button id="theme-toggle-btn" onclick="toggleTheme()" class="btn btn-secondary" title="Switch Theme (Light / Dark)">
+          <span id="theme-icon">☀️</span> <span id="theme-label">Light Mode</span>
+        </button>
         <a href="/admin/db" target="_blank" class="btn btn-secondary">DB JSON</a>
         <a href="/docs" target="_blank" class="btn">Swagger UI</a>
         <a href="/openapi.json" target="_blank" class="btn btn-secondary">OpenAPI Spec</a>
@@ -2372,23 +2448,23 @@ export function renderDashboardHtml() {
   <!-- TAB 1: DATABASE VIEWER & EDITOR -->
   <div id="tab-content-db">
     <!-- TRANSACT SYNC CARD -->
-    <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95)); border: 1px solid rgba(56, 189, 248, 0.35);">
+    <div class="card" style="margin-bottom: 20px; background: var(--sync-gradient); border: 1px solid var(--sync-border);">
       <div class="card-title" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div style="display:flex; align-items:center; gap:8px;">
           <span style="font-size:18px;">⚡</span>
-          <span style="font-size:16px; font-weight:700; color:#38bdf8;">Transact Core Banking Sync</span>
+          <span style="font-size:16px; font-weight:700; color:var(--sync-title);">Transact Core Banking Sync</span>
           <span style="font-size:11px; color:var(--text-muted);">(Temenos T24 Customers API)</span>
         </div>
-        <span style="font-size:11px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:12px; font-family:monospace;">Target: 192.168.1.157:8085</span>
+        <span style="font-size:11px; background:var(--sync-badge-bg); color:var(--sync-badge-color); padding:3px 8px; border-radius:12px; font-family:monospace;">Target: 192.168.1.157:8085</span>
       </div>
       <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
         Enter a <strong>Personal Code</strong> below. The system will look up the customer in MCD, call the Transact Customer API (T24), extract the assigned <code>id</code>, and automatically update the customer's <strong>TransactID</strong> in the database!
       </div>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <select id="sync-customer-select" onchange="if(this.value){document.getElementById('sync-personal-code').value=this.value;}" style="padding:10px 14px; background:#0b1120; border:1px solid var(--border); border-radius:6px; color:#f8fafc; font-size:13px; max-width:320px;">
+        <select id="sync-customer-select" onchange="if(this.value){document.getElementById('sync-personal-code').value=this.value;}" style="padding:10px 14px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-size:13px; max-width:320px;">
           <option value="">-- Select customer to sync --</option>
         </select>
-        <input type="text" id="sync-personal-code" placeholder="Personal Code (e.g. 38501010001, 39001010099)" style="flex:1; min-width:220px; padding:10px 14px; background:#0b1120; border:1px solid var(--border); border-radius:6px; color:#f8fafc; font-family:monospace;" value="39001010099" />
+        <input type="text" id="sync-personal-code" placeholder="Personal Code (e.g. 38501010001, 39001010099)" style="flex:1; min-width:220px; padding:10px 14px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace;" value="39001010099" />
         <button class="btn btn-primary" id="btn-transact-sync" onclick="triggerTransactSync()" style="display:flex; align-items:center; gap:6px;">
           <span>⚡ Call Transact & Sync</span>
         </button>
@@ -2399,7 +2475,7 @@ export function renderDashboardHtml() {
       <div class="card-title">
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
           <span id="current-table-title">Table: Physical Persons</span>
-          <select id="table-selector" onchange="switchTable(this.value)" style="background: #0f172a; color: #fff; border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; font-weight: 600;">
+          <select id="table-selector" onchange="switchTable(this.value)" style="background: var(--input-bg); color: var(--input-color); border: 1px solid var(--input-border); padding: 5px 10px; border-radius: 6px; font-weight: 600;">
             <option value="physical">Physical Persons</option>
             <option value="juridical">Juridical Persons (SME)</option>
             <option value="representatives">Representatives</option>
@@ -3138,7 +3214,30 @@ export function renderDashboardHtml() {
       });
     }
 
+    function updateThemeButton() {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const icon = document.getElementById('theme-icon');
+      const label = document.getElementById('theme-label');
+      if (icon) icon.innerText = isLight ? '🌙' : '☀️';
+      if (label) label.innerText = isLight ? 'Dark Mode' : 'Light Mode';
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      if (current === 'light') {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('mcd-theme', 'dark');
+        showToast('Switched to Dark Theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('mcd-theme', 'light');
+        showToast('Switched to Light Theme');
+      }
+      updateThemeButton();
+    }
+
     // Initialize
+    updateThemeButton();
     setupTableEvents();
     loadDatabase();
   </script>
