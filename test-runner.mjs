@@ -408,6 +408,67 @@ await assertTest('POST /transact/sync-customer (Unknown PersonalCode -> 404)', a
   if (res.json.success !== false) throw new Error('Expected success: false');
 });
 
+// -------------------------------------------------------------
+// Formpipe LaserNet Document Services Tests
+// -------------------------------------------------------------
+await assertTest('POST /formpipe-adapter/v1/document-generation/generate', async () => {
+  const res = await request('POST', '/formpipe-adapter/v1/document-generation/generate', {
+    payloadContentType: 'application/json',
+    payloadType: 'my-template',
+    payload: { clients: [{ client: { firstName: 'John', lastName: 'Doe' } }] }
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.json.status !== '200') throw new Error(`Expected status '200', got ${res.json.status}`);
+  if (res.json.DocID !== '64424517880') throw new Error(`Expected DocID 64424517880, got ${res.json.DocID}`);
+  if (!res.json.DMLink || !res.json.DMLink.includes('64424517880')) throw new Error(`Invalid DMLink: ${res.json.DMLink}`);
+  if (res.json.message !== 'OK') throw new Error(`Expected message 'OK', got ${res.json.message}`);
+});
+
+await assertTest('POST /formpipe-adapter/v1/document-generation/documentonly (raw binary PDF bytes)', async () => {
+  const res = await request('POST', '/formpipe-adapter/v1/document-generation/documentonly', {
+    payloadContentType: 'application/json'
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.headers['Content-Type'] !== 'application/pdf') throw new Error(`Expected application/pdf header, got ${res.headers['Content-Type']}`);
+  if (!res.body.startsWith('%PDF-1.4')) throw new Error('Expected PDF header %PDF-1.4 in binary body');
+  if (res.body.length < 50000) throw new Error(`PDF length suspiciously small: ${res.body.length}`);
+});
+
+await assertTest('POST /formpipe-adapter/v1/document-generation/documentonly?format=base64', async () => {
+  const res = await request('POST', '/formpipe-adapter/v1/document-generation/documentonly?format=base64', {});
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (!res.body.startsWith('JVBERi0x')) throw new Error('Expected Base64 starting with JVBERi0x');
+});
+
+await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778/file (Base64 file string)', async () => {
+  const res = await request('GET', '/formpipe-adapter/v1/documents/by-id/68719477778/file');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (!res.body.startsWith('JVBERi0x')) throw new Error('Expected Base64 starting with JVBERi0x');
+  if (res.body.length < 100000) throw new Error(`Base64 length suspiciously small: ${res.body.length}`);
+});
+
+await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778/file?format=pdf (Binary PDF)', async () => {
+  const res = await request('GET', '/formpipe-adapter/v1/documents/by-id/68719477778/file?format=pdf');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.headers['Content-Type'] !== 'application/pdf') throw new Error(`Expected application/pdf, got ${res.headers['Content-Type']}`);
+  if (!res.body.startsWith('%PDF-1.4')) throw new Error('Expected %PDF-1.4 binary header');
+});
+
+await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778/file?format=json (JSON wrapper)', async () => {
+  const res = await request('GET', '/formpipe-adapter/v1/documents/by-id/68719477778/file?format=json');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.json.status !== '200') throw new Error(`Expected status '200'`);
+  if (res.json.DocID !== '68719477778') throw new Error(`Expected DocID 68719477778`);
+  if (!res.json.file || !res.json.file.startsWith('JVBERi0x')) throw new Error('Invalid Base64 in json.file');
+});
+
+await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778 (Metadata)', async () => {
+  const res = await request('GET', '/formpipe-adapter/v1/documents/by-id/68719477778');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.json.DocID !== '68719477778') throw new Error(`Expected DocID 68719477778`);
+  if (!res.json.DMLink.includes('68719477778')) throw new Error(`Invalid DMLink`);
+});
+
 await assertTest('POST /admin/db/reset (Reset to seed)', async () => {
   const res = await request('POST', '/admin/db/reset');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);

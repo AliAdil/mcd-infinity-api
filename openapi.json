@@ -21,6 +21,10 @@
     {
       "name": "transact",
       "description": "Temenos Transact T24 Core Banking Integration Endpoints"
+    },
+    {
+      "name": "formpipe",
+      "description": "Formpipe LaserNet Document Generation and File Adapter Services"
     }
   ],
   "paths": {
@@ -2885,6 +2889,215 @@
           },
           "502": {
             "description": "Connection to Transact server failed"
+          }
+        }
+      }
+    },
+    "/formpipe-adapter/v1/document-generation/generate": {
+      "post": {
+        "summary": "Generate document and get DocID and DMLink",
+        "description": "Accepts template contract payload and AccessKey header, creates the document in Formpipe LaserNet, and returns DocID and DMLink.",
+        "tags": [
+          "formpipe"
+        ],
+        "parameters": [
+          {
+            "name": "AccessKey",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "p32lUv6H-yyP2biBL-qn8zXUJO-RE/2tdqE"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "200" },
+                    "DocID": { "type": "string", "example": "64424517880" },
+                    "DMLink": { "type": "string", "example": "https://adapter-dev.artea.lasernetgroup.cloud/formpipe-adapter/v1/documents/by-id/64424517880" },
+                    "message": { "type": "string", "example": "OK" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/formpipe-adapter/v1/document-generation/documentonly": {
+      "post": {
+        "summary": "Generate document only (raw PDF byte array)",
+        "description": "Accepts template payload and generates document as a binary PDF byte array (Content-Type: application/pdf, 147 KB).",
+        "tags": [
+          "formpipe"
+        ],
+        "parameters": [
+          {
+            "name": "AccessKey",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "p32lUv6H-yyP2biBL-qn8zXUJO-RE/2tdqE"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "description": "Optional format override ('base64' to return raw Base64 string)",
+            "schema": {
+              "type": "string",
+              "enum": ["pdf", "base64"]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Binary PDF byte array stream",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/formpipe-adapter/v1/documents/by-id/{id}/file": {
+      "get": {
+        "summary": "Retrieve document file by ID (Base64 or Binary PDF)",
+        "description": "Returns the generated document for any given ID as a full Base64 string (196,920 chars). Query format=pdf or download=true streams raw binary PDF bytes.",
+        "tags": [
+          "formpipe"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "68719477778"
+          },
+          {
+            "name": "AccessKey",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "p32lUv6H-yyP2biBL-qn8zXUJO-RE/2tdqE"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "description": "Response format: 'base64' (default), 'pdf' (binary PDF), or 'json' ({ status, DocID, message, file })",
+            "schema": {
+              "type": "string",
+              "enum": ["base64", "pdf", "json"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document file content in requested format",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "Base64 encoded PDF string"
+                }
+              },
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "DocID": { "type": "string" },
+                    "message": { "type": "string" },
+                    "file": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/formpipe-adapter/v1/documents/by-id/{id}": {
+      "get": {
+        "summary": "Retrieve document metadata by ID",
+        "description": "Returns metadata, DMLink, and file download URL for a given document ID.",
+        "tags": [
+          "formpipe"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "64424517880"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "DocID": { "type": "string" },
+                    "DMLink": { "type": "string" },
+                    "fileUrl": { "type": "string" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
           }
         }
       }

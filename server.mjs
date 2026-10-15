@@ -18,6 +18,19 @@ try {
   console.error('Failed to load openapi.json:', err.message);
 }
 
+// Formpipe Sample PDF asset configuration (LaserNet 10 Engine)
+const FORMPIPE_PDF_PATH = path.join(__dirname, 'formpipe-sample.pdf');
+export let formpipePdfBuffer = null;
+export let formpipePdfBase64 = '';
+try {
+  if (fs.existsSync(FORMPIPE_PDF_PATH)) {
+    formpipePdfBuffer = fs.readFileSync(FORMPIPE_PDF_PATH);
+    formpipePdfBase64 = formpipePdfBuffer.toString('base64');
+  }
+} catch (err) {
+  console.error('Failed to load Formpipe sample PDF:', err.message);
+}
+
 // Initial seed data
 const initialSeedData = {
   physicalPersons: [
@@ -1031,6 +1044,119 @@ export async function handleRequest(req, res) {
 
     if (method === 'GET' && (pathname === '/admin/db' || pathname === '/api/db')) {
       return sendJson(res, 200, getDbSnapshot());
+    }
+
+    // ---------------------------------------------------------
+    // Formpipe LaserNet Document Adapter Endpoints
+    // ---------------------------------------------------------
+
+    // 1. Generate Document: POST /formpipe-adapter/v1/document-generation/generate
+    if (method === 'POST' && pathname === '/formpipe-adapter/v1/document-generation/generate') {
+      await parseBody(req);
+      const docId = '64424517880';
+      const dmLink = `https://adapter-dev.artea.lasernetgroup.cloud/formpipe-adapter/v1/documents/by-id/${docId}`;
+      const responseData = {
+        status: "200",
+        DocID: docId,
+        DMLink: dmLink,
+        message: "OK"
+      };
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
+      });
+      return res.end(JSON.stringify(responseData, null, 2));
+    }
+
+    // 2. Generate Document Only (raw PDF byte array): POST /formpipe-adapter/v1/document-generation/documentonly
+    if (method === 'POST' && pathname === '/formpipe-adapter/v1/document-generation/documentonly') {
+      await parseBody(req);
+      if (!formpipePdfBuffer && fs.existsSync(FORMPIPE_PDF_PATH)) {
+        formpipePdfBuffer = fs.readFileSync(FORMPIPE_PDF_PATH);
+        formpipePdfBase64 = formpipePdfBuffer.toString('base64');
+      }
+
+      if (query.format === 'base64') {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
+        });
+        return res.end(formpipePdfBase64);
+      }
+
+      res.writeHead(200, {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'inline; filename="document.pdf"',
+        'Content-Length': formpipePdfBuffer ? formpipePdfBuffer.length : 0,
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
+      });
+      return res.end(formpipePdfBuffer || Buffer.from(''));
+    }
+
+    // 3. Get Document File by ID (Base64 / PDF): GET /formpipe-adapter/v1/documents/by-id/:id/file
+    const formpipeFileMatch = pathname.match(/^\/formpipe-adapter\/v1\/documents\/by-id\/([^\/]+)\/file$/);
+    if (method === 'GET' && formpipeFileMatch) {
+      const docId = formpipeFileMatch[1];
+      if (!formpipePdfBuffer && fs.existsSync(FORMPIPE_PDF_PATH)) {
+        formpipePdfBuffer = fs.readFileSync(FORMPIPE_PDF_PATH);
+        formpipePdfBase64 = formpipePdfBuffer.toString('base64');
+      }
+
+      if (query.format === 'pdf' || query.format === 'binary' || query.download === 'true' || req.headers['accept'] === 'application/pdf') {
+        res.writeHead(200, {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': `inline; filename="document-${docId}.pdf"`,
+          'Content-Length': formpipePdfBuffer ? formpipePdfBuffer.length : 0,
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
+        });
+        return res.end(formpipePdfBuffer || Buffer.from(''));
+      }
+
+      if (query.format === 'json' || req.headers['accept'] === 'application/json') {
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
+        });
+        return res.end(JSON.stringify({
+          status: "200",
+          DocID: docId,
+          message: "OK",
+          file: formpipePdfBase64
+        }, null, 2));
+      }
+
+      res.writeHead(200, {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
+      });
+      return res.end(formpipePdfBase64);
+    }
+
+    // Document Metadata: GET /formpipe-adapter/v1/documents/by-id/:id
+    const formpipeDocMatch = pathname.match(/^\/formpipe-adapter\/v1\/documents\/by-id\/([^\/]+)$/);
+    if (method === 'GET' && formpipeDocMatch) {
+      const docId = formpipeDocMatch[1];
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
+      });
+      return res.end(JSON.stringify({
+        status: "200",
+        DocID: docId,
+        DMLink: `https://adapter-dev.artea.lasernetgroup.cloud/formpipe-adapter/v1/documents/by-id/${docId}`,
+        fileUrl: `/formpipe-adapter/v1/documents/by-id/${docId}/file`,
+        message: "OK"
+      }, null, 2));
     }
 
     // Direct Browser Update endpoint: PUT /admin/db/:collection/:id
@@ -2391,6 +2517,177 @@ export function renderDashboardHtml() {
       display: none;
       z-index: 2000;
     }
+
+    /* System Switcher */
+    .system-switcher-container {
+      margin-bottom: 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: var(--card-shadow);
+    }
+    .system-switcher {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    @media (max-width: 680px) {
+      .system-switcher { grid-template-columns: 1fr; }
+    }
+    .system-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      color: var(--text-muted);
+    }
+    .system-btn:hover {
+      background: var(--table-row-hover);
+      color: var(--text);
+    }
+    .system-btn.active {
+      background: var(--card-inner);
+      border-color: var(--primary);
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(147, 115, 238, 0.15);
+    }
+    .system-btn-icon {
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(147, 115, 238, 0.15);
+      flex-shrink: 0;
+    }
+    .system-btn.active .system-btn-icon {
+      background: var(--primary);
+      color: #fff;
+    }
+    .system-btn-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .system-btn-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-heading);
+    }
+    .system-btn-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Formpipe Container Styling */
+    .formpipe-banner {
+      background: var(--sync-gradient);
+      border: 1px solid var(--sync-border);
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 24px;
+      box-shadow: var(--card-shadow);
+    }
+    .formpipe-banner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .formpipe-banner-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--sync-title);
+    }
+    .formpipe-meta-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .meta-pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--sync-badge-bg);
+      color: var(--sync-badge-color);
+      font-family: monospace;
+      font-weight: 600;
+    }
+    .formpipe-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .formpipe-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      transition: border-color 0.2s;
+    }
+    .formpipe-card:hover {
+      border-color: rgba(147, 115, 238, 0.4);
+    }
+    .formpipe-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .formpipe-endpoint-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-heading);
+    }
+    .formpipe-payload-box {
+      width: 100%;
+      height: 200px;
+      background: var(--terminal-bg);
+      color: var(--terminal-color);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      resize: vertical;
+      margin-bottom: 12px;
+    }
+    .formpipe-payload-box:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .pdf-preview-box {
+      width: 100%;
+      height: 480px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #fff;
+      margin-top: 14px;
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -2417,6 +2714,28 @@ export function renderDashboardHtml() {
     </div>
   </div>
 
+  <!-- SYSTEM SWITCHER (MCD vs FORMPIPE) -->
+  <div class="system-switcher-container">
+    <div class="system-switcher">
+      <button class="system-btn active" id="btn-system-mcd" onclick="switchSystem('mcd')">
+        <div class="system-btn-icon">🏦</div>
+        <div class="system-btn-text">
+          <div class="system-btn-name">MCD Infinity Banking</div>
+          <div class="system-btn-desc">Retail & Juridical Database, Transact T24 Sync, OpenAPI Explorer</div>
+        </div>
+      </button>
+      <button class="system-btn" id="btn-system-formpipe" onclick="switchSystem('formpipe')">
+        <div class="system-btn-icon">📄</div>
+        <div class="system-btn-text">
+          <div class="system-btn-name">Formpipe LaserNet APIs</div>
+          <div class="system-btn-desc">Document Generation (JSON & Raw PDF) and File Retrieval (Base64 & PDF)</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- SYSTEM 1: MCD INFINITY -->
+  <div id="system-content-mcd">
   <div class="stats-grid">
     <div class="stat-card" onclick="switchTable('physical')">
       <div class="stat-label">Physical Persons</div>
@@ -2605,7 +2924,189 @@ export function renderDashboardHtml() {
         <button class="btn btn-success" id="modal-save-btn" onclick="saveModalChanges()">Save Changes</button>
       </div>
     </div>
-  </div>
+  </div> <!-- /#system-content-mcd -->
+
+  <!-- SYSTEM 2: FORMPIPE LASERNET -->
+  <div id="system-content-formpipe" style="display: none;">
+    <!-- Formpipe Banner -->
+    <div class="formpipe-banner">
+      <div class="formpipe-banner-header">
+        <div class="formpipe-banner-title">
+          <span style="font-size:22px;">📄</span>
+          <span>Formpipe LaserNet Document Services</span>
+          <span class="badge" style="background: rgba(147, 115, 238, 0.2); color: var(--primary); font-family: monospace;">v1 Adapter</span>
+        </div>
+        <div class="formpipe-meta-pills">
+          <span class="meta-pill">Port: ${PORT}</span>
+          <span class="meta-pill">Auth: AccessKey</span>
+          <span class="meta-pill" style="color:var(--accent-green); background:rgba(16,185,129,0.15);">● Server Active</span>
+          <a href="/docs#/formpipe" target="_blank" class="btn btn-sm btn-secondary" style="font-size:11px; padding:4px 8px;">Swagger Formpipe Docs</a>
+        </div>
+      </div>
+      <div style="font-size:13px; color:var(--text-muted); line-height:1.5;">
+        Complete Formpipe LaserNet document adapter emulation suite. Generate dynamic contracts, produce raw binary PDF byte arrays, and fetch generated document files with full Base64 / PDF format inspection.
+      </div>
+    </div>
+
+    <!-- 3 Formpipe Testing Cards Grid -->
+    <div class="formpipe-cards-grid">
+      
+      <!-- API 1 CARD -->
+      <div class="formpipe-card">
+        <div class="formpipe-card-header">
+          <div class="formpipe-endpoint-badge">
+            <span class="method-tag method-post">POST</span>
+            <span>/formpipe-adapter/v1/document-generation/generate</span>
+          </div>
+          <span style="font-size:12px; color:var(--text-muted); font-family:monospace;">Returns: JSON (DocID & DMLink)</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+          Submits template payload to LaserNet and creates the document job. Always returns status <code>200 OK</code>, generated <code>DocID: 64424517880</code>, and direct <code>DMLink</code> URL.
+        </div>
+        
+        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">AccessKey Header</label>
+            <input type="text" id="formpipe-api1-key" value="p32lUv6H-yyP2biBL-qn8zXUJO-RE/2tdqE" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace; font-size:12px;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Target URL</label>
+            <input type="text" readonly id="formpipe-api1-url" value="/formpipe-adapter/v1/document-generation/generate" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--card-inner); border:1px solid var(--border); border-radius:6px; color:var(--text-muted); font-family:monospace; font-size:12px;">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Request Body (JSON)</label>
+          <button class="btn btn-secondary btn-sm" onclick="resetFormpipePayload('formpipe-payload-api1')" style="font-size:11px; padding:3px 8px;">Reset Sample Payload</button>
+        </div>
+        <textarea id="formpipe-payload-api1" class="formpipe-payload-box" spellcheck="false"></textarea>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+          <button class="btn btn-primary" onclick="testFormpipeGenerate()">
+            <span>🚀 Send Request (POST /generate)</span>
+          </button>
+          <button class="btn btn-secondary" onclick="copyFormpipeCurl('generate')">
+            <span>📋 Copy cURL</span>
+          </button>
+          <span id="formpipe-api1-status" style="font-size:12px; font-weight:600; font-family:monospace;"></span>
+        </div>
+
+        <div>
+          <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Response Output</label>
+          <pre id="formpipe-api1-response" class="terminal" style="max-height:220px; margin-top:4px;">// Click "Send Request" to test API 1</pre>
+        </div>
+      </div>
+
+      <!-- API 2 CARD -->
+      <div class="formpipe-card">
+        <div class="formpipe-card-header">
+          <div class="formpipe-endpoint-badge">
+            <span class="method-tag method-post">POST</span>
+            <span>/formpipe-adapter/v1/document-generation/documentonly</span>
+          </div>
+          <span style="font-size:12px; color:var(--accent-blue); font-family:monospace; font-weight:600;">Returns: Binary PDF Byte Array</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+          Synchronously generates and streams the complete 4-page banking service contract as a raw binary PDF byte array (<code>Content-Type: application/pdf</code>, 147.69 KB).
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 2fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">AccessKey Header</label>
+            <input type="text" id="formpipe-api2-key" value="p32lUv6H-yyP2biBL-qn8zXUJO-RE/2tdqE" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace; font-size:12px;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Target URL</label>
+            <input type="text" readonly id="formpipe-api2-url" value="/formpipe-adapter/v1/document-generation/documentonly" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--card-inner); border:1px solid var(--border); border-radius:6px; color:var(--text-muted); font-family:monospace; font-size:12px;">
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Request Body (JSON)</label>
+          <button class="btn btn-secondary btn-sm" onclick="resetFormpipePayload('formpipe-payload-api2')" style="font-size:11px; padding:3px 8px;">Reset Sample Payload</button>
+        </div>
+        <textarea id="formpipe-payload-api2" class="formpipe-payload-box" spellcheck="false"></textarea>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+          <button class="btn btn-primary" onclick="testFormpipeDocumentOnly()">
+            <span>📄 Send Request & Retrieve PDF</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-download-api2" onclick="downloadApi2Pdf()" style="display:none;">
+            <span>⬇️ Download PDF (147 KB)</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-toggle-preview-api2" onclick="toggleApi2Preview()" style="display:none;">
+            <span>👁️ Toggle Live Preview</span>
+          </button>
+          <button class="btn btn-secondary" onclick="copyFormpipeCurl('documentonly')">
+            <span>📋 Copy cURL</span>
+          </button>
+          <span id="formpipe-api2-status" style="font-size:12px; font-weight:600; font-family:monospace;"></span>
+        </div>
+
+        <div>
+          <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Response Details & PDF Inspection</label>
+          <pre id="formpipe-api2-response" class="terminal" style="max-height:160px; margin-top:4px;">// Click "Send Request & Retrieve PDF" to test API 2</pre>
+          <iframe id="formpipe-api2-iframe" class="pdf-preview-box"></iframe>
+        </div>
+      </div>
+
+      <!-- API 3 CARD -->
+      <div class="formpipe-card">
+        <div class="formpipe-card-header">
+          <div class="formpipe-endpoint-badge">
+            <span class="method-tag method-get">GET</span>
+            <span>/formpipe-adapter/v1/documents/by-id/{id}/file</span>
+          </div>
+          <span style="font-size:12px; color:var(--accent-purple); font-family:monospace; font-weight:600;">Returns: PDF Base64 String</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+          Retrieves the generated document for any given Document ID. Returns the complete Base64 encoded PDF string (196,920 chars). Also supports direct download or browser viewing via <code>?format=pdf</code>.
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Document ID</label>
+            <input type="text" id="formpipe-api3-id" value="68719477778" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace; font-size:13px; font-weight:600;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">AccessKey Header</label>
+            <input type="text" id="formpipe-api3-key" value="p32lUv6H-yyP2biBL-qn8zXUJO-RE/2tdqE" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace; font-size:12px;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Response Format</label>
+            <select id="formpipe-api3-format" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-size:12px;">
+              <option value="raw" selected>Base64 String (Default)</option>
+              <option value="json">JSON { status, DocID, file }</option>
+              <option value="pdf">Binary PDF (?format=pdf)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+          <button class="btn btn-primary" onclick="testFormpipeGetFile()">
+            <span>📥 Fetch Document File (GET /file)</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-download-api3" onclick="downloadApi3Pdf()" style="display:none;">
+            <span>⬇️ Download Decoded PDF</span>
+          </button>
+          <button class="btn btn-secondary" id="btn-toggle-preview-api3" onclick="toggleApi3Preview()" style="display:none;">
+            <span>👁️ Toggle Live Preview</span>
+          </button>
+          <button class="btn btn-secondary" onclick="copyFormpipeCurl('getfile')">
+            <span>📋 Copy cURL</span>
+          </button>
+          <span id="formpipe-api3-status" style="font-size:12px; font-weight:600; font-family:monospace;"></span>
+        </div>
+
+        <div>
+          <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Response Base64 Content</label>
+          <pre id="formpipe-api3-response" class="terminal" style="max-height:200px; margin-top:4px;">// Click "Fetch Document File" to test API 3</pre>
+          <iframe id="formpipe-api3-iframe" class="pdf-preview-box"></iframe>
+        </div>
+      </div>
+
+    </div>
+  </div> <!-- /#system-content-formpipe -->
 
   <script>
     let dbData = null;
@@ -3236,10 +3737,409 @@ export function renderDashboardHtml() {
       updateThemeButton();
     }
 
+    // ---------------------------------------------------------
+    // Formpipe LaserNet Client Operations
+    // ---------------------------------------------------------
+    var sampleFormpipePayload = JSON.stringify({
+      "payloadContentType": "application/json",
+      "payloadEncoding": "plain",
+      "payloadType": "my-template",
+      "payload": {
+        "clients": [
+          {
+            "client": {
+              "type": "person",
+              "resType": "LT",
+              "death": "N",
+              "custCode": "100001",
+              "forpostNo": "",
+              "firstName": "John",
+              "lastName": "Doe",
+              "fullName": "John Doe",
+              "persCode": "49905201314",
+              "compCode": "123456789",
+              "persCodeCtry": "Lithuania",
+              "docIssCtry": "Lithuania",
+              "docName": "Pasas",
+              "docID": "123456",
+              "docIssDate": "2024-10-01",
+              "docExpDate": "3034-10-01",
+              "natIdCtry": "",
+              "natIdName": "",
+              "natIdCode": "",
+              "natIdNo": "",
+              "birthDate": "1999-01-01",
+              "addressStreet": "Versmelės g.",
+              "addressBuildingNr": "10",
+              "addressFlatNr": "2",
+              "addressBoxNr": "",
+              "addressMunicipality": "Vilniaus rajono savivaldybė",
+              "addressSubdistrict": "",
+              "addressCity": "Miestas",
+              "addressRegion": "Apskritis",
+              "addressPostCode": "LT-92343",
+              "addressCountry": "Lithuania",
+              "email": "john.doe@email.com",
+              "phone": "+12125556342",
+              "landline": "",
+              "electronicBox": "",
+              "relatedPersonRelationCode": "",
+              "relatedPersonRelationName": "",
+              "relatedPersonName": ""
+            }
+          }
+        ],
+        "accnts": [
+          {
+            "accnt": {
+              "rowNr": "",
+              "IBAN": "LT197180333377724444",
+              "currency": "EUR",
+              "LimitTrans": "50.00",
+              "limitDay": "50.00",
+              "limitMonth": "50.00",
+              "debRight": "Y",
+              "credRight": "Y",
+              "reviewRight": "Y"
+            }
+          }
+        ],
+        "usersRights": [
+          {
+            "userRights": {
+              "name": "John Doe",
+              "id": "KL556889P",
+              "pswdNo": "1111111",
+              "initPwd": "",
+              "genNo": "",
+              "authType": "",
+              "smartId": "Y",
+              "sgn": "",
+              "accntRowNr": "1, 2, 3"
+            }
+          }
+        ],
+        "sgnRights": {
+          "primUserLst": "",
+          "primCnt": "",
+          "secUserLst": "",
+          "secCnt": "",
+          "noSignUserLst": "",
+          "noSignCnt": ""
+        },
+        "delivery": {
+          "delyveryEmail": "Y",
+          "printCopy": "Y",
+          "authMeansCnt": "3"
+        },
+        "document": {
+          "no": "IB11-55368",
+          "code": "K06SD01/K06SD02",
+          "type": "InternetinesBankininkystesPaslaugosTeikimoSutartis",
+          "date": "2024-12-12",
+          "time": "10:25:00",
+          "language": "LT",
+          "sourceSystem": "",
+          "sourceApplication": ""
+        }
+      }
+    }, null, 2);
+
+    function switchSystem(sys) {
+      var mcdSection = document.getElementById('system-content-mcd');
+      var formpipeSection = document.getElementById('system-content-formpipe');
+      var btnMcd = document.getElementById('btn-system-mcd');
+      var btnFormpipe = document.getElementById('btn-system-formpipe');
+
+      if (sys === 'formpipe') {
+        if (mcdSection) mcdSection.style.display = 'none';
+        if (formpipeSection) formpipeSection.style.display = 'block';
+        if (btnMcd) btnMcd.classList.remove('active');
+        if (btnFormpipe) btnFormpipe.classList.add('active');
+        localStorage.setItem('selected-system', 'formpipe');
+        initFormpipeInputs();
+        showToast('Switched to Formpipe LaserNet APIs');
+      } else {
+        if (mcdSection) mcdSection.style.display = 'block';
+        if (formpipeSection) formpipeSection.style.display = 'none';
+        if (btnMcd) btnMcd.classList.add('active');
+        if (btnFormpipe) btnFormpipe.classList.remove('active');
+        localStorage.setItem('selected-system', 'mcd');
+        showToast('Switched to MCD Infinity Banking');
+      }
+    }
+
+    function initFormpipeInputs() {
+      var b1 = document.getElementById('formpipe-payload-api1');
+      if (b1 && !b1.value) b1.value = sampleFormpipePayload;
+      var b2 = document.getElementById('formpipe-payload-api2');
+      if (b2 && !b2.value) b2.value = sampleFormpipePayload;
+    }
+
+    function resetFormpipePayload(boxId) {
+      var el = document.getElementById(boxId);
+      if (el) {
+        el.value = sampleFormpipePayload;
+        showToast('Sample contract payload restored');
+      }
+    }
+
+    async function testFormpipeGenerate() {
+      var statusEl = document.getElementById('formpipe-api1-status');
+      var outEl = document.getElementById('formpipe-api1-response');
+      var key = document.getElementById('formpipe-api1-key').value.trim();
+      var payloadStr = document.getElementById('formpipe-payload-api1').value;
+
+      statusEl.innerHTML = '<span style="color:var(--text-muted);">Generating document...</span>';
+      outEl.innerText = '// Calling POST /formpipe-adapter/v1/document-generation/generate...';
+
+      try {
+        var t0 = performance.now();
+        var res = await fetch('/formpipe-adapter/v1/document-generation/generate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'AccessKey': key
+          },
+          body: payloadStr
+        });
+        var t1 = performance.now();
+        var data = await res.json();
+        statusEl.innerHTML = '<span style="color:var(--accent-green);">HTTP ' + res.status + ' OK (' + Math.round(t1 - t0) + 'ms)</span>';
+        outEl.innerText = JSON.stringify(data, null, 2);
+        showToast('Document generated! DocID: ' + data.DocID);
+      } catch (err) {
+        statusEl.innerHTML = '<span style="color:var(--accent-red);">Error</span>';
+        outEl.innerText = '// Request failed: ' + err.message;
+      }
+    }
+
+    var api2PdfBlob = null;
+    var api2PdfUrl = null;
+
+    async function testFormpipeDocumentOnly() {
+      var statusEl = document.getElementById('formpipe-api2-status');
+      var outEl = document.getElementById('formpipe-api2-response');
+      var iframe = document.getElementById('formpipe-api2-iframe');
+      var btnDownload = document.getElementById('btn-download-api2');
+      var btnPreview = document.getElementById('btn-toggle-preview-api2');
+      var key = document.getElementById('formpipe-api2-key').value.trim();
+      var payloadStr = document.getElementById('formpipe-payload-api2').value;
+
+      statusEl.innerHTML = '<span style="color:var(--text-muted);">Streaming binary PDF...</span>';
+      outEl.innerText = '// Calling POST /formpipe-adapter/v1/document-generation/documentonly...';
+
+      try {
+        var t0 = performance.now();
+        var res = await fetch('/formpipe-adapter/v1/document-generation/documentonly', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'AccessKey': key
+          },
+          body: payloadStr
+        });
+        var t1 = performance.now();
+        var blob = await res.blob();
+        api2PdfBlob = blob;
+        if (api2PdfUrl) URL.revokeObjectURL(api2PdfUrl);
+        api2PdfUrl = URL.createObjectURL(blob);
+
+        statusEl.innerHTML = '<span style="color:var(--accent-green);">HTTP ' + res.status + ' OK (' + Math.round(t1 - t0) + 'ms)</span>';
+        outEl.innerText = '// Binary PDF received successfully:\n' +
+          'Content-Type: ' + res.headers.get('content-type') + '\n' +
+          'Byte Size: ' + blob.size.toLocaleString() + ' bytes (' + (blob.size / 1024).toFixed(2) + ' KB)\n' +
+          'Format: Raw PDF Byte Array (%PDF-1.4 binary stream)\n' +
+          'Document: InternetinesBankininkystesPaslaugosTeikimoSutartis (4 Pages)\n' +
+          'Preview: Live embedded PDF rendered below.';
+
+        btnDownload.style.display = 'inline-flex';
+        btnPreview.style.display = 'inline-flex';
+        iframe.src = api2PdfUrl;
+        iframe.style.display = 'block';
+        showToast('PDF byte array received (' + (blob.size / 1024).toFixed(1) + ' KB)!');
+      } catch (err) {
+        statusEl.innerHTML = '<span style="color:var(--accent-red);">Error</span>';
+        outEl.innerText = '// Request failed: ' + err.message;
+      }
+    }
+
+    function downloadApi2Pdf() {
+      if (!api2PdfBlob && !api2PdfUrl) return;
+      var a = document.createElement('a');
+      a.href = api2PdfUrl;
+      a.download = 'formpipe-document.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Downloaded formpipe-document.pdf');
+    }
+
+    function toggleApi2Preview() {
+      var iframe = document.getElementById('formpipe-api2-iframe');
+      if (iframe) {
+        iframe.style.display = iframe.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+    var api3Base64 = '';
+    var api3PdfUrl = null;
+
+    async function testFormpipeGetFile() {
+      var docId = document.getElementById('formpipe-api3-id').value.trim() || '68719477778';
+      var key = document.getElementById('formpipe-api3-key').value.trim();
+      var format = document.getElementById('formpipe-api3-format').value;
+      var statusEl = document.getElementById('formpipe-api3-status');
+      var outEl = document.getElementById('formpipe-api3-response');
+      var iframe = document.getElementById('formpipe-api3-iframe');
+      var btnDownload = document.getElementById('btn-download-api3');
+      var btnPreview = document.getElementById('btn-toggle-preview-api3');
+
+      var url = '/formpipe-adapter/v1/documents/by-id/' + encodeURIComponent(docId) + '/file';
+      if (format === 'pdf') url += '?format=pdf';
+      else if (format === 'json') url += '?format=json';
+
+      statusEl.innerHTML = '<span style="color:var(--text-muted);">Fetching document...</span>';
+      outEl.innerText = '// Calling GET ' + url + '...';
+
+      try {
+        var t0 = performance.now();
+        var res = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'AccessKey': key
+          }
+        });
+        var t1 = performance.now();
+
+        if (format === 'pdf') {
+          var blob = await res.blob();
+          if (api3PdfUrl) URL.revokeObjectURL(api3PdfUrl);
+          api3PdfUrl = URL.createObjectURL(blob);
+          statusEl.innerHTML = '<span style="color:var(--accent-green);">HTTP ' + res.status + ' OK (' + Math.round(t1 - t0) + 'ms)</span>';
+          outEl.innerText = '// Binary PDF received directly:\n' +
+            'Size: ' + blob.size.toLocaleString() + ' bytes (' + (blob.size / 1024).toFixed(2) + ' KB)\n' +
+            'Content-Type: ' + res.headers.get('content-type');
+          iframe.src = api3PdfUrl;
+          iframe.style.display = 'block';
+          btnDownload.style.display = 'inline-flex';
+          btnPreview.style.display = 'inline-flex';
+          showToast('PDF fetched for DocID: ' + docId);
+          return;
+        }
+
+        if (format === 'json') {
+          var data = await res.json();
+          api3Base64 = data.file || '';
+          statusEl.innerHTML = '<span style="color:var(--accent-green);">HTTP ' + res.status + ' OK (' + Math.round(t1 - t0) + 'ms)</span>';
+          outEl.innerText = JSON.stringify({
+            status: data.status,
+            DocID: data.DocID,
+            message: data.message,
+            file: (data.file ? (data.file.substring(0, 100) + '... (' + data.file.length.toLocaleString() + ' base64 characters total)') : '')
+          }, null, 2);
+        } else {
+          var text = await res.text();
+          api3Base64 = text;
+          statusEl.innerHTML = '<span style="color:var(--accent-green);">HTTP ' + res.status + ' OK (' + Math.round(t1 - t0) + 'ms)</span>';
+          outEl.innerText = '// Base64 string response (' + text.length.toLocaleString() + ' characters):\n' +
+            text.substring(0, 300) + '\n... [truncated for display, full length: ' + text.length.toLocaleString() + ' chars]';
+        }
+
+        if (api3Base64) {
+          btnDownload.style.display = 'inline-flex';
+          btnPreview.style.display = 'inline-flex';
+          iframe.src = 'data:application/pdf;base64,' + api3Base64;
+          iframe.style.display = 'block';
+          showToast('Base64 document retrieved (' + api3Base64.length.toLocaleString() + ' chars)');
+        }
+      } catch (err) {
+        statusEl.innerHTML = '<span style="color:var(--accent-red);">Error</span>';
+        outEl.innerText = '// Request failed: ' + err.message;
+      }
+    }
+
+    function downloadApi3Pdf() {
+      if (api3PdfUrl) {
+        var a = document.createElement('a');
+        a.href = api3PdfUrl;
+        a.download = 'formpipe-doc-' + (document.getElementById('formpipe-api3-id').value.trim() || 'file') + '.pdf';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('Downloaded PDF file');
+        return;
+      }
+      if (!api3Base64) return;
+      var byteCharacters = atob(api3Base64);
+      var byteNumbers = new Array(byteCharacters.length);
+      for (var i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      var byteArray = new Uint8Array(byteNumbers);
+      var blob = new Blob([byteArray], { type: 'application/pdf' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'formpipe-doc-' + (document.getElementById('formpipe-api3-id').value.trim() || 'file') + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+      showToast('Downloaded decoded PDF file');
+    }
+
+    function toggleApi3Preview() {
+      var iframe = document.getElementById('formpipe-api3-iframe');
+      if (iframe) {
+        iframe.style.display = iframe.style.display === 'none' ? 'block' : 'none';
+      }
+    }
+
+    function copyFormpipeCurl(type) {
+      var host = window.location.origin;
+      var cmd = '';
+      if (type === 'generate') {
+        var key = document.getElementById('formpipe-api1-key').value;
+        var body = document.getElementById('formpipe-payload-api1').value;
+        cmd = "curl --location '" + host + "/formpipe-adapter/v1/document-generation/generate' \\\n--header 'Content-Type: application/json' \\\n--header 'AccessKey: " + key + "' \\\n--data-raw '" + body.replace(/'/g, "'\\''") + "'";
+      } else if (type === 'documentonly') {
+        var key = document.getElementById('formpipe-api2-key').value;
+        var body = document.getElementById('formpipe-payload-api2').value;
+        cmd = "curl --location '" + host + "/formpipe-adapter/v1/document-generation/documentonly' \\\n--header 'Content-Type: application/json' \\\n--header 'AccessKey: " + key + "' \\\n--data-raw '" + body.replace(/'/g, "'\\''") + "' --output document.pdf";
+      } else if (type === 'getfile') {
+        var id = document.getElementById('formpipe-api3-id').value.trim() || '68719477778';
+        var key = document.getElementById('formpipe-api3-key').value;
+        cmd = "curl --location '" + host + "/formpipe-adapter/v1/documents/by-id/" + id + "/file' \\\n--header 'AccessKey: " + key + "'";
+      }
+      copyToClipboard(cmd);
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() { showToast('cURL command copied to clipboard!'); });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('cURL command copied to clipboard!');
+      }
+    }
+
     // Initialize
     updateThemeButton();
     setupTableEvents();
     loadDatabase();
+
+    var savedSys = localStorage.getItem('selected-system');
+    if (savedSys === 'formpipe' || window.location.search.includes('system=formpipe')) {
+      switchSystem('formpipe');
+    } else {
+      initFormpipeInputs();
+    }
   </script>
 </body>
 </html>`;
