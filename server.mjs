@@ -1173,17 +1173,18 @@ export async function handleRequest(req, res) {
         }
       }
 
-      if (query.format === 'pdf' || query.format === 'binary' || query.download === 'true' || req.headers['accept'] === 'application/pdf') {
+      // Explicit Base64 format requested (?format=base64 or ?encoding=base64)
+      if (query.format === 'base64' || query.encoding === 'base64') {
         res.writeHead(200, {
-          'Content-Type': 'application/pdf',
-          'Content-Disposition': `inline; filename="document-${docId}.pdf"`,
-          'Content-Length': activeBuffer ? activeBuffer.length : 0,
+          'Content-Type': 'text/plain; charset=utf-8',
           'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
         });
-        return res.end(activeBuffer || Buffer.from(''));
+        return res.end(activeBase64);
       }
 
+      // Explicit JSON wrapper requested (?format=json or Accept: application/json)
       if (query.format === 'json' || req.headers['accept'] === 'application/json') {
         res.writeHead(200, {
           'Content-Type': 'application/json',
@@ -1198,13 +1199,16 @@ export async function handleRequest(req, res) {
         }, null, 2));
       }
 
+      // Default & Standard: Content-Type: application/pdf (streaming valid PDF byte array)
       res.writeHead(200, {
-        'Content-Type': 'text/plain; charset=utf-8',
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="document-${docId}.pdf"`,
+        'Content-Length': activeBuffer ? activeBuffer.length : 0,
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
       });
-      return res.end(activeBase64);
+      return res.end(activeBuffer || Buffer.from(''));
     }
 
     // 4. Upload / Update Document File by ID (PUT multipart/form-data or binary stream): PUT /documents/by-id/:id
@@ -3148,10 +3152,10 @@ export function renderDashboardHtml() {
             <span class="method-tag method-get">GET</span>
             <span>/formpipe-adapter/v1/documents/by-id/{id}/file</span>
           </div>
-          <span style="font-size:12px; color:var(--accent-purple); font-family:monospace; font-weight:600;">Returns: PDF Base64 String</span>
+          <span style="font-size:12px; color:var(--accent-purple); font-family:monospace; font-weight:600;">Returns: application/pdf (Binary PDF)</span>
         </div>
         <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-          Retrieves the generated document for any given Document ID. Returns the complete Base64 encoded PDF string (196,920 chars). Also supports direct download or browser viewing via <code>?format=pdf</code>.
+          Retrieves the generated document for any given Document ID. Returns the authentic PDF file with <code>Content-Type: application/pdf</code>. Also supports <code>?format=base64</code> and <code>?format=json</code>.
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
@@ -3166,9 +3170,9 @@ export function renderDashboardHtml() {
           <div>
             <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Response Format</label>
             <select id="formpipe-api3-format" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-size:12px;">
-              <option value="raw" selected>Base64 String (Default)</option>
-              <option value="json">JSON { status, DocID, file }</option>
-              <option value="pdf">Binary PDF (?format=pdf)</option>
+              <option value="pdf" selected>Binary PDF (application/pdf) [Default]</option>
+              <option value="base64">Base64 String (?format=base64)</option>
+              <option value="json">JSON Object (?format=json)</option>
             </select>
           </div>
         </div>
@@ -4136,7 +4140,7 @@ export function renderDashboardHtml() {
       var btnPreview = document.getElementById('btn-toggle-preview-api3');
 
       var url = '/formpipe-adapter/v1/documents/by-id/' + encodeURIComponent(docId) + '/file';
-      if (format === 'pdf') url += '?format=pdf';
+      if (format === 'base64') url += '?format=base64';
       else if (format === 'json') url += '?format=json';
 
       statusEl.innerHTML = '<span style="color:var(--text-muted);">Fetching document...</span>';
@@ -4282,7 +4286,8 @@ export function renderDashboardHtml() {
         var key = document.getElementById('formpipe-api3-key').value;
         cmd = [
           "curl --location '" + host + "/formpipe-adapter/v1/documents/by-id/" + id + "/file' " + bs,
-          "--header 'AccessKey: " + key + "'"
+          "--header 'Accept: application/pdf' " + bs,
+          "--header 'AccessKey: " + key + "' --output document-" + id + ".pdf"
         ].join(nl);
       } else if (type === 'putdoc') {
         var id = document.getElementById('formpipe-api4-id').value.trim() || '68719477778';

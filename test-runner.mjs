@@ -440,18 +440,19 @@ await assertTest('POST /formpipe-adapter/v1/document-generation/documentonly?for
   if (!res.body.startsWith('JVBERi0x')) throw new Error('Expected Base64 starting with JVBERi0x');
 });
 
-await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778/file (Base64 file string)', async () => {
+await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778/file (Default Content-Type: application/pdf binary stream)', async () => {
   const res = await request('GET', '/formpipe-adapter/v1/documents/by-id/68719477778/file');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.headers['Content-Type'] !== 'application/pdf') throw new Error(`Expected Content-Type application/pdf, got ${res.headers['Content-Type']}`);
+  if (!res.body.startsWith('%PDF-1.4')) throw new Error('Expected binary body starting with %PDF-1.4');
+  if (res.body.length < 50000) throw new Error(`Body length suspiciously small: ${res.body.length}`);
+});
+
+await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778/file?format=base64 (Explicit Base64 format)', async () => {
+  const res = await request('GET', '/formpipe-adapter/v1/documents/by-id/68719477778/file?format=base64');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
   if (!res.body.startsWith('JVBERi0x')) throw new Error('Expected Base64 starting with JVBERi0x');
   if (res.body.length < 100000) throw new Error(`Base64 length suspiciously small: ${res.body.length}`);
-});
-
-await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778/file?format=pdf (Binary PDF)', async () => {
-  const res = await request('GET', '/formpipe-adapter/v1/documents/by-id/68719477778/file?format=pdf');
-  if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.headers['Content-Type'] !== 'application/pdf') throw new Error(`Expected application/pdf, got ${res.headers['Content-Type']}`);
-  if (!res.body.startsWith('%PDF-1.4')) throw new Error('Expected %PDF-1.4 binary header');
 });
 
 await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778/file?format=json (JSON wrapper)', async () => {
@@ -481,11 +482,12 @@ await assertTest('PUT /documents/by-id/68719477778 (Alternate prefix for Java cl
   if (res.json.DocID !== '68719477778') throw new Error(`Expected DocID 68719477778`);
 });
 
-await assertTest('GET /documents/by-id/68719477778/file (Fallback to authentic PDF Base64 if uploaded payload is not a PDF)', async () => {
+await assertTest('GET /documents/by-id/68719477778/file (Fallback to authentic PDF binary stream with Content-Type application/pdf)', async () => {
   const res = await request('GET', '/documents/by-id/68719477778/file');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (!res.body.startsWith('JVBERi0x')) throw new Error('Expected valid Base64 PDF starting with JVBERi0x');
-  if (res.body.length < 100000) throw new Error(`Expected full PDF Base64 string, got length: ${res.body.length}`);
+  if (res.headers['Content-Type'] !== 'application/pdf') throw new Error(`Expected Content-Type application/pdf, got ${res.headers['Content-Type']}`);
+  if (!res.body.startsWith('%PDF-1.4')) throw new Error('Expected binary body starting with %PDF-1.4');
+  if (res.body.length < 50000) throw new Error(`Expected full PDF binary, got length: ${res.body.length}`);
 });
 
 await assertTest('extractMultipartFile helper verifies clean binary extraction from multipart payload', async () => {

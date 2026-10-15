@@ -3024,27 +3024,27 @@
             "name": "format",
             "in": "query",
             "required": false,
-            "description": "Response format: 'base64' (default), 'pdf' (binary PDF), or 'json' ({ status, DocID, message, file })",
+            "description": "Response format: 'pdf' (default, binary application/pdf), 'base64' (raw Base64 string), or 'json' ({ status, DocID, message, file })",
             "schema": {
               "type": "string",
-              "enum": ["base64", "pdf", "json"]
+              "enum": ["pdf", "base64", "json"]
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Document file content in requested format",
+            "description": "Document PDF file (application/pdf)",
             "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string",
-                  "description": "Base64 encoded PDF string"
-                }
-              },
               "application/pdf": {
                 "schema": {
                   "type": "string",
                   "format": "binary"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "description": "Base64 encoded PDF string (when format=base64)"
                 }
               },
               "application/json": {
