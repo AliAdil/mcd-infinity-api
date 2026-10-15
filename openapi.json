@@ -3100,6 +3100,68 @@
             }
           }
         }
+      },
+      "put": {
+        "summary": "Upload or update document byte array by ID (multipart/form-data)",
+        "description": "Uploads or updates the document file byte array using multipart/form-data (Java HttpRequest PUT).",
+        "tags": [
+          "formpipe"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "68719477778"
+          },
+          {
+            "name": "AccessKey",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "p32lUv6H-yyP2biBL-qn8zXUJO-RE/2tdqE"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "200" },
+                    "DocID": { "type": "string", "example": "68719477778" },
+                    "DMLink": { "type": "string" },
+                    "bytesReceived": { "type": "integer" },
+                    "message": { "type": "string", "example": "OK" }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/persons/physical/by-personal-code/{personalCode}": {

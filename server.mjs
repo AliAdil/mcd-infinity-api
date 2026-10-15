@@ -22,6 +22,7 @@ try {
 const FORMPIPE_PDF_PATH = path.join(__dirname, 'formpipe-sample.pdf');
 export let formpipePdfBuffer = null;
 export let formpipePdfBase64 = '';
+export const formpipeUploadedDocuments = new Map();
 try {
   if (fs.existsSync(FORMPIPE_PDF_PATH)) {
     formpipePdfBuffer = fs.readFileSync(FORMPIPE_PDF_PATH);
@@ -651,6 +652,18 @@ async function parseBody(req) {
   });
 }
 
+// Read raw binary/multipart request body buffer
+export async function parseRawBuffer(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', chunk => {
+      chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    });
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
 // Full DB snapshot in plain JSON object
 export function getDbSnapshot() {
   return {
@@ -1048,10 +1061,11 @@ export async function handleRequest(req, res) {
 
     // ---------------------------------------------------------
     // Formpipe LaserNet Document Adapter Endpoints
+    // Supports both /formpipe-adapter/v1/* and /* paths
     // ---------------------------------------------------------
 
-    // 1. Generate Document: POST /formpipe-adapter/v1/document-generation/generate
-    if (method === 'POST' && pathname === '/formpipe-adapter/v1/document-generation/generate') {
+    // 1. Generate Document: POST /document-generation/generate
+    if (method === 'POST' && (pathname === '/formpipe-adapter/v1/document-generation/generate' || pathname === '/document-generation/generate')) {
       await parseBody(req);
       const docId = '64424517880';
       const dmLink = `https://adapter-dev.artea.lasernetgroup.cloud/formpipe-adapter/v1/documents/by-id/${docId}`;
@@ -1070,8 +1084,8 @@ export async function handleRequest(req, res) {
       return res.end(JSON.stringify(responseData, null, 2));
     }
 
-    // 2. Generate Document Only (raw PDF byte array): POST /formpipe-adapter/v1/document-generation/documentonly
-    if (method === 'POST' && pathname === '/formpipe-adapter/v1/document-generation/documentonly') {
+    // 2. Generate Document Only (raw PDF byte array): POST /document-generation/documentonly
+    if (method === 'POST' && (pathname === '/formpipe-adapter/v1/document-generation/documentonly' || pathname === '/document-generation/documentonly')) {
       await parseBody(req);
       if (!formpipePdfBuffer && fs.existsSync(FORMPIPE_PDF_PATH)) {
         formpipePdfBuffer = fs.readFileSync(FORMPIPE_PDF_PATH);
@@ -1098,24 +1112,32 @@ export async function handleRequest(req, res) {
       return res.end(formpipePdfBuffer || Buffer.from(''));
     }
 
-    // 3. Get Document File by ID (Base64 / PDF): GET /formpipe-adapter/v1/documents/by-id/:id/file
-    const formpipeFileMatch = pathname.match(/^\/formpipe-adapter\/v1\/documents\/by-id\/([^\/]+)\/file$/);
+    // 3. Get Document File by ID (Base64 / PDF): GET /documents/by-id/:id/file
+    const formpipeFileMatch = pathname.match(/^(?:\/formpipe-adapter\/v1)?\/documents\/by-id\/([^\/]+)\/file$/);
     if (method === 'GET' && formpipeFileMatch) {
       const docId = formpipeFileMatch[1];
-      if (!formpipePdfBuffer && fs.existsSync(FORMPIPE_PDF_PATH)) {
+      let activeBuffer = formpipePdfBuffer;
+      let activeBase64 = formpipePdfBase64;
+
+      if (formpipeUploadedDocuments.has(docId)) {
+        activeBuffer = formpipeUploadedDocuments.get(docId);
+        activeBase64 = activeBuffer.toString('base64');
+      } else if (!activeBuffer && fs.existsSync(FORMPIPE_PDF_PATH)) {
         formpipePdfBuffer = fs.readFileSync(FORMPIPE_PDF_PATH);
         formpipePdfBase64 = formpipePdfBuffer.toString('base64');
+        activeBuffer = formpipePdfBuffer;
+        activeBase64 = formpipePdfBase64;
       }
 
       if (query.format === 'pdf' || query.format === 'binary' || query.download === 'true' || req.headers['accept'] === 'application/pdf') {
         res.writeHead(200, {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `inline; filename="document-${docId}.pdf"`,
-          'Content-Length': formpipePdfBuffer ? formpipePdfBuffer.length : 0,
+          'Content-Length': activeBuffer ? activeBuffer.length : 0,
           'Access-Control-Allow-Origin': '*',
           'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
         });
-        return res.end(formpipePdfBuffer || Buffer.from(''));
+        return res.end(activeBuffer || Buffer.from(''));
       }
 
       if (query.format === 'json' || req.headers['accept'] === 'application/json') {
@@ -1128,7 +1150,7 @@ export async function handleRequest(req, res) {
           status: "200",
           DocID: docId,
           message: "OK",
-          file: formpipePdfBase64
+          file: activeBase64
         }, null, 2));
       }
 
@@ -1138,11 +1160,34 @@ export async function handleRequest(req, res) {
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
       });
-      return res.end(formpipePdfBase64);
+      return res.end(activeBase64);
     }
 
-    // Document Metadata: GET /formpipe-adapter/v1/documents/by-id/:id
-    const formpipeDocMatch = pathname.match(/^\/formpipe-adapter\/v1\/documents\/by-id\/([^\/]+)$/);
+    // 4. Upload / Update Document File by ID (PUT multipart/form-data or binary stream): PUT /documents/by-id/:id
+    const formpipePutMatch = pathname.match(/^(?:\/formpipe-adapter\/v1)?\/documents\/by-id\/([^\/]+)$/);
+    if (method === 'PUT' && formpipePutMatch) {
+      const docId = formpipePutMatch[1];
+      const rawBuffer = await parseRawBuffer(req);
+      if (rawBuffer.length > 0) {
+        formpipeUploadedDocuments.set(docId, rawBuffer);
+      }
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept, AccessKey'
+      });
+      return res.end(JSON.stringify({
+        status: "200",
+        DocID: docId,
+        DMLink: `https://adapter-dev.artea.lasernetgroup.cloud/formpipe-adapter/v1/documents/by-id/${docId}`,
+        bytesReceived: rawBuffer.length,
+        message: "OK"
+      }, null, 2));
+    }
+
+    // 5. Document Metadata: GET /documents/by-id/:id
+    const formpipeDocMatch = pathname.match(/^(?:\/formpipe-adapter\/v1)?\/documents\/by-id\/([^\/]+)$/);
     if (method === 'GET' && formpipeDocMatch) {
       const docId = formpipeDocMatch[1];
       res.writeHead(200, {
@@ -2924,6 +2969,7 @@ export function renderDashboardHtml() {
         <button class="btn btn-success" id="modal-save-btn" onclick="saveModalChanges()">Save Changes</button>
       </div>
     </div>
+  </div>
   </div> <!-- /#system-content-mcd -->
 
   <!-- SYSTEM 2: FORMPIPE LASERNET -->
@@ -3102,6 +3148,53 @@ export function renderDashboardHtml() {
           <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Response Base64 Content</label>
           <pre id="formpipe-api3-response" class="terminal" style="max-height:200px; margin-top:4px;">// Click "Fetch Document File" to test API 3</pre>
           <iframe id="formpipe-api3-iframe" class="pdf-preview-box"></iframe>
+        </div>
+      </div>
+
+      <!-- API 4 CARD -->
+      <div class="formpipe-card">
+        <div class="formpipe-card-header">
+          <div class="formpipe-endpoint-badge">
+            <span class="method-tag method-put">PUT</span>
+            <span>/formpipe-adapter/v1/documents/by-id/{id}</span>
+          </div>
+          <span style="font-size:12px; color:var(--accent-orange); font-family:monospace; font-weight:600;">Returns: JSON { status: "200", DocID, DMLink, message: "OK" }</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+          Uploads / updates document binary bytes via <code>multipart/form-data</code>. Supports Java <code>HttpRequest.newBuilder().PUT(BodyPublishers.ofByteArray(body))</code> client integration.
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Document ID (fileId)</label>
+            <input type="text" id="formpipe-api4-id" value="68719477778" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace; font-size:13px; font-weight:600;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">AccessKey Header</label>
+            <input type="text" id="formpipe-api4-key" value="p32lUv6H-yyP2biBL-qn8zXUJO-RE/2tdqE" style="width:100%; padding:8px 12px; margin-top:4px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace; font-size:12px;">
+          </div>
+          <div>
+            <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Select File (Optional)</label>
+            <input type="file" id="formpipe-api4-file" style="width:100%; padding:6px 8px; margin-top:4px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-size:11px;">
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px;">
+          <button class="btn btn-primary" onclick="testFormpipeUploadDoc()">
+            <span>📤 Send Request (PUT /documents/by-id/{id})</span>
+          </button>
+          <button class="btn btn-secondary" onclick="copyFormpipeCurl('putdoc')">
+            <span>📋 Copy cURL</span>
+          </button>
+          <button class="btn btn-secondary" onclick="copyFormpipeJavaCode()">
+            <span>☕ Copy Java Code</span>
+          </button>
+          <span id="formpipe-api4-status" style="font-size:12px; font-weight:600; font-family:monospace;"></span>
+        </div>
+
+        <div>
+          <label style="font-size:11px; font-weight:600; color:var(--text-muted); text-transform:uppercase;">Response Output</label>
+          <pre id="formpipe-api4-response" class="terminal" style="max-height:180px; margin-top:4px;">// Click "Send Request" to test PUT API</pre>
         </div>
       </div>
 
@@ -4133,8 +4226,90 @@ export function renderDashboardHtml() {
           "curl --location '" + host + "/formpipe-adapter/v1/documents/by-id/" + id + "/file' " + bs,
           "--header 'AccessKey: " + key + "'"
         ].join(nl);
+      } else if (type === 'putdoc') {
+        var id = document.getElementById('formpipe-api4-id').value.trim() || '68719477778';
+        var key = document.getElementById('formpipe-api4-key').value;
+        cmd = [
+          "curl --location --request PUT '" + host + "/formpipe-adapter/v1/documents/by-id/" + id + "' " + bs,
+          "--header 'Accept: application/json' " + bs,
+          "--header 'AccessKey: " + key + "' " + bs,
+          "--header 'Content-Type: multipart/form-data' " + bs,
+          "--form 'file=@document.pdf'"
+        ].join(nl);
       }
       copyToClipboard(cmd);
+    }
+
+    async function testFormpipeUploadDoc() {
+      var docId = document.getElementById('formpipe-api4-id').value.trim() || '68719477778';
+      var key = document.getElementById('formpipe-api4-key').value.trim();
+      var fileInput = document.getElementById('formpipe-api4-file');
+      var statusEl = document.getElementById('formpipe-api4-status');
+      var outEl = document.getElementById('formpipe-api4-response');
+
+      statusEl.innerHTML = '<span style="color:var(--text-muted);">Uploading document...</span>';
+      outEl.innerText = '// Calling PUT /formpipe-adapter/v1/documents/by-id/' + docId + '...';
+
+      try {
+        var bodyData = null;
+        var headers = {
+          'Accept': 'application/json',
+          'AccessKey': key
+        };
+
+        if (fileInput && fileInput.files && fileInput.files.length > 0) {
+          var formData = new FormData();
+          formData.append('file', fileInput.files[0]);
+          bodyData = formData;
+        } else {
+          var boundary = '----Boundary' + Math.random().toString(36).substring(2);
+          headers['Content-Type'] = 'multipart/form-data; boundary=' + boundary;
+          bodyData = '--' + boundary + String.fromCharCode(13, 10) +
+            'Content-Disposition: form-data; name="file"; filename="document.pdf"' + String.fromCharCode(13, 10) +
+            'Content-Type: application/pdf' + String.fromCharCode(13, 10, 13, 10) +
+            (api2PdfBlob ? await api2PdfBlob.text() : 'PDF-BINARY-DATA') + String.fromCharCode(13, 10) +
+            '--' + boundary + '--';
+        }
+
+        var t0 = performance.now();
+        var res = await fetch('/formpipe-adapter/v1/documents/by-id/' + encodeURIComponent(docId), {
+          method: 'PUT',
+          headers: headers,
+          body: bodyData
+        });
+        var t1 = performance.now();
+        var data = await res.json();
+        statusEl.innerHTML = '<span style="color:var(--accent-green);">HTTP ' + res.status + ' OK (' + Math.round(t1 - t0) + 'ms)</span>';
+        outEl.innerText = JSON.stringify(data, null, 2);
+        showToast('Document uploaded/updated: ' + docId);
+      } catch (err) {
+        statusEl.innerHTML = '<span style="color:var(--accent-red);">Error</span>';
+        outEl.innerText = '// Request failed: ' + err.message;
+      }
+    }
+
+    function copyFormpipeJavaCode() {
+      var id = document.getElementById('formpipe-api4-id').value.trim() || '68719477778';
+      var key = document.getElementById('formpipe-api4-key').value.trim() || 'p32lUv6H-yyP2biBL-qn8zXUJO-RE/2tdqE';
+      var nl = String.fromCharCode(10);
+      var code = [
+        '// Java HttpClient PUT request for Formpipe Document Update',
+        'String formpipeAdapterURL = "' + window.location.origin + '/formpipe-adapter/v1";',
+        'String fileId = "' + id + '";',
+        'String formpipeAdapterKey = "' + key + '";',
+        'String boundary = UUID.randomUUID().toString();',
+        'byte[] body = ...; // your PDF/document byte array',
+        '',
+        'HttpRequest requestt = HttpRequest.newBuilder()',
+        '        .uri(new URI(formpipeAdapterURL + "/documents/by-id/" + fileId))',
+        '        .header("Accept", "application/json")',
+        '        .header("AccessKey", formpipeAdapterKey)',
+        '        .header("Content-Type", "multipart/form-data; boundary=" + boundary)',
+        '        .PUT(HttpRequest.BodyPublishers.ofByteArray(body))',
+        '        .build();'
+      ].join(nl);
+      copyToClipboard(code);
+      showToast('Java HttpRequest code copied to clipboard!');
     }
 
     function copyToClipboard(text) {

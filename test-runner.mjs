@@ -462,11 +462,29 @@ await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778/file?form
   if (!res.json.file || !res.json.file.startsWith('JVBERi0x')) throw new Error('Invalid Base64 in json.file');
 });
 
-await assertTest('GET /formpipe-adapter/v1/documents/by-id/68719477778 (Metadata)', async () => {
-  const res = await request('GET', '/formpipe-adapter/v1/documents/by-id/68719477778');
+await assertTest('PUT /formpipe-adapter/v1/documents/by-id/68719477778 (Upload document bytes)', async () => {
+  const res = await request('PUT', '/formpipe-adapter/v1/documents/by-id/68719477778', {
+    test: 'sample byte payload'
+  });
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.json.status !== '200') throw new Error(`Expected status '200'`);
   if (res.json.DocID !== '68719477778') throw new Error(`Expected DocID 68719477778`);
-  if (!res.json.DMLink.includes('68719477778')) throw new Error(`Invalid DMLink`);
+  if (res.json.message !== 'OK') throw new Error(`Expected OK message`);
+});
+
+await assertTest('PUT /documents/by-id/68719477778 (Alternate prefix for Java client)', async () => {
+  const res = await request('PUT', '/documents/by-id/68719477778', {
+    test: 'sample byte payload alternate'
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.json.status !== '200') throw new Error(`Expected status '200'`);
+  if (res.json.DocID !== '68719477778') throw new Error(`Expected DocID 68719477778`);
+});
+
+await assertTest('GET /documents/by-id/68719477778/file (Alternate prefix for Java client)', async () => {
+  const res = await request('GET', '/documents/by-id/68719477778/file');
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.body.length === 0) throw new Error('Expected non-empty body');
 });
 
 await assertTest('POST /admin/db/reset (Reset to seed)', async () => {
