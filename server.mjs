@@ -3946,12 +3946,14 @@ export function renderDashboardHtml() {
         api2PdfUrl = URL.createObjectURL(blob);
 
         statusEl.innerHTML = '<span style="color:var(--accent-green);">HTTP ' + res.status + ' OK (' + Math.round(t1 - t0) + 'ms)</span>';
-        outEl.innerText = '// Binary PDF received successfully:\n' +
-          'Content-Type: ' + res.headers.get('content-type') + '\n' +
-          'Byte Size: ' + blob.size.toLocaleString() + ' bytes (' + (blob.size / 1024).toFixed(2) + ' KB)\n' +
-          'Format: Raw PDF Byte Array (%PDF-1.4 binary stream)\n' +
-          'Document: InternetinesBankininkystesPaslaugosTeikimoSutartis (4 Pages)\n' +
-          'Preview: Live embedded PDF rendered below.';
+        outEl.innerText = [
+          '// Binary PDF received successfully:',
+          'Content-Type: ' + res.headers.get('content-type'),
+          'Byte Size: ' + blob.size.toLocaleString() + ' bytes (' + (blob.size / 1024).toFixed(2) + ' KB)',
+          'Format: Raw PDF Byte Array (%PDF-1.4 binary stream)',
+          'Document: InternetinesBankininkystesPaslaugosTeikimoSutartis (4 Pages)',
+          'Preview: Live embedded PDF rendered below.'
+        ].join(String.fromCharCode(10));
 
         btnDownload.style.display = 'inline-flex';
         btnPreview.style.display = 'inline-flex';
@@ -4017,9 +4019,11 @@ export function renderDashboardHtml() {
           if (api3PdfUrl) URL.revokeObjectURL(api3PdfUrl);
           api3PdfUrl = URL.createObjectURL(blob);
           statusEl.innerHTML = '<span style="color:var(--accent-green);">HTTP ' + res.status + ' OK (' + Math.round(t1 - t0) + 'ms)</span>';
-          outEl.innerText = '// Binary PDF received directly:\n' +
-            'Size: ' + blob.size.toLocaleString() + ' bytes (' + (blob.size / 1024).toFixed(2) + ' KB)\n' +
-            'Content-Type: ' + res.headers.get('content-type');
+          outEl.innerText = [
+            '// Binary PDF received directly:',
+            'Size: ' + blob.size.toLocaleString() + ' bytes (' + (blob.size / 1024).toFixed(2) + ' KB)',
+            'Content-Type: ' + res.headers.get('content-type')
+          ].join(String.fromCharCode(10));
           iframe.src = api3PdfUrl;
           iframe.style.display = 'block';
           btnDownload.style.display = 'inline-flex';
@@ -4042,8 +4046,11 @@ export function renderDashboardHtml() {
           var text = await res.text();
           api3Base64 = text;
           statusEl.innerHTML = '<span style="color:var(--accent-green);">HTTP ' + res.status + ' OK (' + Math.round(t1 - t0) + 'ms)</span>';
-          outEl.innerText = '// Base64 string response (' + text.length.toLocaleString() + ' characters):\n' +
-            text.substring(0, 300) + '\n... [truncated for display, full length: ' + text.length.toLocaleString() + ' chars]';
+          outEl.innerText = [
+            '// Base64 string response (' + text.length.toLocaleString() + ' characters):',
+            text.substring(0, 300) + '...',
+            '[truncated for display, full length: ' + text.length.toLocaleString() + ' chars]'
+          ].join(String.fromCharCode(10));
         }
 
         if (api3Base64) {
@@ -4098,19 +4105,34 @@ export function renderDashboardHtml() {
 
     function copyFormpipeCurl(type) {
       var host = window.location.origin;
+      var nl = String.fromCharCode(10);
+      var bs = String.fromCharCode(92);
       var cmd = '';
       if (type === 'generate') {
         var key = document.getElementById('formpipe-api1-key').value;
         var body = document.getElementById('formpipe-payload-api1').value;
-        cmd = "curl --location '" + host + "/formpipe-adapter/v1/document-generation/generate' \\\n--header 'Content-Type: application/json' \\\n--header 'AccessKey: " + key + "' \\\n--data-raw '" + body.replace(/'/g, "'\\''") + "'";
+        cmd = [
+          "curl --location '" + host + "/formpipe-adapter/v1/document-generation/generate' " + bs,
+          "--header 'Content-Type: application/json' " + bs,
+          "--header 'AccessKey: " + key + "' " + bs,
+          "--data-raw '" + body.split("'").join("'" + bs + "''") + "'"
+        ].join(nl);
       } else if (type === 'documentonly') {
         var key = document.getElementById('formpipe-api2-key').value;
         var body = document.getElementById('formpipe-payload-api2').value;
-        cmd = "curl --location '" + host + "/formpipe-adapter/v1/document-generation/documentonly' \\\n--header 'Content-Type: application/json' \\\n--header 'AccessKey: " + key + "' \\\n--data-raw '" + body.replace(/'/g, "'\\''") + "' --output document.pdf";
+        cmd = [
+          "curl --location '" + host + "/formpipe-adapter/v1/document-generation/documentonly' " + bs,
+          "--header 'Content-Type: application/json' " + bs,
+          "--header 'AccessKey: " + key + "' " + bs,
+          "--data-raw '" + body.split("'").join("'" + bs + "''") + "' --output document.pdf"
+        ].join(nl);
       } else if (type === 'getfile') {
         var id = document.getElementById('formpipe-api3-id').value.trim() || '68719477778';
         var key = document.getElementById('formpipe-api3-key').value;
-        cmd = "curl --location '" + host + "/formpipe-adapter/v1/documents/by-id/" + id + "/file' \\\n--header 'AccessKey: " + key + "'";
+        cmd = [
+          "curl --location '" + host + "/formpipe-adapter/v1/documents/by-id/" + id + "/file' " + bs,
+          "--header 'AccessKey: " + key + "'"
+        ].join(nl);
       }
       copyToClipboard(cmd);
     }
