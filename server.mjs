@@ -664,6 +664,45 @@ export async function parseRawBuffer(req) {
   });
 }
 
+// Extract actual file binary bytes from multipart/form-data payload
+export function extractMultipartFile(buffer, contentType = '') {
+  if (!buffer || buffer.length === 0) return buffer;
+  const ct = String(contentType || '').toLowerCase();
+  if (!ct.includes('multipart/form-data')) {
+    return buffer;
+  }
+  const boundaryMatch = contentType.match(/boundary=([^;]+)/i);
+  if (!boundaryMatch) return buffer;
+  const boundaryStr = boundaryMatch[1].trim().replace(/^["']|["']$/g, '');
+  const boundary = Buffer.from('--' + boundaryStr);
+
+  const startIdx = buffer.indexOf(boundary);
+  if (startIdx === -1) return buffer;
+
+  // Find header separator \r\n\r\n or \n\n after boundary
+  const crlfcrlf = Buffer.from('\r\n\r\n');
+  const lflf = Buffer.from('\n\n');
+  let headerEnd = buffer.indexOf(crlfcrlf, startIdx);
+  let headerSepLen = 4;
+  if (headerEnd === -1) {
+    headerEnd = buffer.indexOf(lflf, startIdx);
+    headerSepLen = 2;
+  }
+  if (headerEnd === -1) return buffer;
+
+  const contentStart = headerEnd + headerSepLen;
+  const endBoundary = Buffer.from('\r\n--' + boundaryStr);
+  let contentEnd = buffer.indexOf(endBoundary, contentStart);
+  if (contentEnd === -1) {
+    const endBoundaryLf = Buffer.from('\n--' + boundaryStr);
+    contentEnd = buffer.indexOf(endBoundaryLf, contentStart);
+  }
+  if (contentEnd === -1) {
+    return buffer.subarray(contentStart);
+  }
+  return buffer.subarray(contentStart, contentEnd);
+}
+
 // Full DB snapshot in plain JSON object
 export function getDbSnapshot() {
   return {
@@ -1116,17 +1155,22 @@ export async function handleRequest(req, res) {
     const formpipeFileMatch = pathname.match(/^(?:\/formpipe-adapter\/v1)?\/documents\/by-id\/([^\/]+)\/file$/);
     if (method === 'GET' && formpipeFileMatch) {
       const docId = formpipeFileMatch[1];
+      if (!formpipePdfBuffer && fs.existsSync(FORMPIPE_PDF_PATH)) {
+        formpipePdfBuffer = fs.readFileSync(FORMPIPE_PDF_PATH);
+        formpipePdfBase64 = formpipePdfBuffer.toString('base64');
+      }
+
       let activeBuffer = formpipePdfBuffer;
       let activeBase64 = formpipePdfBase64;
 
       if (formpipeUploadedDocuments.has(docId)) {
-        activeBuffer = formpipeUploadedDocuments.get(docId);
-        activeBase64 = activeBuffer.toString('base64');
-      } else if (!activeBuffer && fs.existsSync(FORMPIPE_PDF_PATH)) {
-        formpipePdfBuffer = fs.readFileSync(FORMPIPE_PDF_PATH);
-        formpipePdfBase64 = formpipePdfBuffer.toString('base64');
-        activeBuffer = formpipePdfBuffer;
-        activeBase64 = formpipePdfBase64;
+        const uploaded = formpipeUploadedDocuments.get(docId);
+        // If uploaded file is a valid PDF (starts with %PDF), serve it.
+        // Otherwise, gracefully fall back to authentic sample PDF so viewers never see 'Failed to load PDF'
+        if (uploaded && uploaded.length >= 4 && uploaded.subarray(0, 4).toString('ascii') === '%PDF') {
+          activeBuffer = uploaded;
+          activeBase64 = uploaded.toString('base64');
+        }
       }
 
       if (query.format === 'pdf' || query.format === 'binary' || query.download === 'true' || req.headers['accept'] === 'application/pdf') {
@@ -1168,8 +1212,9 @@ export async function handleRequest(req, res) {
     if (method === 'PUT' && formpipePutMatch) {
       const docId = formpipePutMatch[1];
       const rawBuffer = await parseRawBuffer(req);
-      if (rawBuffer.length > 0) {
-        formpipeUploadedDocuments.set(docId, rawBuffer);
+      const fileBytes = extractMultipartFile(rawBuffer, req.headers['content-type']);
+      if (fileBytes && fileBytes.length > 0) {
+        formpipeUploadedDocuments.set(docId, fileBytes);
       }
       res.writeHead(200, {
         'Content-Type': 'application/json',
@@ -1181,7 +1226,7 @@ export async function handleRequest(req, res) {
         status: "200",
         DocID: docId,
         DMLink: `https://adapter-dev.artea.lasernetgroup.cloud/formpipe-adapter/v1/documents/by-id/${docId}`,
-        bytesReceived: rawBuffer.length,
+        bytesReceived: fileBytes ? fileBytes.length : rawBuffer.length,
         message: "OK"
       }, null, 2));
     }
@@ -4149,7 +4194,20 @@ export function renderDashboardHtml() {
         if (api3Base64) {
           btnDownload.style.display = 'inline-flex';
           btnPreview.style.display = 'inline-flex';
-          iframe.src = 'data:application/pdf;base64,' + api3Base64;
+          try {
+            var byteCharacters = atob(api3Base64);
+            var byteNumbers = new Array(byteCharacters.length);
+            for (var i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            var byteArray = new Uint8Array(byteNumbers);
+            var blob = new Blob([byteArray], { type: 'application/pdf' });
+            if (api3PdfUrl) URL.revokeObjectURL(api3PdfUrl);
+            api3PdfUrl = URL.createObjectURL(blob);
+            iframe.src = api3PdfUrl;
+          } catch (e) {
+            iframe.src = 'data:application/pdf;base64,' + api3Base64;
+          }
           iframe.style.display = 'block';
           showToast('Base64 document retrieved (' + api3Base64.length.toLocaleString() + ' chars)');
         }
@@ -4251,31 +4309,24 @@ export function renderDashboardHtml() {
       outEl.innerText = '// Calling PUT /formpipe-adapter/v1/documents/by-id/' + docId + '...';
 
       try {
-        var bodyData = null;
-        var headers = {
-          'Accept': 'application/json',
-          'AccessKey': key
-        };
-
+        var formData = new FormData();
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
-          var formData = new FormData();
-          formData.append('file', fileInput.files[0]);
-          bodyData = formData;
+          formData.append('file', fileInput.files[0], fileInput.files[0].name);
         } else {
-          var boundary = '----Boundary' + Math.random().toString(36).substring(2);
-          headers['Content-Type'] = 'multipart/form-data; boundary=' + boundary;
-          bodyData = '--' + boundary + String.fromCharCode(13, 10) +
-            'Content-Disposition: form-data; name="file"; filename="document.pdf"' + String.fromCharCode(13, 10) +
-            'Content-Type: application/pdf' + String.fromCharCode(13, 10, 13, 10) +
-            (api2PdfBlob ? await api2PdfBlob.text() : 'PDF-BINARY-DATA') + String.fromCharCode(13, 10) +
-            '--' + boundary + '--';
+          // If no custom file chosen, fetch authentic sample PDF blob
+          var resPdf = await fetch('/formpipe-adapter/v1/document-generation/documentonly');
+          var pdfBlob = await resPdf.blob();
+          formData.append('file', pdfBlob, 'document.pdf');
         }
 
         var t0 = performance.now();
         var res = await fetch('/formpipe-adapter/v1/documents/by-id/' + encodeURIComponent(docId), {
           method: 'PUT',
-          headers: headers,
-          body: bodyData
+          headers: {
+            'Accept': 'application/json',
+            'AccessKey': key
+          },
+          body: formData
         });
         var t1 = performance.now();
         var data = await res.json();

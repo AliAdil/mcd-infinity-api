@@ -481,10 +481,29 @@ await assertTest('PUT /documents/by-id/68719477778 (Alternate prefix for Java cl
   if (res.json.DocID !== '68719477778') throw new Error(`Expected DocID 68719477778`);
 });
 
-await assertTest('GET /documents/by-id/68719477778/file (Alternate prefix for Java client)', async () => {
+await assertTest('GET /documents/by-id/68719477778/file (Fallback to authentic PDF Base64 if uploaded payload is not a PDF)', async () => {
   const res = await request('GET', '/documents/by-id/68719477778/file');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
-  if (res.body.length === 0) throw new Error('Expected non-empty body');
+  if (!res.body.startsWith('JVBERi0x')) throw new Error('Expected valid Base64 PDF starting with JVBERi0x');
+  if (res.body.length < 100000) throw new Error(`Expected full PDF Base64 string, got length: ${res.body.length}`);
+});
+
+await assertTest('extractMultipartFile helper verifies clean binary extraction from multipart payload', async () => {
+  const { extractMultipartFile } = await import('./server.mjs');
+  const boundary = '----WebKitFormBoundaryXyZ123';
+  const fakePdf = Buffer.from('%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF');
+  const multipart = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="test.pdf"\r\nContent-Type: application/pdf\r\n\r\n`),
+    fakePdf,
+    Buffer.from(`\r\n--${boundary}--\r\n`)
+  ]);
+  const extracted = extractMultipartFile(multipart, `multipart/form-data; boundary=${boundary}`);
+  if (!extracted || !extracted.subarray(0, 4).equals(Buffer.from('%PDF'))) {
+    throw new Error('Failed to extract valid PDF bytes from multipart body');
+  }
+  if (!extracted.equals(fakePdf)) {
+    throw new Error('Extracted PDF bytes do not match original PDF bytes');
+  }
 });
 
 await assertTest('POST /admin/db/reset (Reset to seed)', async () => {
