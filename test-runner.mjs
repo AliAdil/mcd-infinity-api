@@ -748,6 +748,153 @@ await assertTest('PUT /persons/physical/:mcdId updating address updates Registra
   }
 });
 
+await assertTest('PUT /admin/db/physical/F20018333 updating any payload fields allows update without calling external API', async () => {
+  const userPayload = {
+    mcdId: "F20018333",
+    firstName: "Nathaniel",
+    middleName: null,
+    lastName: "Lyon",
+    personalCode: "26710206089",
+    ssn: null,
+    countryCode: "AU",
+    gender: "MALE",
+    status: "Prospect",
+    transactID: "10001096",
+    transactStatus: "Synced from Transact",
+    dateOfBirth: "1997-08-15",
+    dateOfDeath: null,
+    birthCountryCode: "AU",
+    birthCity: "Vilnius",
+    languageCode: "lt",
+    primaryEmail: "test12345@test.com",
+    primaryEmailVerified: true,
+    secondaryEmail: null,
+    primaryPhoneNumber: "+923323087897",
+    primaryPhoneNumberVerified: true,
+    secondaryPhoneNumber: null,
+    registrationAddress: {
+      countryCode: "EE",
+      buildingNumber: "10",
+      buildingName: "buldingname",
+      flatNumber: "",
+      postCode: "750000",
+      postBox: "",
+      district: "East",
+      city: "Khi",
+      street: "7th",
+      eldership: "",
+      municipality: "",
+      fullAddress: ""
+    },
+    residenceAddress: {
+      countryCode: "EE",
+      buildingNumber: "45",
+      buildingName: "",
+      flatNumber: "",
+      postCode: "03216",
+      postBox: "",
+      district: "",
+      city: "Vilnius",
+      street: "Algirdo g. 45",
+      eldership: "",
+      municipality: "Vilniaus apskritis",
+      fullAddress: ""
+    },
+    correspondenceAddress: {
+      countryCode: "EE",
+      buildingNumber: "45",
+      buildingName: "",
+      flatNumber: "",
+      postCode: "03216",
+      postBox: "",
+      district: "",
+      city: "Vilnius",
+      street: "Algirdo g. 45",
+      eldership: "",
+      municipality: "Vilniaus apskritis",
+      fullAddress: ""
+    },
+    consents: {
+      consentOffers: true,
+      consentProfiling: false,
+      consentPartnersOffers: false,
+      date: "2026-10-14T12:55:07.045Z",
+      validUntil: "2028-12-31"
+    },
+    nationalities: [
+      "AU"
+    ],
+    idDocuments: [],
+    ondatoCheckValid: true,
+    amlScreening: {
+      lastAmlResultDate: "2026-10-14T12:55:07.045Z",
+      amlResult: "PASSED",
+      smaApprovalStatus: "APPROVED",
+      smaDecisionDate: "2026-10-14T12:55:07.045Z"
+    },
+    kyc: {
+      isKycRequired: false,
+      expirationDate: "2027-01-01"
+    },
+    selectedProducts: [
+      {
+        productCategory: "TEST",
+        productId: "32323"
+      }
+    ],
+    hasParentalPermissionToManageProducts: null,
+    isMinor: false,
+    isEmancipatedMinor: false,
+    isIncapable: false,
+    guardianMcdId: null,
+    coapplicantMcdId: null,
+    transactSyncDate: "2026-10-16T13:00:28.991Z"
+  };
+
+  const putRes = await request('PUT', '/admin/db/physical/F20018333', userPayload);
+  if (putRes.status !== 200) throw new Error(`Expected status 200, got ${putRes.status}`);
+  if (putRes.json.transactSynced !== false) throw new Error(`Expected transactSynced: false, got ${putRes.json.transactSynced}`);
+  if (putRes.json.record.firstName !== 'Nathaniel') throw new Error(`Expected firstName Nathaniel, got ${putRes.json.record.firstName}`);
+  if (putRes.json.record.registrationAddress?.city !== 'Khi') throw new Error(`Expected city Khi, got ${putRes.json.record.registrationAddress?.city}`);
+  if (putRes.json.record.residenceAddress?.street !== 'Algirdo g. 45') throw new Error(`Expected residence street Algirdo g. 45, got ${putRes.json.record.residenceAddress?.street}`);
+  if (putRes.json.record.transactID !== '10001096') throw new Error(`Expected transactID 10001096, got ${putRes.json.record.transactID}`);
+
+  // Check GET endpoint returns updated record
+  const getRes = await request('GET', '/admin/db/physical/F20018333');
+  if (getRes.status !== 200) throw new Error(`Expected 200, got ${getRes.status}`);
+  if (getRes.json.firstName !== 'Nathaniel') throw new Error(`Persisted firstName mismatch: ${getRes.json.firstName}`);
+  if (getRes.json.registrationAddress?.street !== '7th') throw new Error(`Persisted street mismatch: ${getRes.json.registrationAddress?.street}`);
+});
+
+await assertTest('PUT /admin/db/physical/F20018333 changing TransactID triggers customer fetch and sync', async () => {
+  const updateTidRes = await request('PUT', '/admin/db/physical/F20018333', {
+    transactId: '10001868',
+    mock: true
+  });
+  if (updateTidRes.status !== 200) throw new Error(`Expected 200, got ${updateTidRes.status}`);
+  if (!updateTidRes.json.transactSynced) throw new Error('Expected transactSynced: true when TransactID changes');
+  if (updateTidRes.json.record.transactID !== '10001868') throw new Error(`Expected transactID 10001868, got ${updateTidRes.json.record.transactID}`);
+  if (updateTidRes.json.record.transactStatus !== 'Synced from Transact') {
+    throw new Error(`Expected transactStatus 'Synced from Transact', got ${updateTidRes.json.record.transactStatus}`);
+  }
+});
+
+await assertTest('PUT /admin/db/physical/:id upserts brand-new customer ID without 404', async () => {
+  const newCustomerRes = await request('PUT', '/admin/db/physical/F99999999', {
+    firstName: 'Alex',
+    lastName: 'Turner',
+    countryCode: 'GB',
+    transactID: 'TX-NEW-999'
+  });
+  if (newCustomerRes.status !== 200) throw new Error(`Expected 200, got ${newCustomerRes.status}`);
+  if (newCustomerRes.json.record.mcdId !== 'F99999999') throw new Error(`Expected mcdId F99999999, got ${newCustomerRes.json.record.mcdId}`);
+  if (newCustomerRes.json.record.firstName !== 'Alex') throw new Error(`Expected firstName Alex, got ${newCustomerRes.json.record.firstName}`);
+
+  const getNewRes = await request('GET', '/admin/db/physical/F99999999');
+  if (getNewRes.status !== 200) throw new Error(`Expected 200, got ${getNewRes.status}`);
+  if (getNewRes.json.lastName !== 'Turner') throw new Error(`Expected lastName Turner, got ${getNewRes.json.lastName}`);
+});
+
 await assertTest('POST /admin/db/reset (Reset to seed)', async () => {
   const res = await request('POST', '/admin/db/reset');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);

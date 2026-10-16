@@ -33,7 +33,7 @@ try {
 }
 
 // Initial seed data
-const initialSeedData = {
+export const initialSeedData = {
   physicalPersons: [
     ['F20014528', {
       McdId: 'F20014528',
@@ -268,6 +268,246 @@ const initialSeedData = {
       IsIncapable: false,
       guardianMcdId: 'F20014528',
       coapplicantMcdId: null
+    }],
+    ['F20018333', {
+      McdId: 'F20018333',
+      mcdId: 'F20018333',
+      FirstName: 'Nathan',
+      firstName: 'Nathan',
+      MiddleName: null,
+      middleName: null,
+      LastName: 'Lyon',
+      lastName: 'Lyon',
+      PersonalCode: '26710206089',
+      personalCode: '26710206089',
+      Ssn: null,
+      ssn: null,
+      CountryCode: 'AU',
+      countryCode: 'AU',
+      Gender: 'MALE',
+      gender: 'MALE',
+      Status: 'Prospect',
+      status: 'Prospect',
+      TransactID: '10001096',
+      transactID: '10001096',
+      TransactId: '10001096',
+      transactId: '10001096',
+      TransactStatus: 'Synced from Transact',
+      transactStatus: 'Synced from Transact',
+      DateOfBirth: '1997-08-15',
+      dateOfBirth: '1997-08-15',
+      DateOfDeath: null,
+      dateOfDeath: null,
+      BirthCountryCode: 'AU',
+      birthCountryCode: 'AU',
+      BirthCity: 'Vilnius',
+      birthCity: 'Vilnius',
+      LanguageCode: 'lt',
+      languageCode: 'lt',
+      PrimaryEmail: 'test12345@test.com',
+      primaryEmail: 'test12345@test.com',
+      PrimaryEmailVerified: true,
+      primaryEmailVerified: true,
+      SecondaryEmail: null,
+      secondaryEmail: null,
+      PrimaryPhoneNumber: '+923323087897',
+      primaryPhoneNumber: '+923323087897',
+      PrimaryPhoneNumberVerified: true,
+      primaryPhoneNumberVerified: true,
+      SecondaryPhoneNumber: null,
+      secondaryPhoneNumber: null,
+      RegistrationAddress: {
+        countryCode: 'EE',
+        buildingNumber: '10',
+        buildingName: 'buldingname',
+        flatNumber: '',
+        postCode: '750000',
+        postBox: '',
+        district: 'East',
+        city: 'Khi',
+        street: '7th',
+        eldership: '',
+        municipality: '',
+        fullAddress: '7th, 750000 Khi, EE'
+      },
+      registrationAddress: {
+        countryCode: 'EE',
+        buildingNumber: '10',
+        buildingName: 'buldingname',
+        flatNumber: '',
+        postCode: '750000',
+        postBox: '',
+        district: 'East',
+        city: 'Khi',
+        street: '7th',
+        eldership: '',
+        municipality: '',
+        fullAddress: '7th, 750000 Khi, EE'
+      },
+      ResidenceAddress: {
+        countryCode: 'EE',
+        buildingNumber: '45',
+        buildingName: '',
+        flatNumber: '',
+        postCode: '03216',
+        postBox: '',
+        district: '',
+        city: 'Vilnius',
+        street: 'Algirdo g. 45',
+        eldership: '',
+        municipality: 'Vilniaus apskritis',
+        fullAddress: 'Algirdo g. 45, 03216 Vilnius, EE'
+      },
+      residenceAddress: {
+        countryCode: 'EE',
+        buildingNumber: '45',
+        buildingName: '',
+        flatNumber: '',
+        postCode: '03216',
+        postBox: '',
+        district: '',
+        city: 'Vilnius',
+        street: 'Algirdo g. 45',
+        eldership: '',
+        municipality: 'Vilniaus apskritis',
+        fullAddress: 'Algirdo g. 45, 03216 Vilnius, EE'
+      },
+      CorrespondenceAddress: {
+        countryCode: 'EE',
+        buildingNumber: '45',
+        buildingName: '',
+        flatNumber: '',
+        postCode: '03216',
+        postBox: '',
+        district: '',
+        city: 'Vilnius',
+        street: 'Algirdo g. 45',
+        eldership: '',
+        municipality: 'Vilniaus apskritis',
+        fullAddress: 'Algirdo g. 45, 03216 Vilnius, EE'
+      },
+      correspondenceAddress: {
+        countryCode: 'EE',
+        buildingNumber: '45',
+        buildingName: '',
+        flatNumber: '',
+        postCode: '03216',
+        postBox: '',
+        district: '',
+        city: 'Vilnius',
+        street: 'Algirdo g. 45',
+        eldership: '',
+        municipality: 'Vilniaus apskritis',
+        fullAddress: 'Algirdo g. 45, 03216 Vilnius, EE'
+      },
+      Consents: {
+        ConsentOffers: true,
+        ConsentProfiling: false,
+        ConsentPartnersOffers: false,
+        Date: '2026-10-14T12:55:07.045Z',
+        ValidUntil: '2028-12-31'
+      },
+      consents: {
+        consentOffers: true,
+        consentProfiling: false,
+        consentPartnersOffers: false,
+        date: '2026-10-14T12:55:07.045Z',
+        validUntil: '2028-12-31'
+      },
+      Nationalities: ['AU'],
+      nationalities: ['AU'],
+      IdDocuments: [],
+      idDocuments: [],
+      OndatoCheckValid: true,
+      ondatoCheckValid: true,
+      AmlScreening: {
+        LastAmlResultDate: '2026-10-14T12:55:07.045Z',
+        AmlResult: 'PASSED',
+        SmaApprovalStatus: 'APPROVED',
+        SmaDecisionDate: '2026-10-14T12:55:07.045Z'
+      },
+      amlScreening: {
+        lastAmlResultDate: '2026-10-14T12:55:07.045Z',
+        amlResult: 'PASSED',
+        smaApprovalStatus: 'APPROVED',
+        smaDecisionDate: '2026-10-14T12:55:07.045Z'
+      },
+      Kyc: {
+        IsKycRequired: false,
+        ExpirationDate: '2027-01-01'
+      },
+      kyc: {
+        isKycRequired: false,
+        expirationDate: '2027-01-01'
+      },
+      SelectedProducts: [
+        { productCategory: 'TEST', productId: '32323' }
+      ],
+      selectedProducts: [
+        { productCategory: 'TEST', productId: '32323' }
+      ],
+      HasParentalPermissionToManageProducts: null,
+      hasParentalPermissionToManageProducts: null,
+      IsMinor: false,
+      isMinor: false,
+      IsEmancipatedMinor: false,
+      isEmancipatedMinor: false,
+      IsIncapable: false,
+      isIncapable: false,
+      guardianMcdId: null,
+      coapplicantMcdId: null,
+      TransactSyncDate: '2026-10-16T13:00:28.991Z',
+      transactSyncDate: '2026-10-16T13:00:28.991Z',
+      TransactResponse: {
+        header: {
+          audit: {
+            t24_time: 203,
+            responseParse_time: 16,
+            requestParse_time: 16
+          },
+          page_start: 1,
+          page_token: "202207268189267550.00,99",
+          total_size: 1,
+          page_size: 99,
+          id: "10001096",
+          status: "success",
+          transactionStatus: "Live"
+        },
+        body: {
+          customerMnemonic: "XD101698",
+          lastName: "Lyon",
+          givenName: "Nathan",
+          displayNames: [{ displayName: "Nathan Lyon" }],
+          customerNames: [{ customerName: "Nathan", customerNameAdditional: "Lyon" }],
+          gender: "MALE",
+          customerId: "10001096"
+        }
+      },
+      transactResponse: {
+        header: {
+          audit: {
+            t24_time: 203,
+            responseParse_time: 16,
+            requestParse_time: 16
+          },
+          page_start: 1,
+          page_token: "202207268189267550.00,99",
+          total_size: 1,
+          page_size: 99,
+          id: "10001096",
+          status: "success",
+          transactionStatus: "Live"
+        },
+        body: {
+          customerMnemonic: "XD101698",
+          lastName: "Lyon",
+          givenName: "Nathan",
+          displayNames: [{ displayName: "Nathan Lyon" }],
+          customerNames: [{ customerName: "Nathan", customerNameAdditional: "Lyon" }],
+          gender: "MALE",
+          customerId: "10001096"
+        }
+      }
     }]
   ],
 
@@ -460,6 +700,20 @@ export function getPhysicalPerson(id) {
     else if (id === 'P1003') p = db.physicalPersons.get('F20014530');
     else if (id === 'P1004') p = db.physicalPersons.get('F20014531');
     else if (id === 'P1005') p = db.physicalPersons.get('F20014532');
+    else {
+      const lower = String(id).toLowerCase();
+      for (const [k, v] of db.physicalPersons.entries()) {
+        if (
+          k.toLowerCase() === lower ||
+          (v.McdId && v.McdId.toLowerCase() === lower) ||
+          (v.mcdId && v.mcdId.toLowerCase() === lower) ||
+          (v.PersonalCode && String(v.PersonalCode) === String(id)) ||
+          (v.personalCode && String(v.personalCode) === String(id))
+        ) {
+          return v;
+        }
+      }
+    }
   }
   return p;
 }
@@ -470,6 +724,20 @@ export function getJuridicalPerson(id) {
   let j = db.juridicalPersons.get(id);
   if (!j && id === 'J2001') {
     j = db.juridicalPersons.get('J20014528');
+  }
+  if (!j) {
+    const lower = String(id).toLowerCase();
+    for (const [k, v] of db.juridicalPersons.entries()) {
+      if (
+        k.toLowerCase() === lower ||
+        (v.McdId && v.McdId.toLowerCase() === lower) ||
+        (v.mcdId && v.mcdId.toLowerCase() === lower) ||
+        (v.CompanyCode && String(v.CompanyCode) === String(id)) ||
+        (v.companyCode && String(v.companyCode) === String(id))
+      ) {
+        return v;
+      }
+    }
   }
   return j;
 }
@@ -970,6 +1238,95 @@ export function hasTransactId(customer) {
   if (!tid) return false;
   const s = String(tid).trim();
   return s !== '' && s !== 'null' && s !== 'undefined' && s !== 'None' && s !== 'Pending';
+}
+
+// Helper: Synchronize dual-case properties between PascalCase and camelCase
+export function syncDualCaseProperties(target, source) {
+  if (!target || !source || typeof source !== 'object') return target;
+
+  const fieldPairs = [
+    ['firstName', 'FirstName'],
+    ['middleName', 'MiddleName'],
+    ['lastName', 'LastName'],
+    ['fullName', 'FullName'],
+    ['personalCode', 'PersonalCode'],
+    ['ssn', 'Ssn'],
+    ['countryCode', 'CountryCode'],
+    ['gender', 'Gender'],
+    ['status', 'Status'],
+    ['dateOfBirth', 'DateOfBirth'],
+    ['dateOfDeath', 'DateOfDeath'],
+    ['birthCountryCode', 'BirthCountryCode'],
+    ['birthCity', 'BirthCity'],
+    ['languageCode', 'LanguageCode'],
+    ['primaryEmail', 'PrimaryEmail'],
+    ['primaryEmailVerified', 'PrimaryEmailVerified'],
+    ['secondaryEmail', 'SecondaryEmail'],
+    ['primaryPhoneNumber', 'PrimaryPhoneNumber'],
+    ['primaryPhoneNumberVerified', 'PrimaryPhoneNumberVerified'],
+    ['secondaryPhoneNumber', 'SecondaryPhoneNumber'],
+    ['registrationAddress', 'RegistrationAddress'],
+    ['residenceAddress', 'ResidenceAddress'],
+    ['correspondenceAddress', 'CorrespondenceAddress'],
+    ['consents', 'Consents'],
+    ['nationalities', 'Nationalities'],
+    ['idDocuments', 'IdDocuments'],
+    ['ondatoCheckValid', 'OndatoCheckValid'],
+    ['amlScreening', 'AmlScreening'],
+    ['kyc', 'Kyc'],
+    ['selectedProducts', 'SelectedProducts'],
+    ['hasParentalPermissionToManageProducts', 'HasParentalPermissionToManageProducts'],
+    ['isMinor', 'IsMinor'],
+    ['isEmancipatedMinor', 'IsEmancipatedMinor'],
+    ['isIncapable', 'IsIncapable'],
+    ['guardianMcdId', 'GuardianMcdId'],
+    ['coapplicantMcdId', 'CoapplicantMcdId'],
+    ['transactStatus', 'TransactStatus'],
+    ['transactSyncDate', 'TransactSyncDate'],
+    ['transactResponse', 'TransactResponse'],
+    ['transactCustomerDetails', 'TransactCustomerDetails'],
+    ['customerMnemonic', 'CustomerMnemonic'],
+    ['customerCompany', 'CustomerCompany'],
+    ['maritalStatus', 'MaritalStatus'],
+    ['numberOfDependents', 'NumberOfDependents'],
+    ['companyCode', 'CompanyCode'],
+    ['representativeMcdId', 'RepresentativeMcdId'],
+    ['finalBeneficiariesMissing', 'FinalBeneficiariesMissing']
+  ];
+
+  for (const [camel, pascal] of fieldPairs) {
+    if (source[camel] !== undefined) {
+      target[camel] = source[camel];
+      target[pascal] = source[camel];
+    } else if (source[pascal] !== undefined) {
+      target[camel] = source[pascal];
+      target[pascal] = source[pascal];
+    }
+  }
+
+  // Also iterate source keys to set any additional properties
+  for (const [key, val] of Object.entries(source)) {
+    if (key.startsWith('_')) continue;
+    const lowerKey = lowerFirstKey(key);
+    const pascalKey = key.charAt(0).toUpperCase() + key.slice(1);
+    target[lowerKey] = val;
+    target[pascalKey] = val;
+  }
+
+  // Synchronize address sub-objects fullAddress formatting if missing
+  for (const addrKey of ['registrationAddress', 'residenceAddress', 'correspondenceAddress']) {
+    const addr = target[addrKey];
+    if (addr && typeof addr === 'object') {
+      if (!addr.fullAddress && (addr.street || addr.city)) {
+        addr.fullAddress = [addr.street, addr.postCode ? `${addr.postCode} ${addr.city}` : addr.city, addr.countryCode || target.countryCode || target.CountryCode || 'LT'].filter(Boolean).join(', ');
+      }
+      const capKey = addrKey.charAt(0).toUpperCase() + addrKey.slice(1);
+      target[capKey] = addr;
+      target[addrKey] = addr;
+    }
+  }
+
+  return target;
 }
 
 // -------------------------------------------------------------
@@ -2066,9 +2423,32 @@ export async function handleRequest(req, res) {
       }
 
       const body = await parseBody(req);
-      const existing = targetMap.get(id);
+      let existing = targetMap.get(id);
       if (!existing) {
-        return sendJson(res, 404, { success: false, ErrorMessage: `Record '${id}' not found in '${colName}'` });
+        for (const [k, v] of targetMap.entries()) {
+          if (
+            k.toLowerCase() === id.toLowerCase() ||
+            (v.McdId && v.McdId.toLowerCase() === id.toLowerCase()) ||
+            (v.mcdId && v.mcdId.toLowerCase() === id.toLowerCase()) ||
+            (v.PersonalCode && String(v.PersonalCode) === String(id)) ||
+            (v.personalCode && String(v.personalCode) === String(id)) ||
+            (v.CompanyCode && String(v.CompanyCode) === String(id)) ||
+            (v.companyCode && String(v.companyCode) === String(id))
+          ) {
+            existing = v;
+            break;
+          }
+        }
+      }
+
+      const isNewRecord = !existing;
+      if (!existing) {
+        existing = {
+          McdId: id,
+          mcdId: id,
+          Status: 'Prospect',
+          status: 'Prospect'
+        };
       }
 
       let bodyTransactId = undefined;
@@ -2086,24 +2466,13 @@ export async function handleRequest(req, res) {
         : '';
 
       const isTransactIdExplicitlyProvided = bodyTransactId !== undefined;
-      const isTransactIdChanged = isTransactIdExplicitlyProvided && ((newTransactId !== existingTransactId) || body.force === true);
+      const alreadyHasSyncData = Boolean(body.transactResponse || body.transactCustomerDetails);
+      const isTransactIdChanged = isTransactIdExplicitlyProvided &&
+        ((newTransactId !== existingTransactId && (!isNewRecord || !alreadyHasSyncData)) || body.force === true);
 
       // Merge and update local MCD record
-      const updated = { ...existing, ...body, McdId: id };
-
-      // Ensure addresses are synchronized between PascalCase and camelCase
-      if (body.RegistrationAddress || body.registrationAddress) {
-        updated.RegistrationAddress = body.RegistrationAddress || body.registrationAddress;
-        updated.registrationAddress = updated.RegistrationAddress;
-      }
-      if (body.ResidenceAddress || body.residenceAddress) {
-        updated.ResidenceAddress = body.ResidenceAddress || body.residenceAddress;
-        updated.residenceAddress = updated.ResidenceAddress;
-      }
-      if (body.CorrespondenceAddress || body.correspondenceAddress) {
-        updated.CorrespondenceAddress = body.CorrespondenceAddress || body.correspondenceAddress;
-        updated.correspondenceAddress = updated.CorrespondenceAddress;
-      }
+      const updated = { ...existing, ...body, McdId: id, mcdId: id };
+      syncDualCaseProperties(updated, body);
 
       let syncResult = null;
       // ONLY trigger external Transact sync IF the TransactID was actually CHANGED!
@@ -2117,16 +2486,19 @@ export async function handleRequest(req, res) {
           });
           if (!syncResult.synced && (!updated.TransactStatus || !updated.TransactStatus.startsWith('Synced'))) {
             updated.TransactStatus = 'Synced (Manual)';
+            updated.transactStatus = 'Synced (Manual)';
             updated.TransactSyncDate = new Date().toISOString();
+            updated.transactSyncDate = updated.TransactSyncDate;
           }
         } else {
           updated.TransactStatus = 'Pending';
+          updated.transactStatus = 'Pending';
           updated.transactCustomerDetails = null;
         }
       } else {
         // TransactID was NOT changed (or this is another collection).
         // Update local MCD database ONLY — do NOT call any external API or Transact sync!
-        normalizeTransactKeys(updated, existingTransactId || newTransactId || null);
+        normalizeTransactKeys(updated, isTransactIdExplicitlyProvided ? newTransactId : (existingTransactId || null));
       }
 
       targetMap.set(id, updated);
@@ -2657,29 +3029,46 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/physical\/([^\/]+)$/);
     if (method === 'PUT' && m) {
       const mcdId = m[1];
-      const person = getPhysicalPerson(mcdId);
-      if (!person) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Physical person ${mcdId} not found` });
+      let person = getPhysicalPerson(mcdId);
+      if (!person) {
+        person = {
+          McdId: mcdId,
+          mcdId: mcdId,
+          Status: 'Prospect',
+          status: 'Prospect'
+        };
+        db.physicalPersons.set(mcdId, person);
+      }
 
       const body = await parseBody(req);
-      if (body.PrimaryEmail !== undefined) person.PrimaryEmail = body.PrimaryEmail;
-      if (body.PrimaryEmailVerified !== undefined) person.PrimaryEmailVerified = body.PrimaryEmailVerified;
-      if (body.PrimaryPhoneNumber !== undefined) person.PrimaryPhoneNumber = body.PrimaryPhoneNumber;
-      if (body.RegistrationAddress || body.registrationAddress) {
-        person.RegistrationAddress = body.RegistrationAddress || body.registrationAddress;
-        person.registrationAddress = person.RegistrationAddress;
-      }
-      if (body.ResidenceAddress || body.residenceAddress) {
-        person.ResidenceAddress = body.ResidenceAddress || body.residenceAddress;
-        person.residenceAddress = person.ResidenceAddress;
-      }
-      if (body.CorrespondenceAddress || body.correspondenceAddress) {
-        person.CorrespondenceAddress = body.CorrespondenceAddress || body.correspondenceAddress;
-        person.correspondenceAddress = person.CorrespondenceAddress;
-      }
-      if (body.SelectedProducts) person.SelectedProducts = body.SelectedProducts;
-      if (body.TransactID !== undefined || body.transactID !== undefined || body.TransactId !== undefined || body.transactId !== undefined) {
-        const tid = body.TransactID !== undefined ? body.TransactID : (body.transactID !== undefined ? body.transactID : (body.TransactId !== undefined ? body.TransactId : body.transactId));
-        normalizeTransactKeys(person, tid);
+      syncDualCaseProperties(person, body);
+
+      const existingTransactId = String(
+        person.TransactID || person.transactID || person.TransactId || person.transactId || ''
+      ).trim();
+
+      let bodyTransactId = undefined;
+      if (body.TransactID !== undefined) bodyTransactId = body.TransactID;
+      else if (body.transactID !== undefined) bodyTransactId = body.transactID;
+      else if (body.TransactId !== undefined) bodyTransactId = body.TransactId;
+      else if (body.transactId !== undefined) bodyTransactId = body.transactId;
+
+      const newTransactId = (bodyTransactId !== undefined && bodyTransactId !== null)
+        ? String(bodyTransactId).trim()
+        : '';
+
+      const isTransactIdExplicitlyProvided = bodyTransactId !== undefined;
+      const isTransactIdChanged = isTransactIdExplicitlyProvided && (newTransactId !== existingTransactId);
+
+      if (isTransactIdChanged && newTransactId && newTransactId !== 'null') {
+        normalizeTransactKeys(person, newTransactId);
+        const isMock = body.mock === true || req.headers['x-mock-transact'] === 'true' || process.env.MOCK_TRANSACT === 'true';
+        await fetchAndSyncCustomerFromTransact(person, newTransactId, {
+          mock: isMock,
+          url: body.transactUrl || req.headers['x-transact-url']
+        });
+      } else if (isTransactIdExplicitlyProvided) {
+        normalizeTransactKeys(person, newTransactId || null);
       }
 
       syncDbToFile();
