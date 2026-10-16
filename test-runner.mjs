@@ -459,9 +459,9 @@ await assertTest('PUT /admin/db/physical/:id/transact-id (Fetch & sync customer 
   if (tResp.body?.lastName !== 'Kumar') throw new Error(`Expected transactResponse.body.lastName 'Kumar', got '${tResp.body?.lastName}'`);
 });
 
-await assertTest('PUT /admin/db/physical/:id (Fetch & sync customer info from Transact ID 10001868 via general editor)', async () => {
+await assertTest('PUT /admin/db/physical/:id (Fetch & sync customer info from Transact ID 10001869 via general editor)', async () => {
   const res = await request('PUT', '/admin/db/physical/F20014529', {
-    TransactID: '10001868',
+    TransactID: '10001869',
     mock: true
   });
   if (res.status !== 200) throw new Error(`Status ${res.status}: ${JSON.stringify(res.json)}`);
@@ -698,6 +698,53 @@ await assertTest('PUT /admin/db/physical/:id updates record with Transact data v
   if (!res.json.transactSynced) throw new Error('Expected transactSynced: true');
   if (res.json.record.transactStatus !== 'Synced from Transact') {
     throw new Error(`Expected transactStatus 'Synced from Transact', got ${res.json.record.transactStatus}`);
+  }
+});
+
+await assertTest('PUT /admin/db/physical/:id updating address only updates local MCD DB and does NOT call Transact sync', async () => {
+  // First ensure customer F20014529 has TransactID 10001929
+  const current = await request('GET', '/admin/db/physical/F20014529');
+  const existingTid = current.json.transactID || current.json.TransactID;
+
+  // Now update only the address, keeping the same TransactID
+  const updateRes = await request('PUT', '/admin/db/physical/F20014529', {
+    transactId: existingTid,
+    registrationAddress: {
+      street: 'Gedimino pr. 99',
+      city: 'Vilnius',
+      postCode: 'LT-01103',
+      countryCode: 'LT'
+    }
+  });
+
+  if (updateRes.status !== 200) throw new Error(`Expected 200, got ${updateRes.status}`);
+  if (updateRes.json.transactSynced !== false) {
+    throw new Error('Expected transactSynced: false because TransactID did not change');
+  }
+  if (updateRes.json.record.registrationAddress?.street !== 'Gedimino pr. 99') {
+    throw new Error(`Expected street 'Gedimino pr. 99', got ${updateRes.json.record.registrationAddress?.street}`);
+  }
+
+  // Verify GET /admin/db/physical/F20014529 reflects the newly updated local address
+  const getRes = await request('GET', '/admin/db/physical/F20014529');
+  if (getRes.json.registrationAddress?.street !== 'Gedimino pr. 99') {
+    throw new Error(`Persisted street mismatch: ${getRes.json.registrationAddress?.street}`);
+  }
+});
+
+await assertTest('PUT /persons/physical/:mcdId updating address updates RegistrationAddress in local MCD DB', async () => {
+  const res = await request('PUT', '/persons/physical/F20014529', {
+    registrationAddress: {
+      street: 'Konstitucijos pr. 20',
+      city: 'Vilnius',
+      postCode: 'LT-08105',
+      countryCode: 'LT'
+    }
+  });
+
+  if (res.status !== 200) throw new Error(`Expected 200, got ${res.status}`);
+  if (res.json.registrationAddress?.street !== 'Konstitucijos pr. 20') {
+    throw new Error(`Expected street 'Konstitucijos pr. 20', got ${res.json.registrationAddress?.street}`);
   }
 });
 

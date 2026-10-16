@@ -2077,14 +2077,41 @@ export async function handleRequest(req, res) {
       else if (body.TransactId !== undefined) bodyTransactId = body.TransactId;
       else if (body.transactId !== undefined) bodyTransactId = body.transactId;
 
-      // Merge and update
+      const existingTransactId = String(
+        existing.TransactID || existing.transactID || existing.TransactId || existing.transactId || ''
+      ).trim();
+
+      const newTransactId = (bodyTransactId !== undefined && bodyTransactId !== null)
+        ? String(bodyTransactId).trim()
+        : '';
+
+      const isTransactIdExplicitlyProvided = bodyTransactId !== undefined;
+      const isTransactIdChanged = isTransactIdExplicitlyProvided && ((newTransactId !== existingTransactId) || body.force === true);
+
+      // Merge and update local MCD record
       const updated = { ...existing, ...body, McdId: id };
+
+      // Ensure addresses are synchronized between PascalCase and camelCase
+      if (body.RegistrationAddress || body.registrationAddress) {
+        updated.RegistrationAddress = body.RegistrationAddress || body.registrationAddress;
+        updated.registrationAddress = updated.RegistrationAddress;
+      }
+      if (body.ResidenceAddress || body.residenceAddress) {
+        updated.ResidenceAddress = body.ResidenceAddress || body.residenceAddress;
+        updated.residenceAddress = updated.ResidenceAddress;
+      }
+      if (body.CorrespondenceAddress || body.correspondenceAddress) {
+        updated.CorrespondenceAddress = body.CorrespondenceAddress || body.correspondenceAddress;
+        updated.correspondenceAddress = updated.CorrespondenceAddress;
+      }
+
       let syncResult = null;
-      if (colName === 'physical' && bodyTransactId !== undefined) {
-        normalizeTransactKeys(updated, bodyTransactId);
-        if (bodyTransactId && String(bodyTransactId).trim() !== '' && String(bodyTransactId) !== 'null') {
+      // ONLY trigger external Transact sync IF the TransactID was actually CHANGED!
+      if (colName === 'physical' && isTransactIdChanged) {
+        normalizeTransactKeys(updated, newTransactId);
+        if (newTransactId && newTransactId !== 'null') {
           const isMock = body.mock === true || req.headers['x-mock-transact'] === 'true' || process.env.MOCK_TRANSACT === 'true';
-          syncResult = await fetchAndSyncCustomerFromTransact(updated, String(bodyTransactId).trim(), {
+          syncResult = await fetchAndSyncCustomerFromTransact(updated, newTransactId, {
             mock: isMock,
             url: body.transactUrl || req.headers['x-transact-url']
           });
@@ -2092,19 +2119,23 @@ export async function handleRequest(req, res) {
             updated.TransactStatus = 'Synced (Manual)';
             updated.TransactSyncDate = new Date().toISOString();
           }
+        } else {
+          updated.TransactStatus = 'Pending';
+          updated.transactCustomerDetails = null;
         }
-      } else if (bodyTransactId !== undefined) {
-        normalizeTransactKeys(updated, bodyTransactId);
       } else {
-        normalizeTransactKeys(updated);
+        // TransactID was NOT changed (or this is another collection).
+        // Update local MCD database ONLY — do NOT call any external API or Transact sync!
+        normalizeTransactKeys(updated, existingTransactId || newTransactId || null);
       }
+
       targetMap.set(id, updated);
       syncDbToFile();
 
       return sendJson(res, 200, {
         success: true,
         message: syncResult?.synced
-          ? `Record ${id} updated and synced with Transact customer '${bodyTransactId}'`
+          ? `Record ${id} updated and synced with Transact customer '${newTransactId}'`
           : `Record ${id} updated in ${colName} successfully`,
         transactSynced: syncResult ? syncResult.synced : false,
         syncResult,
@@ -2633,9 +2664,18 @@ export async function handleRequest(req, res) {
       if (body.PrimaryEmail !== undefined) person.PrimaryEmail = body.PrimaryEmail;
       if (body.PrimaryEmailVerified !== undefined) person.PrimaryEmailVerified = body.PrimaryEmailVerified;
       if (body.PrimaryPhoneNumber !== undefined) person.PrimaryPhoneNumber = body.PrimaryPhoneNumber;
-      if (body.PrimaryPhoneNumberVerified !== undefined) person.PrimaryPhoneNumberVerified = body.PrimaryPhoneNumberVerified;
-      if (body.ResidenceAddress) person.ResidenceAddress = body.ResidenceAddress;
-      if (body.CorrespondenceAddress) person.CorrespondenceAddress = body.CorrespondenceAddress;
+      if (body.RegistrationAddress || body.registrationAddress) {
+        person.RegistrationAddress = body.RegistrationAddress || body.registrationAddress;
+        person.registrationAddress = person.RegistrationAddress;
+      }
+      if (body.ResidenceAddress || body.residenceAddress) {
+        person.ResidenceAddress = body.ResidenceAddress || body.residenceAddress;
+        person.residenceAddress = person.ResidenceAddress;
+      }
+      if (body.CorrespondenceAddress || body.correspondenceAddress) {
+        person.CorrespondenceAddress = body.CorrespondenceAddress || body.correspondenceAddress;
+        person.correspondenceAddress = person.CorrespondenceAddress;
+      }
       if (body.SelectedProducts) person.SelectedProducts = body.SelectedProducts;
       if (body.TransactID !== undefined || body.transactID !== undefined || body.TransactId !== undefined || body.transactId !== undefined) {
         const tid = body.TransactID !== undefined ? body.TransactID : (body.transactID !== undefined ? body.transactID : (body.TransactId !== undefined ? body.TransactId : body.transactId));
