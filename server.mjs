@@ -599,31 +599,54 @@ export function lowerFirstKey(key) {
   return key.charAt(0).toLowerCase() + key.slice(1);
 }
 
-export function lowerFirstKeys(obj) {
+export function lowerFirstKeys(obj, seen = new WeakSet()) {
   if (obj === null || typeof obj !== 'object' || obj instanceof Date || (typeof Buffer !== 'undefined' && Buffer.isBuffer(obj))) {
     return obj;
   }
+  if (seen.has(obj)) {
+    return obj;
+  }
+  seen.add(obj);
+
   if (Array.isArray(obj)) {
-    return obj.map(lowerFirstKeys);
+    return obj.map(item => lowerFirstKeys(item, seen));
   }
   const result = {};
   for (const [key, value] of Object.entries(obj)) {
+    if (key.startsWith('_')) continue;
     const newKey = lowerFirstKey(key);
-    result[newKey] = lowerFirstKeys(value);
+    result[newKey] = lowerFirstKeys(value, seen);
   }
   return result;
 }
 
 // Helper: send JSON response
 function sendJson(res, statusCode, data) {
-  res.writeHead(statusCode, {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept'
-  });
-  const payload = (data === openapiSpec) ? data : lowerFirstKeys(data);
-  res.end(JSON.stringify(payload, null, 2));
+  try {
+    const payload = (data === openapiSpec) ? data : lowerFirstKeys(data);
+    const bodyStr = JSON.stringify(payload, null, 2);
+    if (!res.headersSent) {
+      res.writeHead(statusCode, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Accept'
+      });
+    }
+    res.end(bodyStr);
+  } catch (err) {
+    console.error('[sendJson Error]:', err.message);
+    if (!res.headersSent) {
+      res.writeHead(500, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      });
+    }
+    res.end(JSON.stringify({
+      errorCode: '500000',
+      errorMessage: err.message || 'Internal Server Error'
+    }, null, 2));
+  }
 }
 
 // Helper: send HTML response
@@ -991,11 +1014,22 @@ export function extractTransactCustomerRecord(data, transactId) {
   }
 
   if (bodyRecord) {
-    if (!bodyRecord.customerId) {
-      bodyRecord.customerId = data.header?.id || targetId || '';
+    const cleanRecord = { ...bodyRecord };
+    if (!cleanRecord.customerId) {
+      cleanRecord.customerId = data.header?.id || targetId || '';
     }
-    bodyRecord._rawResponse = data;
-    return bodyRecord;
+    try {
+      const dataCopy = JSON.parse(JSON.stringify(data));
+      Object.defineProperty(cleanRecord, '_rawResponse', {
+        value: dataCopy,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      });
+    } catch {
+      // Fallback
+    }
+    return cleanRecord;
   }
 
   return null;
@@ -1111,7 +1145,14 @@ export function generateMockTransactCustomer(transactId) {
   };
 
   const bodyRecord = { ...mockResponse.body };
-  bodyRecord._rawResponse = mockResponse;
+  try {
+    Object.defineProperty(bodyRecord, '_rawResponse', {
+      value: JSON.parse(JSON.stringify(mockResponse)),
+      enumerable: false,
+      writable: true,
+      configurable: true
+    });
+  } catch {}
   return bodyRecord;
 }
 
@@ -1362,33 +1403,66 @@ export function syncMcdCustomerFromTransactData(customer, tCust, rawResponse) {
     modifiedFields.push('PersonalCode');
   }
 
-  // 9. Customer Mnemonic
+  // 9. Customer Mnemonic, Company, Marital Status & Dependents
   if (tCust.customerMnemonic) {
     customer.customerMnemonic = tCust.customerMnemonic;
     customer.CustomerMnemonic = tCust.customerMnemonic;
   }
+  if (tCust.customerCompany) {
+    customer.customerCompany = tCust.customerCompany;
+    customer.CustomerCompany = tCust.customerCompany;
+  }
+  if (tCust.maritalStatus) {
+    customer.maritalStatus = tCust.maritalStatus;
+    customer.MaritalStatus = tCust.maritalStatus;
+  }
+  if (tCust.numberOfDependents !== undefined) {
+    customer.numberOfDependents = tCust.numberOfDependents;
+    customer.NumberOfDependents = tCust.numberOfDependents;
+  }
 
-  // 10. EXACT Transact Response & Audit Metadata
-  const fullRespToSave = rawResponse || tCust._rawResponse || {
-    header: {
-      transactionStatus: "Live",
-      audit: {
-        t24_time: 2671,
-        responseParse_time: 16,
-        requestParse_time: 32,
-        versionNumber: "1"
+  // 10. EXACT Transact Response & Audit Metadata (Safe without circular references)
+  let fullRespToSave = null;
+  if (rawResponse) {
+    try {
+      fullRespToSave = JSON.parse(JSON.stringify(rawResponse));
+    } catch {
+      fullRespToSave = rawResponse;
+    }
+  } else if (tCust._rawResponse) {
+    try {
+      fullRespToSave = JSON.parse(JSON.stringify(tCust._rawResponse));
+    } catch {
+      fullRespToSave = tCust._rawResponse;
+    }
+  } else {
+    fullRespToSave = {
+      header: {
+        transactionStatus: "Live",
+        audit: {
+          t24_time: 2671,
+          responseParse_time: 16,
+          requestParse_time: 32,
+          versionNumber: "1"
+        },
+        id: String(customer.TransactID || tCust.customerId || '10001929'),
+        status: "success"
       },
-      id: String(customer.TransactID || tCust.customerId || '10001929'),
-      status: "success"
-    },
-    body: tCust
-  };
+      body: { ...tCust }
+    };
+  }
+
+  // Clean tCust so it has NO _rawResponse property
+  const cleanCustomerDetails = { ...tCust };
+  delete cleanCustomerDetails._rawResponse;
 
   customer.transactResponse = fullRespToSave;
   customer.TransactResponse = fullRespToSave;
-  customer.transactCustomerDetails = tCust;
+  customer.transactCustomerDetails = cleanCustomerDetails;
   customer.TransactStatus = 'Synced from Transact';
+  customer.transactStatus = 'Synced from Transact';
   customer.TransactSyncDate = new Date().toISOString();
+  customer.transactSyncDate = customer.TransactSyncDate;
 
   return {
     updated: modifiedFields.length > 0,
@@ -1463,20 +1537,30 @@ export async function fetchAndSyncCustomerFromTransact(customer, transactId, opt
   const tid = String(transactId).trim();
   try {
     const tCust = await fetchTransactCustomerData(tid, options);
-    const rawResp = tCust._rawResponse || {
-      header: {
-        transactionStatus: "Live",
-        audit: {
-          t24_time: 2671,
-          responseParse_time: 16,
-          requestParse_time: 32,
-          versionNumber: "1"
+    let rawResp = null;
+    if (tCust._rawResponse) {
+      try {
+        rawResp = JSON.parse(JSON.stringify(tCust._rawResponse));
+      } catch {}
+    }
+    if (!rawResp) {
+      const cleanCust = { ...tCust };
+      delete cleanCust._rawResponse;
+      rawResp = {
+        header: {
+          transactionStatus: "Live",
+          audit: {
+            t24_time: 2671,
+            responseParse_time: 16,
+            requestParse_time: 32,
+            versionNumber: "1"
+          },
+          id: tid,
+          status: "success"
         },
-        id: tid,
-        status: "success"
-      },
-      body: tCust
-    };
+        body: cleanCust
+      };
+    }
     const syncRes = syncMcdCustomerFromTransactData(customer, tCust, rawResp);
     return {
       success: true,

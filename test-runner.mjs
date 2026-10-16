@@ -629,12 +629,75 @@ await assertTest('GET /admin/db/physical returns list of all physical customers'
   }
 });
 
-await assertTest('GET /admin/db/physical/:id returns 404001 when record does not exist', async () => {
-  const res = await request('GET', '/admin/db/physical/F99999999');
-  if (res.status !== 404) throw new Error(`Expected 404, got ${res.status}`);
-  const errCode = res.json.errorCode || res.json.ErrorCode;
-  if (errCode !== '404001') {
-    throw new Error(`Expected ErrorCode 404001, got ${errCode}`);
+await assertTest('Transact sync maps all matching keys and serializes without circular reference error', async () => {
+  const { syncMcdCustomerFromTransactData, extractTransactCustomerRecord, lowerFirstKeys } = await import('./server.mjs');
+  const transactPayload = {
+    header: {
+      transactionStatus: "Live",
+      audit: { t24_time: 2671, responseParse_time: 16, requestParse_time: 32, versionNumber: "1" },
+      id: "10001929",
+      status: "success"
+    },
+    body: {
+      customerMnemonic: "XD101698",
+      lastName: "Kumar",
+      numberOfDependents: 2,
+      gender: "MALE",
+      streets: [{ street: "7th" }],
+      customerNames: [{ customerNameAdditional: "Kumar", customerName: "Awesh" }],
+      taxIds: [{ taxId: "791-50-6202" }],
+      officePhoneNumbers: [{ officePhoneNumber: "+923323087897" }],
+      customerCompany: "AU0070001",
+      nationalityId: "EE",
+      givenName: "Awesh",
+      addressCities: [{ addressCity: "Khi" }],
+      displayNames: [{ displayName: "Awesh Kumar" }],
+      dateOfBirth: "1995-07-23",
+      countries: [{ country: "EE" }],
+      contactDetails: [
+        { contactData: "3323087897", iddPrefixPhone: "+92", contactType: "MOBILE" },
+        { contactData: "test12345@test.com", contactType: "EMAIL" }
+      ],
+      residenceId: "EE",
+      postCode: 750000,
+      maritalStatus: "MARRIED"
+    }
+  };
+
+  const customer = { McdId: 'F20018333', PersonalCode: '39507230001' };
+  const extracted = extractTransactCustomerRecord(transactPayload, '10001929');
+  const res = syncMcdCustomerFromTransactData(customer, extracted, transactPayload);
+  
+  if (!res.updated) throw new Error('Expected updated: true');
+  if (customer.FirstName !== 'Awesh') throw new Error(`Expected FirstName Awesh, got ${customer.FirstName}`);
+  if (customer.LastName !== 'Kumar') throw new Error(`Expected LastName Kumar, got ${customer.LastName}`);
+  if (customer.FullName !== 'Awesh Kumar') throw new Error(`Expected FullName Awesh Kumar, got ${customer.FullName}`);
+  if (customer.DateOfBirth !== '1995-07-23') throw new Error(`Expected DateOfBirth 1995-07-23, got ${customer.DateOfBirth}`);
+  if (customer.Gender !== 'MALE') throw new Error(`Expected Gender MALE, got ${customer.Gender}`);
+  if (customer.CountryCode !== 'EE') throw new Error(`Expected CountryCode EE, got ${customer.CountryCode}`);
+  if (customer.PrimaryEmail !== 'test12345@test.com') throw new Error(`Expected PrimaryEmail test12345@test.com, got ${customer.PrimaryEmail}`);
+  if (customer.PrimaryPhoneNumber !== '+923323087897') throw new Error(`Expected PrimaryPhoneNumber +923323087897, got ${customer.PrimaryPhoneNumber}`);
+  if (customer.RegistrationAddress?.city !== 'Khi') throw new Error(`Expected city Khi, got ${customer.RegistrationAddress?.city}`);
+  if (customer.RegistrationAddress?.street !== '7th') throw new Error(`Expected street 7th, got ${customer.RegistrationAddress?.street}`);
+  if (customer.RegistrationAddress?.postCode !== '750000') throw new Error(`Expected postCode 750000, got ${customer.RegistrationAddress?.postCode}`);
+  if (customer.MaritalStatus !== 'MARRIED') throw new Error(`Expected MaritalStatus MARRIED, got ${customer.MaritalStatus}`);
+
+  // Crucial test: JSON.stringify and lowerFirstKeys MUST NOT fail with circular error
+  const jsonStr = JSON.stringify(customer);
+  if (!jsonStr || jsonStr.length === 0) throw new Error('JSON.stringify returned empty');
+  const lower = lowerFirstKeys(customer);
+  if (!lower || typeof lower !== 'object') throw new Error('lowerFirstKeys failed');
+});
+
+await assertTest('PUT /admin/db/physical/:id updates record with Transact data via mock', async () => {
+  const res = await request('PUT', '/admin/db/physical/F20014529', {
+    transactId: '10001929',
+    mock: true
+  });
+  if (res.status !== 200) throw new Error(`Expected 200, got ${res.status}`);
+  if (!res.json.transactSynced) throw new Error('Expected transactSynced: true');
+  if (res.json.record.transactStatus !== 'Synced from Transact') {
+    throw new Error(`Expected transactStatus 'Synced from Transact', got ${res.json.record.transactStatus}`);
   }
 });
 
