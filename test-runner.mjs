@@ -383,6 +383,46 @@ await assertTest('POST /transact/sync-customer (Force re-sync with force: true)'
   if (res.json.alreadySynced) throw new Error('Expected alreadySynced to be false on forced sync');
 });
 
+await assertTest('PUT /admin/db/physical/:id/transact-id (Dedicated quick update)', async () => {
+  const res = await request('PUT', '/admin/db/physical/F20014529/transact-id', {
+    transactId: '10001999'
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (!res.json.success) throw new Error('Update failed');
+  if ((res.json.record.transactID || res.json.record.TransactID) !== '10001999') throw new Error('TransactID mismatch');
+  
+  // Verify GET also reflects the updated ID
+  const getRes = await request('GET', '/persons/physical/F20014529');
+  if ((getRes.json.transactID || getRes.json.TransactID) !== '10001999') throw new Error('GET verification failed');
+});
+
+await assertTest('PUT /admin/db/physical/:id (Update TransactID via general editor)', async () => {
+  const res = await request('PUT', '/admin/db/physical/F20014529', {
+    transactID: '10002000'
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (!res.json.success) throw new Error('Update failed');
+  if ((res.json.record.transactID || res.json.record.TransactID) !== '10002000') throw new Error('TransactID mismatch');
+});
+
+await assertTest('PUT /persons/physical/:mcdId (Update TransactID via REST API)', async () => {
+  const res = await request('PUT', '/persons/physical/F20014529', {
+    transactId: '10002001'
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if ((res.json.transactID || res.json.TransactID) !== '10002001') throw new Error('TransactID mismatch');
+});
+
+await assertTest('POST /transact/sync-customer (Direct manual transactId override)', async () => {
+  const res = await request('POST', '/transact/sync-customer', {
+    personalCode: '48802020002',
+    transactId: '10002002'
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (!res.json.success) throw new Error('Direct update failed');
+  if (res.json.transactId !== '10002002') throw new Error('transactId mismatch in response');
+});
+
 await assertTest('POST /persons/physical (Create prospect with pre-existing TransactID -> skips Transact API)', async () => {
   const res = await request('POST', '/persons/physical', {
     firstName: 'Saulius',

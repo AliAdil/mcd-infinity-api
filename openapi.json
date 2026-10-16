@@ -2832,6 +2832,11 @@
                     "description": "Optional flag to mock the Transact call if offline",
                     "example": false
                   },
+                  "transactId": {
+                    "type": "string",
+                    "description": "Optional direct TransactID to assign immediately without external API call",
+                    "example": "10001925"
+                  },
                   "transactPayloadOverrides": {
                     "type": "object",
                     "description": "Optional field overrides to pass into Transact body",

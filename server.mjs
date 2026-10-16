@@ -921,9 +921,28 @@ export function buildTransactPayload(customer, overrides = {}) {
   };
 }
 
+export function normalizeTransactKeys(record, explicitVal) {
+  if (!record || typeof record !== 'object') return record;
+  let val = explicitVal;
+  if (val === undefined) {
+    if (record.TransactID !== undefined) val = record.TransactID;
+    else if (record.transactID !== undefined) val = record.transactID;
+    else if (record.TransactId !== undefined) val = record.TransactId;
+    else if (record.transactId !== undefined) val = record.transactId;
+  }
+  if (val !== undefined) {
+    const strVal = (val === null || val === undefined || String(val).trim() === '' || String(val) === 'null') ? null : String(val).trim();
+    record.TransactID = strVal;
+    record.TransactId = strVal;
+    record.transactID = strVal;
+    record.transactId = strVal;
+  }
+  return record;
+}
+
 export function hasTransactId(customer) {
   if (!customer) return false;
-  const tid = customer.TransactID || customer.TransactId;
+  const tid = customer.TransactID || customer.TransactId || customer.transactID || customer.transactId;
   if (!tid) return false;
   const s = String(tid).trim();
   return s !== '' && s !== 'null' && s !== 'undefined' && s !== 'None' && s !== 'Pending';
@@ -955,9 +974,27 @@ export async function syncCustomerWithTransact(personalCode, options = {}) {
     throw error;
   }
 
+  // Direct TransactID assignment or manual update
+  if (options.transactId || options.transactID || options.TransactID) {
+    const directId = String(options.transactId || options.transactID || options.TransactID).trim();
+    normalizeTransactKeys(customer, directId);
+    customer.TransactSyncDate = new Date().toISOString();
+    customer.TransactStatus = 'Synced (Manual)';
+    db.physicalPersons.set(targetKey, customer);
+    syncDbToFile();
+    return {
+      success: true,
+      message: `Customer ${customer.McdId} (PersonalCode: ${personalCode}) TransactID updated to ${directId}.`,
+      personalCode: String(personalCode),
+      mcdId: customer.McdId,
+      transactId: directId,
+      customer
+    };
+  }
+
   // If customer already has TransactID, do not call Transact API
   if (hasTransactId(customer) && !options.force) {
-    const existingId = String(customer.TransactID || customer.TransactId);
+    const existingId = String(customer.TransactID || customer.TransactId || customer.transactID || customer.transactId);
     return {
       success: true,
       alreadySynced: true,
@@ -978,8 +1015,7 @@ export async function syncCustomerWithTransact(personalCode, options = {}) {
   // Support offline mock mode if specifically requested
   if (options.mock === true || process.env.MOCK_TRANSACT === 'true') {
     const mockId = String(Math.floor(10001000 + Math.random() * 9000));
-    customer.TransactID = mockId;
-    customer.TransactId = mockId;
+    normalizeTransactKeys(customer, mockId);
     customer.TransactSyncDate = new Date().toISOString();
     customer.TransactStatus = 'Synced (Mock)';
     db.physicalPersons.set(targetKey, customer);
@@ -1038,8 +1074,7 @@ export async function syncCustomerWithTransact(personalCode, options = {}) {
   }
 
   // 5. Update MCD customer in database
-  customer.TransactID = String(transactId);
-  customer.TransactId = String(transactId);
+  normalizeTransactKeys(customer, String(transactId));
   customer.TransactSyncDate = new Date().toISOString();
   customer.TransactStatus = 'Synced';
   customer.transactResponse = resData;
@@ -1253,6 +1288,37 @@ export async function handleRequest(req, res) {
       }, null, 2));
     }
 
+    // Dedicated TransactID update endpoint: PUT/POST /admin/db/physical/:id/transact-id or /persons/physical/:id/transact-id
+    const transactIdMatch = pathname.match(/^\/(?:admin\/db|persons)\/physical\/([^\/]+)\/transact-id$/);
+    if ((method === 'PUT' || method === 'POST') && transactIdMatch) {
+      const id = transactIdMatch[1];
+      const person = getPhysicalPerson(id);
+      if (!person) {
+        return sendJson(res, 404, { success: false, ErrorCode: '404001', ErrorMessage: `Physical person '${id}' not found` });
+      }
+      const body = await parseBody(req);
+      const newTid = body.transactId !== undefined ? body.transactId :
+                     (body.transactID !== undefined ? body.transactID :
+                     (body.TransactID !== undefined ? body.TransactID :
+                     (body.TransactId !== undefined ? body.TransactId : body.id)));
+      
+      normalizeTransactKeys(person, newTid);
+      if (newTid && String(newTid).trim() !== '' && String(newTid) !== 'null') {
+        person.TransactStatus = 'Synced (Manual)';
+        person.TransactSyncDate = new Date().toISOString();
+      } else {
+        person.TransactStatus = 'Pending';
+      }
+      syncDbToFile();
+      return sendJson(res, 200, {
+        success: true,
+        message: `TransactID for physical person ${id} updated to '${person.TransactID || ''}'`,
+        mcdId: id,
+        transactId: person.TransactID,
+        record: person
+      });
+    }
+
     // Direct Browser Update endpoint: PUT /admin/db/:collection/:id
     let dbMatch = pathname.match(/^\/admin\/db\/([^\/]+)\/([^\/]+)$/);
     if (method === 'PUT' && dbMatch) {
@@ -1268,8 +1334,19 @@ export async function handleRequest(req, res) {
         return sendJson(res, 404, { success: false, ErrorMessage: `Record '${id}' not found in '${colName}'` });
       }
 
+      let bodyTransactId = undefined;
+      if (body.TransactID !== undefined) bodyTransactId = body.TransactID;
+      else if (body.transactID !== undefined) bodyTransactId = body.transactID;
+      else if (body.TransactId !== undefined) bodyTransactId = body.TransactId;
+      else if (body.transactId !== undefined) bodyTransactId = body.transactId;
+
       // Merge and update
       const updated = { ...existing, ...body, McdId: id };
+      if (bodyTransactId !== undefined) {
+        normalizeTransactKeys(updated, bodyTransactId);
+      } else {
+        normalizeTransactKeys(updated);
+      }
       targetMap.set(id, updated);
       syncDbToFile();
 
@@ -1324,6 +1401,7 @@ export async function handleRequest(req, res) {
         }
       }
       const record = { ...body, McdId: id, mcdId: id };
+      normalizeTransactKeys(record);
 
       targetMap.set(id, record);
       syncDbToFile();
@@ -1337,10 +1415,9 @@ export async function handleRequest(req, res) {
             mock: Boolean(body.mock || req.headers['x-mock-transact'] === 'true' || process.env.MOCK_TRANSACT === 'true')
           });
           if (syncRes && syncRes.transactId) {
-            record.TransactID = String(syncRes.transactId);
-            record.TransactId = String(syncRes.transactId);
+            normalizeTransactKeys(record, String(syncRes.transactId));
             record.TransactSyncDate = syncRes.customer.TransactSyncDate;
-            record.TransactStatus = 'Synced';
+            record.TransactStatus = syncRes.transactResponse?.header?.mock ? 'Synced (Mock)' : 'Synced';
             record.transactResponse = syncRes.transactResponse;
             targetMap.set(id, record);
             syncDbToFile();
@@ -1448,11 +1525,13 @@ export async function handleRequest(req, res) {
       const isMock = req.headers['x-mock-transact'] === 'true' || body.mock === true || query.mock === 'true';
 
       try {
+        const directTransactId = body.transactId || body.transactID || body.TransactID || body.TransactId || query.transactId;
         const result = await syncCustomerWithTransact(personalCode, {
           token: customToken,
           overrides: body.transactPayloadOverrides || body.body || {},
           mock: isMock,
-          force: Boolean(body.force === true || query.force === 'true')
+          force: Boolean(body.force === true || query.force === 'true' || directTransactId),
+          transactId: directTransactId
         });
         return sendJson(res, 200, result);
       } catch (err) {
@@ -1550,8 +1629,8 @@ export async function handleRequest(req, res) {
         }
       }
 
-      const preExistingId = (body.TransactID || body.transactId) ||
-        (existingCustomer && (existingCustomer.TransactID || existingCustomer.TransactId));
+      const preExistingId = (body.TransactID || body.transactID || body.TransactId || body.transactId) ||
+        (existingCustomer && (existingCustomer.TransactID || existingCustomer.TransactId || existingCustomer.transactID || existingCustomer.transactId));
       const hasId = preExistingId &&
         String(preExistingId).trim() !== '' &&
         preExistingId !== 'null' &&
@@ -1636,8 +1715,11 @@ export async function handleRequest(req, res) {
 
       // If customer already has a TransactID, do NOT create or call Transact API
       if (hasId) {
+        normalizeTransactKeys(newPerson, String(preExistingId));
         newPerson.alreadySynced = true;
         newPerson.transactNotice = `Customer already has TransactID '${preExistingId}'. No new Transact customer was created.`;
+        db.physicalPersons.set(newMcdId, newPerson);
+        syncDbToFile();
         return sendJson(res, 201, newPerson);
       }
 
@@ -1647,8 +1729,7 @@ export async function handleRequest(req, res) {
           mock: Boolean(body.mock || req.headers['x-mock-transact'] === 'true' || process.env.MOCK_TRANSACT === 'true')
         });
         if (syncResult && syncResult.transactId) {
-          newPerson.TransactID = String(syncResult.transactId);
-          newPerson.TransactId = String(syncResult.transactId);
+          normalizeTransactKeys(newPerson, String(syncResult.transactId));
           newPerson.TransactSyncDate = syncResult.customer.TransactSyncDate || new Date().toISOString();
           newPerson.TransactStatus = syncResult.alreadySynced ? 'Already Synced' : 'Synced';
           newPerson.alreadySynced = Boolean(syncResult.alreadySynced);
@@ -1789,6 +1870,10 @@ export async function handleRequest(req, res) {
       if (body.ResidenceAddress) person.ResidenceAddress = body.ResidenceAddress;
       if (body.CorrespondenceAddress) person.CorrespondenceAddress = body.CorrespondenceAddress;
       if (body.SelectedProducts) person.SelectedProducts = body.SelectedProducts;
+      if (body.TransactID !== undefined || body.transactID !== undefined || body.TransactId !== undefined || body.transactId !== undefined) {
+        const tid = body.TransactID !== undefined ? body.TransactID : (body.transactID !== undefined ? body.transactID : (body.TransactId !== undefined ? body.TransactId : body.transactId));
+        normalizeTransactKeys(person, tid);
+      }
 
       syncDbToFile();
       return sendJson(res, 200, person);
@@ -2877,9 +2962,13 @@ export function renderDashboardHtml() {
         <select id="sync-customer-select" onchange="if(this.value){document.getElementById('sync-personal-code').value=this.value;}" style="padding:10px 14px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-size:13px; max-width:320px;">
           <option value="">-- Select customer to sync --</option>
         </select>
-        <input type="text" id="sync-personal-code" placeholder="Personal Code (e.g. 38501010001, 39001010099)" style="flex:1; min-width:220px; padding:10px 14px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace;" value="39001010099" />
-        <button class="btn btn-primary" id="btn-transact-sync" onclick="triggerTransactSync()" style="display:flex; align-items:center; gap:6px;">
+        <input type="text" id="sync-personal-code" placeholder="Personal Code (e.g. 38501010001, 39001010099)" style="flex:1; min-width:200px; padding:10px 14px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace;" value="39001010099" />
+        <input type="text" id="sync-manual-tid" placeholder="Manual Transact ID (Optional)" style="width:190px; padding:10px 14px; background:var(--input-bg); border:1px solid var(--input-border); border-radius:6px; color:var(--input-color); font-family:monospace; font-size:13px;" title="Optionally type a specific Transact ID to assign directly" />
+        <button class="btn btn-primary" id="btn-transact-sync" onclick="triggerTransactSync(true)" style="display:flex; align-items:center; gap:6px;">
           <span>⚡ Call Transact & Sync</span>
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-transact-mock" onclick="triggerTransactMockSync()" style="display:flex; align-items:center; gap:6px;" title="Generate or assign Transact ID directly without calling remote host">
+          <span>🎲 Simulated Sync</span>
         </button>
       </div>
       <div id="transact-sync-alert" style="margin-top:12px; display:none; padding:10px 14px; border-radius:6px; font-size:13px; font-family:monospace;"></div>
@@ -3006,11 +3095,22 @@ export function renderDashboardHtml() {
         <button class="btn btn-secondary btn-sm" onclick="closeModal()">✕</button>
       </div>
       <div class="modal-body">
+        <div id="modal-transact-section" style="background:var(--card-bg, #1e293b); border:1px solid var(--border-color, #334155); border-radius:6px; padding:10px 14px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:16px;">⚡</span>
+            <label for="modal-transact-id" style="font-size:13px; font-weight:600; color:var(--text-color);">Transact ID:</label>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:220px; max-width:380px;">
+            <input type="text" id="modal-transact-id" placeholder="e.g. 10001923" style="flex:1; padding:6px 10px; border-radius:4px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--input-color); font-family:monospace; font-size:13px;" oninput="syncModalTransactInputToJson()" />
+            <button type="button" class="btn btn-sm btn-secondary" onclick="generateMockTransactForModal()" style="font-size:11px; padding:4px 8px;" title="Generate random mock Transact ID">🎲 Gen ID</button>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="clearModalTransactId()" style="font-size:11px; padding:4px 8px;" title="Clear Transact ID">Clear</button>
+          </div>
+        </div>
         <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
           <span>Modify JSON below. Changes are saved immediately to in-memory state and synced to <code style="color:var(--accent-blue)">db.json</code>.</span>
           <button type="button" class="btn btn-sm btn-primary" id="modal-randomize-btn" onclick="randomizeModalPayload()" style="display:none; font-size:11px; padding:4px 10px; background:#0284c7;">🎲 Randomize Data</button>
         </div>
-        <textarea id="modal-json-editor" class="json-editor" spellcheck="false"></textarea>
+        <textarea id="modal-json-editor" class="json-editor" spellcheck="false" oninput="syncJsonEditorToTransactInput()"></textarea>
         <div id="modal-error" style="color: #f87171; font-size: 12px; margin-top: 8px; display: none;"></div>
       </div>
       <div class="modal-footer">
@@ -3342,8 +3442,8 @@ export function renderDashboardHtml() {
           var fName = p.firstName || p.FirstName || '';
           var lName = p.lastName || p.LastName || '';
           var pCode = p.personalCode || p.PersonalCode || '-';
-          var tIdVal = p.transactID || p.TransactID || p.transactId || p.TransactId;
-          var tIdSpan = tIdVal ? ('<span style="background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:4px; font-weight:600; font-family:monospace;">' + tIdVal + '</span>') : '<span style="color:var(--text-muted); font-size:12px;">None</span>';
+          var tIdVal = p.transactID || p.TransactID || p.transactId || p.TransactId || '';
+          var tIdSpan = tIdVal ? ('<span style="background:rgba(56,189,248,0.15); color:#38bdf8; padding:3px 8px; border-radius:4px; font-weight:600; font-family:monospace; display:inline-flex; align-items:center; gap:6px;">' + tIdVal + '<button type="button" class="btn btn-sm btn-edit-tid" data-id="' + id + '" data-val="' + tIdVal + '" style="background:none; border:none; color:#38bdf8; cursor:pointer; padding:0 2px; font-size:12px;" title="Click to change Transact ID">✏️</button></span>') : ('<span style="color:var(--text-muted); font-size:12px; display:inline-flex; align-items:center; gap:6px;">None <button type="button" class="btn btn-sm btn-edit-tid" data-id="' + id + '" data-val="" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3); border-radius:4px; padding:1px 6px; font-size:11px; cursor:pointer;" title="Assign Transact ID">+ Set ID</button></span>');
           var email = p.primaryEmail || p.PrimaryEmail || '-';
           var phone = p.primaryPhoneNumber || p.PrimaryPhoneNumber || '-';
           var gId = p.guardianMcdId || p.GuardianMcdId;
@@ -3462,7 +3562,69 @@ export function renderDashboardHtml() {
       document.getElementById('modal-error').style.display = 'none';
       const rBtn = document.getElementById('modal-randomize-btn');
       if (rBtn) rBtn.style.display = 'none';
+
+      const tSec = document.getElementById('modal-transact-section');
+      const tInput = document.getElementById('modal-transact-id');
+      if (tSec && tInput) {
+        if (col === 'physical' || record.TransactID !== undefined || record.transactID !== undefined || record.TransactId !== undefined || record.transactId !== undefined) {
+          tSec.style.display = 'flex';
+          tInput.value = record.TransactID || record.transactID || record.TransactId || record.transactId || '';
+        } else {
+          tSec.style.display = 'none';
+          tInput.value = '';
+        }
+      }
+
       document.getElementById('edit-modal').style.display = 'flex';
+    }
+
+    function syncModalTransactInputToJson() {
+      const tInput = document.getElementById('modal-transact-id');
+      const editor = document.getElementById('modal-json-editor');
+      if (!tInput || !editor) return;
+      try {
+        const val = tInput.value.trim();
+        const obj = JSON.parse(editor.value);
+        if (val) {
+          obj.TransactID = val;
+          obj.transactID = val;
+          obj.TransactId = val;
+          obj.transactId = val;
+        } else {
+          obj.TransactID = null;
+          obj.transactID = null;
+          obj.TransactId = null;
+          obj.transactId = null;
+        }
+        editor.value = JSON.stringify(obj, null, 2);
+      } catch (e) {}
+    }
+
+    function syncJsonEditorToTransactInput() {
+      const tInput = document.getElementById('modal-transact-id');
+      const editor = document.getElementById('modal-json-editor');
+      if (!tInput || !editor) return;
+      try {
+        const obj = JSON.parse(editor.value);
+        const val = obj.TransactID || obj.transactID || obj.TransactId || obj.transactId || '';
+        tInput.value = val;
+      } catch (e) {}
+    }
+
+    function clearModalTransactId() {
+      const tInput = document.getElementById('modal-transact-id');
+      if (tInput) {
+        tInput.value = '';
+        syncModalTransactInputToJson();
+      }
+    }
+
+    function generateMockTransactForModal() {
+      const tInput = document.getElementById('modal-transact-id');
+      if (tInput) {
+        tInput.value = String(Math.floor(10001000 + Math.random() * 9000));
+        syncModalTransactInputToJson();
+      }
     }
 
     function getRandomItem(arr) {
@@ -3598,6 +3760,19 @@ export function renderDashboardHtml() {
       document.getElementById('modal-error').style.display = 'none';
       const rBtn = document.getElementById('modal-randomize-btn');
       if (rBtn) rBtn.style.display = 'inline-block';
+
+      const tSec = document.getElementById('modal-transact-section');
+      const tInput = document.getElementById('modal-transact-id');
+      if (tSec && tInput) {
+        if (currentTable === 'physical') {
+          tSec.style.display = 'flex';
+          tInput.value = template.TransactID || template.transactID || '';
+        } else {
+          tSec.style.display = 'none';
+          tInput.value = '';
+        }
+      }
+
       document.getElementById('edit-modal').style.display = 'flex';
     }
 
@@ -3606,6 +3781,8 @@ export function renderDashboardHtml() {
         const template = getRandomTemplate(currentTable);
         document.getElementById('modal-json-editor').value = JSON.stringify(template, null, 2);
         document.getElementById('modal-error').style.display = 'none';
+        const tInput = document.getElementById('modal-transact-id');
+        if (tInput) tInput.value = template.TransactID || template.transactID || '';
         showToast('Generated fresh random payload!');
       }
     }
@@ -3624,6 +3801,23 @@ export function renderDashboardHtml() {
         errBox.innerText = 'Invalid JSON: ' + e.message;
         errBox.style.display = 'block';
         return;
+      }
+
+      const tSec = document.getElementById('modal-transact-section');
+      const tInput = document.getElementById('modal-transact-id');
+      if (tSec && tSec.style.display !== 'none' && tInput) {
+        const tidVal = tInput.value.trim();
+        if (tidVal) {
+          payload.TransactID = tidVal;
+          payload.transactID = tidVal;
+          payload.TransactId = tidVal;
+          payload.transactId = tidVal;
+        } else {
+          payload.TransactID = null;
+          payload.transactID = null;
+          payload.TransactId = null;
+          payload.transactId = null;
+        }
       }
 
       try {
@@ -3754,14 +3948,16 @@ export function renderDashboardHtml() {
       document.getElementById('response-title').innerText = 'Live Response Console';
     }
 
-    async function triggerTransactSync() {
+    async function triggerTransactSync(force = true) {
       const codeInput = document.getElementById('sync-personal-code');
+      const manualInput = document.getElementById('sync-manual-tid');
       const alertBox = document.getElementById('transact-sync-alert');
       const btn = document.getElementById('btn-transact-sync');
       const code = codeInput ? codeInput.value.trim() : '';
+      const manualId = manualInput ? manualInput.value.trim() : '';
 
       if (!code) {
-        alert('Please enter a Personal Code');
+        alert('Please enter or select a Personal Code');
         return;
       }
 
@@ -3771,30 +3967,28 @@ export function renderDashboardHtml() {
       alertBox.style.background = 'rgba(56,189,248,0.1)';
       alertBox.style.color = '#38bdf8';
       alertBox.style.border = '1px solid rgba(56,189,248,0.3)';
-      alertBox.innerText = 'Calling Transact API at 192.168.1.157:8085 for PersonalCode: ' + code + '...';
+      alertBox.innerText = manualId 
+        ? ('Assigning TransactID: ' + manualId + ' to customer with PersonalCode: ' + code + '...')
+        : ('Calling Transact API at 192.168.1.157:8085 for PersonalCode: ' + code + '...');
 
       try {
+        const payload = { personalCode: code, force: true };
+        if (manualId) payload.transactId = manualId;
+
         const res = await fetch('/transact/sync-customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ personalCode: code })
+          body: JSON.stringify(payload)
         });
         const data = await res.json();
 
         if (res.ok && data.success) {
-          if (data.alreadySynced) {
-            alertBox.style.background = 'rgba(234,179,8,0.15)';
-            alertBox.style.color = '#facc15';
-            alertBox.style.border = '1px solid rgba(234,179,8,0.4)';
-            alertBox.innerText = 'ℹ️ ' + (data.message || ('Customer already has TransactID: ' + data.transactId));
-            showToast('Customer already has TransactID: ' + data.transactId);
-          } else {
-            alertBox.style.background = 'rgba(16,185,129,0.15)';
-            alertBox.style.color = '#34d399';
-            alertBox.style.border = '1px solid rgba(16,185,129,0.4)';
-            alertBox.innerText = 'SUCCESS! Transact customer created. ID: ' + data.transactId + ' linked to MCD customer ' + data.mcdId + ' (' + data.customer.FirstName + ' ' + data.customer.LastName + ')';
-            showToast('Synced with Transact! ID: ' + data.transactId);
-          }
+          alertBox.style.background = 'rgba(16,185,129,0.15)';
+          alertBox.style.color = '#34d399';
+          alertBox.style.border = '1px solid rgba(16,185,129,0.4)';
+          alertBox.innerText = 'SUCCESS! TransactID updated to ' + data.transactId + ' for customer ' + data.mcdId + ' (' + (data.customer?.FirstName || '') + ' ' + (data.customer?.LastName || '') + ')';
+          showToast('Updated Transact ID: ' + data.transactId);
+          if (manualInput) manualInput.value = '';
           await loadDatabase();
           if (data.customer) inspectRecord(data.customer);
         } else {
@@ -3807,10 +4001,73 @@ export function renderDashboardHtml() {
         alertBox.style.background = 'rgba(239,68,68,0.15)';
         alertBox.style.color = '#f87171';
         alertBox.style.border = '1px solid rgba(239,68,68,0.4)';
-        alertBox.innerText = 'ERROR: ' + err.message;
+        alertBox.innerText = 'ERROR: ' + err.message + '. Tip: Use the 🎲 Simulated Sync button or type a Transact ID in the manual field.';
       } finally {
         btn.disabled = false;
         btn.innerHTML = '<span>⚡ Call Transact & Sync</span>';
+      }
+    }
+
+    async function triggerTransactMockSync() {
+      const codeInput = document.getElementById('sync-personal-code');
+      const alertBox = document.getElementById('transact-sync-alert');
+      const code = codeInput ? codeInput.value.trim() : '';
+
+      if (!code) {
+        alert('Please enter or select a Personal Code');
+        return;
+      }
+
+      alertBox.style.display = 'block';
+      alertBox.style.background = 'rgba(56,189,248,0.1)';
+      alertBox.style.color = '#38bdf8';
+      alertBox.style.border = '1px solid rgba(56,189,248,0.3)';
+      alertBox.innerText = 'Generating simulated Transact ID for customer with PersonalCode: ' + code + '...';
+
+      try {
+        const res = await fetch('/transact/sync-customer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ personalCode: code, mock: true, force: true })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alertBox.style.background = 'rgba(16,185,129,0.15)';
+          alertBox.style.color = '#34d399';
+          alertBox.style.border = '1px solid rgba(16,185,129,0.4)';
+          alertBox.innerText = 'SUCCESS! TransactID updated to ' + data.transactId + ' (Simulated Sync) for customer ' + data.mcdId;
+          showToast('Updated Transact ID: ' + data.transactId);
+          await loadDatabase();
+          if (data.customer) inspectRecord(data.customer);
+        } else {
+          alertBox.innerText = 'FAILED: ' + (data.message || 'Unknown error');
+        }
+      } catch (err) {
+        alertBox.innerText = 'ERROR: ' + err.message;
+      }
+    }
+
+    async function quickEditTransactId(id, currentVal) {
+      const newId = prompt('Update Transact ID for ' + id + ' (leave empty to clear):', currentVal || '');
+      if (newId === null) return;
+      try {
+        const res = await fetch('/admin/db/physical/' + encodeURIComponent(id) + '/transact-id', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transactId: newId.trim() })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast('Updated Transact ID for ' + id + ' to ' + (newId.trim() || 'None'));
+          await loadDatabase();
+          if (currentlyInspected && (currentlyInspected.mcdId || currentlyInspected.McdId) === id) {
+            inspectRecord(data.record);
+          }
+        } else {
+          alert('Failed to update Transact ID: ' + (data.message || data.ErrorMessage || 'Unknown error'));
+        }
+      } catch (e) {
+        alert('Error updating Transact ID: ' + e.message);
       }
     }
 
@@ -3819,13 +4076,22 @@ export function renderDashboardHtml() {
       if (input) input.value = code;
       const select = document.getElementById('sync-customer-select');
       if (select) select.value = code;
-      triggerTransactSync();
+      triggerTransactSync(true);
     }
 
     function setupTableEvents() {
       const container = document.getElementById('table-display');
       if (!container) return;
       container.addEventListener('click', function(e) {
+        const btnTid = e.target.closest('.btn-edit-tid');
+        if (btnTid) {
+          e.stopPropagation();
+          const pId = btnTid.getAttribute('data-id');
+          const pVal = btnTid.getAttribute('data-val');
+          if (pId) quickEditTransactId(pId, pVal);
+          return;
+        }
+
         const btnSync = e.target.closest('.btn-sync');
         if (btnSync) {
           e.stopPropagation();
