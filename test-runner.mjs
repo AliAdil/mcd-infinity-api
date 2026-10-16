@@ -440,16 +440,23 @@ await assertTest('PUT /admin/db/physical/:id/transact-id (Fetch & sync customer 
   const phone = rec.primaryPhoneNumber || rec.PrimaryPhoneNumber;
   const addr = rec.registrationAddress || rec.RegistrationAddress;
   const tStatus = rec.transactStatus || rec.TransactStatus;
+  const tResp = rec.transactResponse || rec.TransactResponse;
 
   if ((rec.transactID || rec.TransactID) !== '10001868') throw new Error('TransactID mismatch');
-  if (fName !== 'Dovile') throw new Error(`Expected FirstName 'Dovile', got '${fName}'`);
-  if (lName !== 'Naujokaite') throw new Error(`Expected LastName 'Naujokaite', got '${lName}'`);
-  if (dob !== '1992-08-08') throw new Error(`Expected DateOfBirth '1992-08-08', got '${dob}'`);
-  if (gender !== 'FEMALE') throw new Error(`Expected Gender 'FEMALE', got '${gender}'`);
-  if (email !== 'dovile.n@example.com') throw new Error(`Expected PrimaryEmail 'dovile.n@example.com', got '${email}'`);
-  if (phone !== '+37061122334') throw new Error(`Expected PrimaryPhoneNumber '+37061122334', got '${phone}'`);
-  if (addr?.city !== 'Vilnius') throw new Error(`Expected RegistrationAddress city 'Vilnius', got '${addr?.city}'`);
+  if (fName !== 'Awesh') throw new Error(`Expected FirstName 'Awesh', got '${fName}'`);
+  if (lName !== 'Kumar') throw new Error(`Expected LastName 'Kumar', got '${lName}'`);
+  if (dob !== '1995-07-23') throw new Error(`Expected DateOfBirth '1995-07-23', got '${dob}'`);
+  if (gender !== 'MALE') throw new Error(`Expected Gender 'MALE', got '${gender}'`);
+  if (email !== 'test12345@test.com') throw new Error(`Expected PrimaryEmail 'test12345@test.com', got '${email}'`);
+  if (phone !== '+923323087897') throw new Error(`Expected PrimaryPhoneNumber '+923323087897', got '${phone}'`);
+  if (addr?.city !== 'Khi') throw new Error(`Expected RegistrationAddress city 'Khi', got '${addr?.city}'`);
+  if (addr?.street !== '7th') throw new Error(`Expected RegistrationAddress street '7th', got '${addr?.street}'`);
   if (tStatus !== 'Synced from Transact') throw new Error(`Expected TransactStatus 'Synced from Transact', got '${tStatus}'`);
+
+  if (!tResp) throw new Error('Expected transactResponse to be present on record');
+  if (tResp.header?.status !== 'success') throw new Error(`Expected transactResponse.header.status 'success', got '${tResp.header?.status}'`);
+  if (tResp.header?.transactionStatus !== 'Live') throw new Error(`Expected transactResponse.header.transactionStatus 'Live', got '${tResp.header?.transactionStatus}'`);
+  if (tResp.body?.lastName !== 'Kumar') throw new Error(`Expected transactResponse.body.lastName 'Kumar', got '${tResp.body?.lastName}'`);
 });
 
 await assertTest('PUT /admin/db/physical/:id (Fetch & sync customer info from Transact ID 10001868 via general editor)', async () => {
@@ -463,19 +470,21 @@ await assertTest('PUT /admin/db/physical/:id (Fetch & sync customer info from Tr
   const rec = res.json.record;
   const fName = rec.firstName || rec.FirstName;
   const lName = rec.lastName || rec.LastName;
-  if (fName !== 'Dovile') throw new Error(`Expected FirstName 'Dovile', got '${fName}'`);
-  if (lName !== 'Naujokaite') throw new Error(`Expected LastName 'Naujokaite', got '${lName}'`);
+  if (fName !== 'Awesh') throw new Error(`Expected FirstName 'Awesh', got '${fName}'`);
+  if (lName !== 'Kumar') throw new Error(`Expected LastName 'Kumar', got '${lName}'`);
+  const tResp = rec.transactResponse || rec.TransactResponse;
+  if (!tResp) throw new Error('Expected transactResponse on updated record');
 });
 
 await assertTest('GET /irf-provider-container/api/v3.0.0/party/customers?customerId=10001868 (Direct query Transact customer)', async () => {
   const res = await request('GET', '/irf-provider-container/api/v3.0.0/party/customers?customerId=10001868&mock=true');
   if (res.status !== 200) throw new Error(`Status ${res.status}: ${JSON.stringify(res.json)}`);
   if (res.json.header?.status !== 'success') throw new Error('Expected header.status to be success');
-  if (!Array.isArray(res.json.body) || res.json.body.length === 0) throw new Error('Expected non-empty body array');
-  const cust = res.json.body[0];
-  if (cust.customerId !== '10001868') throw new Error(`Expected customerId '10001868', got '${cust.customerId}'`);
-  if (cust.givenName !== 'Dovile') throw new Error(`Expected givenName 'Dovile', got '${cust.givenName}'`);
-  if (cust.familyName !== 'Naujokaite') throw new Error(`Expected familyName 'Naujokaite', got '${cust.familyName}'`);
+  if (res.json.header?.transactionStatus !== 'Live') throw new Error('Expected header.transactionStatus to be Live');
+  const body = res.json.body;
+  if (!body || typeof body !== 'object') throw new Error('Expected body object');
+  if (body.givenName !== 'Awesh') throw new Error(`Expected givenName 'Awesh', got '${body.givenName}'`);
+  if (body.lastName !== 'Kumar') throw new Error(`Expected lastName 'Kumar', got '${body.lastName}'`);
 });
 
 await assertTest('POST /persons/physical (Create prospect with pre-existing TransactID -> skips Transact API)', async () => {

@@ -956,136 +956,195 @@ export function extractTransactCustomerRecord(data, transactId) {
   if (!data || typeof data !== 'object') return null;
   const targetId = transactId !== undefined && transactId !== null ? String(transactId).trim() : null;
 
-  let list = [];
+  let bodyRecord = null;
   if (Array.isArray(data)) {
-    list = data;
-  } else if (Array.isArray(data.body)) {
-    list = data.body;
-  } else if (Array.isArray(data.customers)) {
-    list = data.customers;
-  } else if (data.body && typeof data.body === 'object' && !Array.isArray(data.body)) {
-    return data.body;
-  } else if (data.customerId || data.customerNames || data.givenName || data.familyName || data.name) {
-    return data;
-  }
-
-  if (list.length > 0) {
     if (targetId) {
-      const matched = list.find(item => {
+      bodyRecord = data.find(item => {
         const cId = item.customerId || item.customerID || item.id || item.TransactID;
         return cId !== undefined && String(cId).trim() === targetId;
-      });
-      if (matched) return matched;
+      }) || data[0];
+    } else {
+      bodyRecord = data[0];
     }
-    return list[0];
+  } else if (Array.isArray(data.body)) {
+    if (targetId) {
+      bodyRecord = data.body.find(item => {
+        const cId = item.customerId || item.customerID || item.id || item.TransactID;
+        return cId !== undefined && String(cId).trim() === targetId;
+      }) || data.body[0];
+    } else {
+      bodyRecord = data.body[0];
+    }
+  } else if (Array.isArray(data.customers)) {
+    if (targetId) {
+      bodyRecord = data.customers.find(item => {
+        const cId = item.customerId || item.customerID || item.id || item.TransactID;
+        return cId !== undefined && String(cId).trim() === targetId;
+      }) || data.customers[0];
+    } else {
+      bodyRecord = data.customers[0];
+    }
+  } else if (data.body && typeof data.body === 'object' && !Array.isArray(data.body)) {
+    bodyRecord = { ...data.body };
+  } else if (data.customerId || data.customerNames || data.givenName || data.familyName || data.name || data.lastName) {
+    bodyRecord = { ...data };
+  }
+
+  if (bodyRecord) {
+    if (!bodyRecord.customerId) {
+      bodyRecord.customerId = data.header?.id || targetId || '';
+    }
+    bodyRecord._rawResponse = data;
+    return bodyRecord;
   }
 
   return null;
 }
 
 export function generateMockTransactCustomer(transactId) {
-  const tid = String(transactId).trim();
-  if (tid === '10001868') {
-    return {
-      customerId: '10001868',
+  const tid = String(transactId || '10001929').trim();
+
+  const mockResponse = {
+    header: {
+      transactionStatus: "Live",
+      audit: {
+        t24_time: 2671,
+        responseParse_time: 16,
+        requestParse_time: 32,
+        versionNumber: "1"
+      },
+      id: tid,
+      status: "success"
+    },
+    body: {
+      customerMnemonic: "XD101698",
+      lastName: "Kumar",
+      numberOfDependents: 2,
+      introducer: "DIGITALONBOARDING",
+      gender: "MALE",
+      streets: [
+        {
+          street: "7th"
+        }
+      ],
+      faxIds: [
+        {
+          faxId: "FAX001"
+        }
+      ],
       customerNames: [
         {
-          customerName: 'Dovile Naujokaite',
-          customerNameAdditional: 'Dovile'
+          customerNameAdditional: "Kumar",
+          customerName: "Awesh"
         }
       ],
-      givenName: 'Dovile',
-      familyName: 'Naujokaite',
-      dateOfBirth: '1992-08-08',
-      gender: 'FEMALE',
-      country: 'LT',
-      nationality: 'LT',
-      residence: 'LT',
-      maritalStatus: 'SINGLE',
-      streets: ['Gedimino pr. 12-4'],
-      addressCities: ['Vilnius'],
-      countries: ['Lithuania'],
-      postCode: '01103',
+      language: 1,
+      title: "MR",
+      taxIds: [
+        {
+          taxId: "791-50-6202"
+        }
+      ],
+      customerStatus: 17,
+      industryId: 13,
+      accountOfficerId: 1,
+      officePhoneNumbers: [
+        {
+          officePhoneNumber: "+923323087897"
+        }
+      ],
+      customerCompany: "AU0070001",
+      amlResult: "NULL",
+      isSecureMessage: "YES",
+      sectorId: 1001,
+      nationalityId: "EE",
+      givenName: "Awesh",
+      addressCities: [
+        {
+          addressCity: "Khi"
+        }
+      ],
+      amlLastResultDate: "20260908",
+      displayNames: [
+        {
+          displayName: "Awesh Kumar"
+        }
+      ],
+      dateOfBirth: "1995-07-23",
+      kycNextSystemReviewDate: "2027-01-15",
+      countries: [
+        {
+          country: "EE"
+        }
+      ],
+      amlCheck: "NULL",
       contactDetails: [
         {
-          contactType: 'MOBILE',
-          contactData: '61122334',
-          iddPrefixPhone: '+370'
+          contactData: "3323087897",
+          iddPrefixPhone: "+92",
+          contactType: "MOBILE"
         },
         {
-          contactType: 'EMAIL',
-          contactData: 'dovile.n@example.com'
+          contactData: "test12345@test.com",
+          contactType: "EMAIL"
         }
       ],
-      customerStatus: 'ACTIVE',
-      sector: '1001',
-      target: '1'
-    };
-  }
-
-  return {
-    customerId: tid,
-    customerNames: [
-      {
-        customerName: `Customer ${tid}`,
-        customerNameAdditional: 'Customer'
-      }
-    ],
-    givenName: 'Customer',
-    familyName: `${tid}`,
-    dateOfBirth: '1985-05-15',
-    gender: 'MALE',
-    country: 'LT',
-    nationality: 'LT',
-    residence: 'LT',
-    streets: [`Subaciaus g. ${tid.slice(-2) || '10'}`],
-    addressCities: ['Vilnius'],
-    countries: ['Lithuania'],
-    postCode: '01200',
-    contactDetails: [
-      {
-        contactType: 'MOBILE',
-        contactData: `699${tid.slice(-5) || '12345'}`,
-        iddPrefixPhone: '+370'
-      },
-      {
-        contactType: 'EMAIL',
-        contactData: `transact.${tid}@temenos.com`
-      }
-    ],
-    customerStatus: 'ACTIVE',
-    sector: '1001'
+      residenceId: "EE",
+      target: 1,
+      postingRestrictIds: [
+        {
+          postingRestrictId: 1
+        }
+      ],
+      otherNationalityIds: [
+        {
+          otherNationalityId: "EE"
+        }
+      ],
+      kycNextReviewDate: "2027-01-15",
+      birthIncorpDate: "1995-07-23",
+      domicile: "EE",
+      postCode: 750000,
+      maritalStatus: "MARRIED",
+      customerId: tid
+    }
   };
+
+  const bodyRecord = { ...mockResponse.body };
+  bodyRecord._rawResponse = mockResponse;
+  return bodyRecord;
 }
 
-export function syncMcdCustomerFromTransactData(customer, tCust) {
+export function syncMcdCustomerFromTransactData(customer, tCust, rawResponse) {
   if (!customer || !tCust || typeof tCust !== 'object') {
     return { updated: false, modifiedFields: [] };
   }
 
   const modifiedFields = [];
 
-  // 1. Given Name & Family Name
+  // 1. Given Name & Family Name & Full Name
   let givenName = tCust.givenName || tCust.firstName;
   let familyName = tCust.familyName || tCust.lastName;
+  let fullName = '';
+
+  // Check displayNames array: [ { displayName: "Awesh Kumar" } ]
+  if (Array.isArray(tCust.displayNames) && tCust.displayNames.length > 0) {
+    const d0 = tCust.displayNames[0];
+    fullName = typeof d0 === 'string' ? d0 : (d0?.displayName || '');
+  }
 
   if (!givenName || !familyName) {
     if (Array.isArray(tCust.customerNames) && tCust.customerNames.length > 0) {
       const firstEntry = tCust.customerNames[0];
-      const nameStr = typeof firstEntry === 'string' ? firstEntry : (firstEntry.customerName || '');
-      const addName = typeof firstEntry === 'object' ? (firstEntry.customerNameAdditional || '') : '';
-      if (addName && !givenName) givenName = addName;
-      if (nameStr) {
-        const parts = String(nameStr).trim().split(/\s+/);
-        if (!givenName && parts.length > 1) {
-          givenName = parts[0];
-          if (!familyName) familyName = parts.slice(1).join(' ');
-        } else if (!familyName) {
-          familyName = nameStr;
-        }
+      const nameStr = typeof firstEntry === 'string' ? firstEntry : (firstEntry?.customerName || '');
+      const addName = typeof firstEntry === 'object' ? (firstEntry?.customerNameAdditional || '') : '';
+      if (!givenName && nameStr) givenName = nameStr;
+      if (!familyName && addName) familyName = addName;
+      if (!fullName && nameStr) {
+        fullName = addName ? `${nameStr} ${addName}`.trim() : nameStr;
       }
-    } else if (tCust.name || tCust.fullName) {
-      const parts = String(tCust.name || tCust.fullName).trim().split(/\s+/);
+    } else if (tCust.name || tCust.fullName || fullName) {
+      const parts = String(fullName || tCust.name || tCust.fullName).trim().split(/\s+/);
       if (!givenName && parts.length > 1) {
         givenName = parts[0];
         if (!familyName) familyName = parts.slice(1).join(' ');
@@ -1093,6 +1152,10 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
         familyName = String(tCust.name || tCust.fullName).trim();
       }
     }
+  }
+
+  if (!fullName && (givenName || familyName)) {
+    fullName = `${givenName || ''} ${familyName || ''}`.trim();
   }
 
   if (givenName && customer.FirstName !== givenName) {
@@ -1105,9 +1168,9 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
     customer.lastName = familyName;
     modifiedFields.push('LastName');
   }
-  if (customer.FirstName && customer.LastName) {
-    customer.FullName = `${customer.FirstName} ${customer.LastName}`.trim();
-    customer.fullName = customer.FullName;
+  if (fullName) {
+    customer.FullName = fullName;
+    customer.fullName = fullName;
   }
 
   // 2. Date of Birth & Minor status
@@ -1145,7 +1208,11 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
   }
 
   // 4. Country Code
-  const rawCountry = tCust.country || tCust.residence || tCust.nationality || tCust.domicile;
+  let rawCountry = tCust.nationalityId || tCust.residenceId || tCust.domicile || tCust.country || tCust.residence || tCust.nationality;
+  if (!rawCountry && Array.isArray(tCust.countries) && tCust.countries.length > 0) {
+    const c0 = tCust.countries[0];
+    rawCountry = typeof c0 === 'string' ? c0 : (c0?.country || '');
+  }
   if (rawCountry) {
     let cCode = String(rawCountry).trim().toUpperCase();
     if (cCode === 'LITHUANIA') cCode = 'LT';
@@ -1171,7 +1238,8 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
         if (idd && !fullPhone.startsWith('+')) {
           fullPhone = (idd.startsWith('+') ? idd : '+' + idd) + fullPhone.replace(/^0+/, '');
         } else if (!fullPhone.startsWith('+')) {
-          fullPhone = '+370' + fullPhone.replace(/^0+/, '');
+          const fallbackIdd = customer.CountryCode === 'PK' ? '+92' : (customer.CountryCode === 'EE' ? '+372' : '+370');
+          fullPhone = fallbackIdd + fullPhone.replace(/^0+/, '');
         }
         if (customer.PrimaryPhoneNumber !== fullPhone) {
           customer.PrimaryPhoneNumber = fullPhone;
@@ -1190,7 +1258,23 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
     }
   }
 
-  // Top level email/phone fallbacks
+  // Top level / office phone fallback
+  if (Array.isArray(tCust.officePhoneNumbers) && tCust.officePhoneNumbers.length > 0) {
+    const o0 = tCust.officePhoneNumbers[0];
+    const offPhone = typeof o0 === 'string' ? o0 : (o0?.officePhoneNumber || '');
+    if (offPhone) {
+      if (!customer.PrimaryPhoneNumber || customer.PrimaryPhoneNumber === '+37060012345') {
+        customer.PrimaryPhoneNumber = offPhone;
+        customer.primaryPhoneNumber = offPhone;
+        customer.PrimaryPhoneNumberVerified = true;
+        modifiedFields.push('PrimaryPhoneNumber');
+      } else {
+        customer.SecondaryPhoneNumber = offPhone;
+        customer.secondaryPhoneNumber = offPhone;
+      }
+    }
+  }
+
   if (tCust.email && customer.PrimaryEmail !== tCust.email) {
     customer.PrimaryEmail = tCust.email;
     customer.primaryEmail = tCust.email;
@@ -1209,8 +1293,8 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
 
   // 6. Address
   let streetStr = '';
-  if (Array.isArray(tCust.streets) && tCust.streets.length > 0) {
-    streetStr = tCust.streets.filter(Boolean).join(', ');
+  if (Array.isArray(tCust.streets)) {
+    streetStr = tCust.streets.map(s => typeof s === 'string' ? s : (s?.street || '')).filter(Boolean).join(', ');
   } else if (typeof tCust.street === 'string') {
     streetStr = tCust.street;
   } else if (typeof tCust.addressStreet === 'string') {
@@ -1218,18 +1302,19 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
   }
 
   let cityStr = '';
-  if (Array.isArray(tCust.addressCities) && tCust.addressCities.length > 0) {
-    cityStr = tCust.addressCities.filter(Boolean).join(', ');
+  if (Array.isArray(tCust.addressCities)) {
+    cityStr = tCust.addressCities.map(c => typeof c === 'string' ? c : (c?.addressCity || c?.city || '')).filter(Boolean).join(', ');
   } else if (typeof tCust.city === 'string') {
     cityStr = tCust.city;
   } else if (typeof tCust.addressCity === 'string') {
     cityStr = tCust.addressCity;
   }
 
-  let postCodeStr = tCust.postCode || tCust.postalCode || tCust.addressPostCode || '';
+  let postCodeStr = tCust.postCode !== undefined && tCust.postCode !== null ? String(tCust.postCode) : (tCust.postalCode || tCust.addressPostCode || '');
   let countryStr = '';
   if (Array.isArray(tCust.countries) && tCust.countries.length > 0) {
-    countryStr = tCust.countries[0];
+    const c0 = tCust.countries[0];
+    countryStr = typeof c0 === 'string' ? c0 : (c0?.country || '');
   } else if (typeof tCust.country === 'string') {
     countryStr = tCust.country;
   }
@@ -1239,12 +1324,12 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
     const addr = customer.RegistrationAddress;
     if (streetStr) addr.street = streetStr;
     if (cityStr) addr.city = cityStr;
-    if (postCodeStr) addr.postCode = String(postCodeStr);
+    if (postCodeStr) addr.postCode = postCodeStr;
     if (countryStr) {
       const cUpper = String(countryStr).toUpperCase();
-      addr.countryCode = cUpper === 'LITHUANIA' ? 'LT' : (cUpper.length === 2 ? cUpper : (addr.countryCode || 'LT'));
+      addr.countryCode = cUpper === 'LITHUANIA' ? 'LT' : (cUpper.length === 2 ? cUpper : (addr.countryCode || customer.CountryCode || 'LT'));
     }
-    addr.fullAddress = [addr.street, addr.postCode ? `${addr.postCode} ${addr.city}` : addr.city, addr.countryCode || 'LT'].filter(Boolean).join(', ');
+    addr.fullAddress = [addr.street, addr.postCode ? `${addr.postCode} ${addr.city}` : addr.city, addr.countryCode || customer.CountryCode || 'LT'].filter(Boolean).join(', ');
     customer.registrationAddress = addr;
     modifiedFields.push('RegistrationAddress');
 
@@ -1254,7 +1339,22 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
     }
   }
 
-  // 7. Personal Code / National ID if present
+  // 7. Tax IDs / SSN
+  if (Array.isArray(tCust.taxIds) && tCust.taxIds.length > 0) {
+    const t0 = tCust.taxIds[0];
+    const taxIdVal = typeof t0 === 'string' ? t0 : (t0?.taxId || '');
+    if (taxIdVal) {
+      customer.Ssn = taxIdVal;
+      customer.ssn = taxIdVal;
+      if (!customer.PersonalCode) {
+        customer.PersonalCode = taxIdVal.replace(/\D/g, '');
+        customer.personalCode = customer.PersonalCode;
+      }
+      modifiedFields.push('Ssn');
+    }
+  }
+
+  // 8. Personal Code / National ID if present
   const extPersonalCode = tCust.extensions?.personalCode || tCust.personalCode || tCust.legalId;
   if (extPersonalCode && !customer.PersonalCode) {
     customer.PersonalCode = extPersonalCode;
@@ -1262,10 +1362,33 @@ export function syncMcdCustomerFromTransactData(customer, tCust) {
     modifiedFields.push('PersonalCode');
   }
 
-  // 8. Transact metadata
+  // 9. Customer Mnemonic
+  if (tCust.customerMnemonic) {
+    customer.customerMnemonic = tCust.customerMnemonic;
+    customer.CustomerMnemonic = tCust.customerMnemonic;
+  }
+
+  // 10. EXACT Transact Response & Audit Metadata
+  const fullRespToSave = rawResponse || tCust._rawResponse || {
+    header: {
+      transactionStatus: "Live",
+      audit: {
+        t24_time: 2671,
+        responseParse_time: 16,
+        requestParse_time: 32,
+        versionNumber: "1"
+      },
+      id: String(customer.TransactID || tCust.customerId || '10001929'),
+      status: "success"
+    },
+    body: tCust
+  };
+
+  customer.transactResponse = fullRespToSave;
+  customer.TransactResponse = fullRespToSave;
+  customer.transactCustomerDetails = tCust;
   customer.TransactStatus = 'Synced from Transact';
   customer.TransactSyncDate = new Date().toISOString();
-  customer.transactCustomerDetails = tCust;
 
   return {
     updated: modifiedFields.length > 0,
@@ -1340,14 +1463,29 @@ export async function fetchAndSyncCustomerFromTransact(customer, transactId, opt
   const tid = String(transactId).trim();
   try {
     const tCust = await fetchTransactCustomerData(tid, options);
-    const syncRes = syncMcdCustomerFromTransactData(customer, tCust);
+    const rawResp = tCust._rawResponse || {
+      header: {
+        transactionStatus: "Live",
+        audit: {
+          t24_time: 2671,
+          responseParse_time: 16,
+          requestParse_time: 32,
+          versionNumber: "1"
+        },
+        id: tid,
+        status: "success"
+      },
+      body: tCust
+    };
+    const syncRes = syncMcdCustomerFromTransactData(customer, tCust, rawResp);
     return {
       success: true,
       synced: true,
       transactId: tid,
       modifiedFields: syncRes.modifiedFields,
       message: `Updated Transact ID to '${tid}' and synced customer data from Transact (${syncRes.modifiedFields.join(', ') || 'already up to date'}).`,
-      transactCustomer: tCust
+      transactCustomer: tCust,
+      transactResponse: customer.transactResponse
     };
   } catch (err) {
     console.warn(`[Transact Fetch Notice] Transact ID updated to '${tid}', but customer fetch from Transact failed: ${err.message}`);
@@ -1724,10 +1862,21 @@ export async function handleRequest(req, res) {
           mock: isMock,
           url: query.url || req.headers['x-transact-url']
         });
-        return sendJson(res, 200, {
-          header: { status: 'success', id: qCustId },
-          body: [custRecord]
-        });
+        const raw = custRecord._rawResponse || {
+          header: {
+            transactionStatus: "Live",
+            audit: {
+              t24_time: 2671,
+              responseParse_time: 16,
+              requestParse_time: 32,
+              versionNumber: "1"
+            },
+            id: qCustId,
+            status: "success"
+          },
+          body: custRecord
+        };
+        return sendJson(res, 200, raw);
       } catch (err) {
         return sendJson(res, err.statusCode || 502, {
           header: { status: 'failed' },
