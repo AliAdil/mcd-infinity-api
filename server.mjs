@@ -1927,8 +1927,53 @@ export async function handleRequest(req, res) {
       });
     }
 
-    // Direct Browser Update endpoint: PUT /admin/db/:collection/:id
+    // Direct Browser Read single record endpoint: GET /admin/db/:collection/:id
     let dbMatch = pathname.match(/^\/admin\/db\/([^\/]+)\/([^\/]+)$/);
+    if (method === 'GET' && dbMatch) {
+      const [, colName, id] = dbMatch;
+      const targetMap = getCollection(colName);
+      if (!targetMap) {
+        return sendJson(res, 400, { success: false, ErrorMessage: `Unknown collection '${colName}'` });
+      }
+
+      let record = null;
+      if (colName.toLowerCase().startsWith('p')) {
+        record = getPhysicalPerson(id);
+      } else if (colName.toLowerCase().startsWith('j')) {
+        record = getJuridicalPerson(id);
+      } else {
+        record = targetMap.get(id);
+      }
+
+      if (!record) {
+        for (const item of targetMap.values()) {
+          if (
+            (item.McdId && item.McdId.toLowerCase() === id.toLowerCase()) ||
+            (item.mcdId && item.mcdId.toLowerCase() === id.toLowerCase()) ||
+            (item.PersonalCode && String(item.PersonalCode) === String(id)) ||
+            (item.personalCode && String(item.personalCode) === String(id))
+          ) {
+            record = item;
+            break;
+          }
+        }
+      }
+
+      if (!record) {
+        return sendJson(res, 404, {
+          ErrorCode: '404001',
+          ErrorMessage: `Record '${id}' not found in '${colName}'`
+        });
+      }
+
+      return sendJson(res, 200, {
+        success: true,
+        record,
+        ...record
+      });
+    }
+
+    // Direct Browser Update endpoint: PUT /admin/db/:collection/:id
     if (method === 'PUT' && dbMatch) {
       const [, colName, id] = dbMatch;
       const targetMap = getCollection(colName);
@@ -2004,8 +2049,20 @@ export async function handleRequest(req, res) {
       });
     }
 
-    // Direct Browser Add endpoint: POST /admin/db/:collection
+    // Direct Browser Read collection endpoint: GET /admin/db/:collection
     dbMatch = pathname.match(/^\/admin\/db\/([^\/]+)$/);
+    if (method === 'GET' && dbMatch && dbMatch[1] !== 'reset' && dbMatch[1] !== 'export') {
+      const colName = dbMatch[1];
+      const targetMap = getCollection(colName);
+      if (!targetMap) {
+        return sendJson(res, 400, { success: false, ErrorMessage: `Unknown collection '${colName}'` });
+      }
+
+      const records = Array.from(targetMap.values());
+      return sendJson(res, 200, records);
+    }
+
+    // Direct Browser Add endpoint: POST /admin/db/:collection
     if (method === 'POST' && dbMatch && dbMatch[1] !== 'reset') {
       const colName = dbMatch[1];
       const targetMap = getCollection(colName);
@@ -4463,7 +4520,12 @@ export function renderDashboardHtml() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        const result = await res.json();
+        let result;
+        try {
+          result = await res.json();
+        } catch {
+          result = { ErrorMessage: 'HTTP ' + res.status + ': ' + (res.statusText || 'Response parse failed') };
+        }
         if (res.ok) {
           closeModal();
           if (result.transactSynced) {
@@ -4476,11 +4538,11 @@ export function renderDashboardHtml() {
             inspectRecord(result.record || payload);
           }
         } else {
-          errBox.innerText = result.errorMessage || result.ErrorMessage || 'Failed to save';
+          errBox.innerText = result.errorMessage || result.ErrorMessage || result.message || ('Failed to save (HTTP ' + res.status + ')');
           errBox.style.display = 'block';
         }
       } catch (err) {
-        errBox.innerText = 'Network error: ' + err.message;
+        errBox.innerText = 'Network error: ' + err.message + ' (Check active server port)';
         errBox.style.display = 'block';
       }
     }

@@ -612,6 +612,32 @@ await assertTest('extractMultipartFile helper verifies clean binary extraction f
   }
 });
 
+await assertTest('GET /admin/db/physical/:id returns customer record with 200 OK', async () => {
+  const res = await request('GET', '/admin/db/physical/F20014529');
+  if (res.status !== 200) throw new Error(`Expected 200, got ${res.status}`);
+  const mcdId = res.json.mcdId || res.json.McdId || res.json.record?.mcdId || res.json.record?.McdId;
+  if (mcdId !== 'F20014529') {
+    throw new Error(`Expected McdId F20014529, got ${mcdId}`);
+  }
+});
+
+await assertTest('GET /admin/db/physical returns list of all physical customers', async () => {
+  const res = await request('GET', '/admin/db/physical');
+  if (res.status !== 200) throw new Error(`Expected 200, got ${res.status}`);
+  if (!Array.isArray(res.json) || res.json.length === 0) {
+    throw new Error('Expected non-empty array of physical persons');
+  }
+});
+
+await assertTest('GET /admin/db/physical/:id returns 404001 when record does not exist', async () => {
+  const res = await request('GET', '/admin/db/physical/F99999999');
+  if (res.status !== 404) throw new Error(`Expected 404, got ${res.status}`);
+  const errCode = res.json.errorCode || res.json.ErrorCode;
+  if (errCode !== '404001') {
+    throw new Error(`Expected ErrorCode 404001, got ${errCode}`);
+  }
+});
+
 await assertTest('POST /admin/db/reset (Reset to seed)', async () => {
   const res = await request('POST', '/admin/db/reset');
   if (res.status !== 200) throw new Error(`Status ${res.status}`);
