@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PORT = process.env.PORT || 3000;
+let PORT = parseInt(process.env.PORT, 10) || 3000;
 const DB_FILE_PATH = path.join(__dirname, 'db.json');
 const DB_BACKUP_PATH = path.join(__dirname, 'db.backup.json');
 
@@ -4671,15 +4671,32 @@ export default handleRequest;
 
 // Auto-start when executed directly
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  server.listen(PORT, '0.0.0.0', () => {
-    console.log('====================================================');
-    console.log(` MCD Infinity API Server is running on port ${PORT}`);
-    console.log(` Web Dashboard:  http://localhost:${PORT}/`);
-    console.log(` Database JSON:  http://localhost:${PORT}/admin/db`);
-    console.log(` Swagger Docs:   http://localhost:${PORT}/docs`);
-    console.log(` OpenAPI Spec:   http://localhost:${PORT}/openapi.json`);
-    console.log(` Health Check:   http://localhost:${PORT}/health`);
-    console.log(` DB File Path:   ${DB_FILE_PATH}`);
-    console.log('====================================================');
+  function tryListen(p) {
+    server.listen(p, '0.0.0.0', () => {
+      PORT = p;
+      console.log('====================================================');
+      console.log(` MCD Infinity API Server is running on port ${PORT}`);
+      console.log(` Web Dashboard:  http://localhost:${PORT}/`);
+      console.log(` Database JSON:  http://localhost:${PORT}/admin/db`);
+      console.log(` Swagger Docs:   http://localhost:${PORT}/docs`);
+      console.log(` OpenAPI Spec:   http://localhost:${PORT}/openapi.json`);
+      console.log(` Health Check:   http://localhost:${PORT}/health`);
+      console.log(` DB File Path:   ${DB_FILE_PATH}`);
+      console.log('====================================================');
+    });
+  }
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && !process.env.PORT && PORT < 3010) {
+      const nextPort = PORT + 1;
+      console.warn(`[Notice] Port ${PORT} is occupied. Automatically trying port ${nextPort}...`);
+      PORT = nextPort;
+      tryListen(PORT);
+    } else {
+      console.error(`Failed to start server on port ${PORT}:`, err.message);
+      process.exit(1);
+    }
   });
+
+  tryListen(PORT);
 }
