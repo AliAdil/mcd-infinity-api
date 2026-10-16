@@ -423,6 +423,61 @@ await assertTest('POST /transact/sync-customer (Direct manual transactId overrid
   if (res.json.transactId !== '10002002') throw new Error('transactId mismatch in response');
 });
 
+await assertTest('PUT /admin/db/physical/:id/transact-id (Fetch & sync customer info from Transact ID 10001868)', async () => {
+  const res = await request('PUT', '/admin/db/physical/F20014529/transact-id', {
+    transactId: '10001868',
+    mock: true
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}: ${JSON.stringify(res.json)}`);
+  if (!res.json.success) throw new Error('Update failed');
+  if (!res.json.transactSynced) throw new Error('Expected transactSynced: true');
+  const rec = res.json.record;
+  const fName = rec.firstName || rec.FirstName;
+  const lName = rec.lastName || rec.LastName;
+  const dob = rec.dateOfBirth || rec.DateOfBirth;
+  const gender = rec.gender || rec.Gender;
+  const email = rec.primaryEmail || rec.PrimaryEmail;
+  const phone = rec.primaryPhoneNumber || rec.PrimaryPhoneNumber;
+  const addr = rec.registrationAddress || rec.RegistrationAddress;
+  const tStatus = rec.transactStatus || rec.TransactStatus;
+
+  if ((rec.transactID || rec.TransactID) !== '10001868') throw new Error('TransactID mismatch');
+  if (fName !== 'Dovile') throw new Error(`Expected FirstName 'Dovile', got '${fName}'`);
+  if (lName !== 'Naujokaite') throw new Error(`Expected LastName 'Naujokaite', got '${lName}'`);
+  if (dob !== '1992-08-08') throw new Error(`Expected DateOfBirth '1992-08-08', got '${dob}'`);
+  if (gender !== 'FEMALE') throw new Error(`Expected Gender 'FEMALE', got '${gender}'`);
+  if (email !== 'dovile.n@example.com') throw new Error(`Expected PrimaryEmail 'dovile.n@example.com', got '${email}'`);
+  if (phone !== '+37061122334') throw new Error(`Expected PrimaryPhoneNumber '+37061122334', got '${phone}'`);
+  if (addr?.city !== 'Vilnius') throw new Error(`Expected RegistrationAddress city 'Vilnius', got '${addr?.city}'`);
+  if (tStatus !== 'Synced from Transact') throw new Error(`Expected TransactStatus 'Synced from Transact', got '${tStatus}'`);
+});
+
+await assertTest('PUT /admin/db/physical/:id (Fetch & sync customer info from Transact ID 10001868 via general editor)', async () => {
+  const res = await request('PUT', '/admin/db/physical/F20014529', {
+    TransactID: '10001868',
+    mock: true
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}: ${JSON.stringify(res.json)}`);
+  if (!res.json.success) throw new Error('Update failed');
+  if (!res.json.transactSynced) throw new Error('Expected transactSynced: true');
+  const rec = res.json.record;
+  const fName = rec.firstName || rec.FirstName;
+  const lName = rec.lastName || rec.LastName;
+  if (fName !== 'Dovile') throw new Error(`Expected FirstName 'Dovile', got '${fName}'`);
+  if (lName !== 'Naujokaite') throw new Error(`Expected LastName 'Naujokaite', got '${lName}'`);
+});
+
+await assertTest('GET /irf-provider-container/api/v3.0.0/party/customers?customerId=10001868 (Direct query Transact customer)', async () => {
+  const res = await request('GET', '/irf-provider-container/api/v3.0.0/party/customers?customerId=10001868&mock=true');
+  if (res.status !== 200) throw new Error(`Status ${res.status}: ${JSON.stringify(res.json)}`);
+  if (res.json.header?.status !== 'success') throw new Error('Expected header.status to be success');
+  if (!Array.isArray(res.json.body) || res.json.body.length === 0) throw new Error('Expected non-empty body array');
+  const cust = res.json.body[0];
+  if (cust.customerId !== '10001868') throw new Error(`Expected customerId '10001868', got '${cust.customerId}'`);
+  if (cust.givenName !== 'Dovile') throw new Error(`Expected givenName 'Dovile', got '${cust.givenName}'`);
+  if (cust.familyName !== 'Naujokaite') throw new Error(`Expected familyName 'Naujokaite', got '${cust.familyName}'`);
+});
+
 await assertTest('POST /persons/physical (Create prospect with pre-existing TransactID -> skips Transact API)', async () => {
   const res = await request('POST', '/persons/physical', {
     firstName: 'Saulius',

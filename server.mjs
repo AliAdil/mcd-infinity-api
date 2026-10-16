@@ -729,6 +729,7 @@ export function getDbSnapshot() {
 // Transact Core Banking API Integration
 // -------------------------------------------------------------
 export const DEFAULT_TRANSACT_API_URL = process.env.TRANSACT_API_URL || 'http://192.168.1.157:8085/irf-provider-container/api/v5.1.0/party/customers';
+export const DEFAULT_TRANSACT_GET_CUSTOMER_URL = process.env.TRANSACT_GET_CUSTOMER_URL || 'http://192.168.1.157:8085/irf-provider-container/api/v3.0.0/party/customers';
 export const DEFAULT_TRANSACT_COOKIE = process.env.TRANSACT_COOKIE || 'ApplicationGatewayAffinity=169ff9c6fbc8876c0b34e7b7497e23fe;ApplicationGatewayAffinityCORS=169ff9c6fbc8876c0b34e7b7497e23fe';
 export const DEFAULT_TRANSACT_TOKEN = process.env.TRANSACT_BEARER_TOKEN || 'eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJWS3lBcGswWExyeC0zQUZUWVBzX1dNOG55SXN1YUFiNFVRbGhmM0VrM2ZBIn0.eyJleHAiOjE3OTA3Njk5OTUsImlhdCI6MTc5MDc2NzI5NSwianRpIjoiZTljZjY5MGItOGIwMi00ZDEzLThjNzItZmE5ZjM0NDkxYjI4IiwiaXNzIjoiaHR0cHM6Ly9pZGVudGl0eS1waWkuemVucHIubm9ucHJvZC50ZW1lbm9zYmFua2luZy5jbG91ZC9hdXRoL3JlYWxtcy9iYW5raW5nY2xvdWQiLCJhdWQiOlsibW5vZ3ctVGRoRGVzaWduZXIiLCJtbm9ndy1zcG90bGlnaHQiLCJyZWFsbS1tYW5hZ2VtZW50IiwibW5vZ3ctVGRoU2NoZWR1bGVyIiwidGVtZW5vcy1ncmFmYW5hLWNsaWVudCIsIm1ub2d3LVRkaHNxbGF1dGgiLCJtbm9ndy1UZGhUTVMiLCJtbm9ndy1UZGhSaXNrU2VydmljZXMiLCJtbm9ndy1UZGhBZG1pbmlzdHJhdG9yIiwiYWNjb3VudCJdLCJzdWIiOiIwZWZlOGE2My01NDQ3LTRlMmYtOTE3My1jZDA0OTYzMDZhMWMiLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJtbm9ndy10cmFuc2FjdCIsInNlc3Npb25fc3RhdGUiOiI4NDBiMmVmOS04MjU1LTRmOGUtOGYyMi0zZDM0Njg3NWU0YTYiLCJhY3IiOiIxIiwiYWxsb3dlZC1vcmlnaW5zIjpbImh0dHBzOi8vYmFua2FzLWRldi56ZW5wci5ub25wcm9kLnRlbWVub3NiYW5raW5nLmNsb3VkIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJyZWxlYXNlX21hbmFnZXIiLCJvZmZsaW5lX2FjY2VzcyIsInJlc3QtYWxsIiwiQWRtaW5pc3RyYXRvcnMiLCJhZG1pbiIsImRlZmF1bHQtcm9sZXMtYmFua2luZ2Nsb3VkIiwiZGV2ZWxvcGVyIiwidW1hX2F1dGhvcml6YXRpb24iLCJraWUtc2VydmVyIiwiVFBNQWRtaW5pc3RyYXRvciJdfSwicmVzb3VyY2VfYWNjZXNzIjp7Im1ub2d3LVRkaERlc2lnbmVyIjp7InJvbGVzIjpbIlRkaERlc2lnbmVyVXNlciIsIlRkaERlc2lnbmVyUmVhZE9ubHkiXX0sIm1ub2d3LXNwb3RsaWdodCI6eyJyb2xlcyI6WyJHQl9DdXN0b21lclNlcnZpY2VBZ2VudCIsIkdCX1N1cGVydmlzb3IiLCJTdXBlciBBZG1pbiJdfSwicmVhbG0tbWFuYWdlbWVudCI6eyJyb2xlcyI6WyJtYW5hZ2UtdXNlcnMiLCJ2aWV3LXVzZXJzIiwicXVlcnktdXNlcnMiLCJxdWVyeS11c2VycyJdfSwibW5vZ3ctVGRoU2NoZWR1bGVyIjp7InJvbGVzIjpbIlRkaFNjaGVkdWxlclVzZXIiLCJUZGhTY2hlZHVsZXJSZWFkT25seSJdfSwidGVtZW5vcy1ncmFmYW5hLWNsaWVudCI6eyJyb2xlcyI6WyJ2aWV3ZXIiXX0sIm1ub2d3LVRkaHNxbGF1dGgiOnsicm9sZXMiOlsiVGRoU3FsYXV0aFVzZXIiXX0sIm1ub2d3LVRkaFRNUyI6eyJyb2xlcyI6WyJUZGhUbXNVc2VyIl19LCJtbm9ndy1UZGhSaXNrU2VydmljZXMiOnsicm9sZXMiOlsiVGRoUmlza1NlcnZpY2VzVXNlciJdfSwibW5vZ3ctVGRoQWRtaW5pc3RyYXRvciI6eyJyb2xlcyI6WyJUZGhBZG1pblVzZXIiLCJUZGhBZG1pblJlYWRPbmx5Il19LCJhY2NvdW50Ijp7InJvbGVzIjpbIm1hbmFnZS1hY2NvdW50IiwibWFuYWdlLWFjY291bnQtbGlua3MiLCJ2aWV3LXByb2ZpbGUiXX19LCJzY29wZSI6Im9wZW5pZCBwcm9maWxlIGVtYWlsIiwic2lkIjoiODQwYjJlZjktODI1NS00ZjhlLThmMjItM2QzNDY4NzVlNGE2IiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInJvbGVJZCI6IkFETUlOIiwibmFtZSI6IlRSQU5TQUNUIFNBQVMiLCJTcWxUZGhVc2VyQ2xhaW1OYW1lIjoiU3FsVGRoVXNlckNsYWltTmFtZSIsInQyNHVzZXIiOiJtbm9ndy1zYWFzdXNlciIsInByZWZlcnJlZF91c2VybmFtZSI6Im1ub2d3LXNhYXN1c2VyIiwiZ2l2ZW5fbmFtZSI6IlRSQU5TQUNUIiwiZmFtaWx5X25hbWUiOiJTQUFTIiwiZW1haWwiOiJtbm9ndy1zYWFzdXNlckB0cmFuc2FjdC5jb20ifQ.fnrA990Zbh4YIdCm74hX1XcUZIf6nno1qzvZSMaZyuaCR-Ciq4tg4cWxwVG1OOnj9tuVHOtqI13JrnLT_X6anGcwM0dDAg9QikXXN4Oteeo8IR_j1u93eHbEUmWIbwV8Evm3IQCeYkiWXIU4q9_cZxyVpu3X1AsKYrb-WPhtzo01hwLAWzrVqqKo01Glt_LS9GqE0bXQuczew5cuDuqb5L80L150NZSHzrkNOZjRj27iZ0YuwSM4MzB2HJ-hLQutJcXihCnKXdhYDJzitsYgdu8hgL_VUNp77eEay9CW0CoiJt7fSkXgC06YYAQzdq4KY12d47t-Iwz542TVsUqFEg';
 
@@ -948,6 +949,418 @@ export function hasTransactId(customer) {
   return s !== '' && s !== 'null' && s !== 'undefined' && s !== 'None' && s !== 'Pending';
 }
 
+// -------------------------------------------------------------
+// Transact Customer Record Extraction & Synchronization
+// -------------------------------------------------------------
+export function extractTransactCustomerRecord(data, transactId) {
+  if (!data || typeof data !== 'object') return null;
+  const targetId = transactId !== undefined && transactId !== null ? String(transactId).trim() : null;
+
+  let list = [];
+  if (Array.isArray(data)) {
+    list = data;
+  } else if (Array.isArray(data.body)) {
+    list = data.body;
+  } else if (Array.isArray(data.customers)) {
+    list = data.customers;
+  } else if (data.body && typeof data.body === 'object' && !Array.isArray(data.body)) {
+    return data.body;
+  } else if (data.customerId || data.customerNames || data.givenName || data.familyName || data.name) {
+    return data;
+  }
+
+  if (list.length > 0) {
+    if (targetId) {
+      const matched = list.find(item => {
+        const cId = item.customerId || item.customerID || item.id || item.TransactID;
+        return cId !== undefined && String(cId).trim() === targetId;
+      });
+      if (matched) return matched;
+    }
+    return list[0];
+  }
+
+  return null;
+}
+
+export function generateMockTransactCustomer(transactId) {
+  const tid = String(transactId).trim();
+  if (tid === '10001868') {
+    return {
+      customerId: '10001868',
+      customerNames: [
+        {
+          customerName: 'Dovile Naujokaite',
+          customerNameAdditional: 'Dovile'
+        }
+      ],
+      givenName: 'Dovile',
+      familyName: 'Naujokaite',
+      dateOfBirth: '1992-08-08',
+      gender: 'FEMALE',
+      country: 'LT',
+      nationality: 'LT',
+      residence: 'LT',
+      maritalStatus: 'SINGLE',
+      streets: ['Gedimino pr. 12-4'],
+      addressCities: ['Vilnius'],
+      countries: ['Lithuania'],
+      postCode: '01103',
+      contactDetails: [
+        {
+          contactType: 'MOBILE',
+          contactData: '61122334',
+          iddPrefixPhone: '+370'
+        },
+        {
+          contactType: 'EMAIL',
+          contactData: 'dovile.n@example.com'
+        }
+      ],
+      customerStatus: 'ACTIVE',
+      sector: '1001',
+      target: '1'
+    };
+  }
+
+  return {
+    customerId: tid,
+    customerNames: [
+      {
+        customerName: `Customer ${tid}`,
+        customerNameAdditional: 'Customer'
+      }
+    ],
+    givenName: 'Customer',
+    familyName: `${tid}`,
+    dateOfBirth: '1985-05-15',
+    gender: 'MALE',
+    country: 'LT',
+    nationality: 'LT',
+    residence: 'LT',
+    streets: [`Subaciaus g. ${tid.slice(-2) || '10'}`],
+    addressCities: ['Vilnius'],
+    countries: ['Lithuania'],
+    postCode: '01200',
+    contactDetails: [
+      {
+        contactType: 'MOBILE',
+        contactData: `699${tid.slice(-5) || '12345'}`,
+        iddPrefixPhone: '+370'
+      },
+      {
+        contactType: 'EMAIL',
+        contactData: `transact.${tid}@temenos.com`
+      }
+    ],
+    customerStatus: 'ACTIVE',
+    sector: '1001'
+  };
+}
+
+export function syncMcdCustomerFromTransactData(customer, tCust) {
+  if (!customer || !tCust || typeof tCust !== 'object') {
+    return { updated: false, modifiedFields: [] };
+  }
+
+  const modifiedFields = [];
+
+  // 1. Given Name & Family Name
+  let givenName = tCust.givenName || tCust.firstName;
+  let familyName = tCust.familyName || tCust.lastName;
+
+  if (!givenName || !familyName) {
+    if (Array.isArray(tCust.customerNames) && tCust.customerNames.length > 0) {
+      const firstEntry = tCust.customerNames[0];
+      const nameStr = typeof firstEntry === 'string' ? firstEntry : (firstEntry.customerName || '');
+      const addName = typeof firstEntry === 'object' ? (firstEntry.customerNameAdditional || '') : '';
+      if (addName && !givenName) givenName = addName;
+      if (nameStr) {
+        const parts = String(nameStr).trim().split(/\s+/);
+        if (!givenName && parts.length > 1) {
+          givenName = parts[0];
+          if (!familyName) familyName = parts.slice(1).join(' ');
+        } else if (!familyName) {
+          familyName = nameStr;
+        }
+      }
+    } else if (tCust.name || tCust.fullName) {
+      const parts = String(tCust.name || tCust.fullName).trim().split(/\s+/);
+      if (!givenName && parts.length > 1) {
+        givenName = parts[0];
+        if (!familyName) familyName = parts.slice(1).join(' ');
+      } else if (!familyName) {
+        familyName = String(tCust.name || tCust.fullName).trim();
+      }
+    }
+  }
+
+  if (givenName && customer.FirstName !== givenName) {
+    customer.FirstName = givenName;
+    customer.firstName = givenName;
+    modifiedFields.push('FirstName');
+  }
+  if (familyName && customer.LastName !== familyName) {
+    customer.LastName = familyName;
+    customer.lastName = familyName;
+    modifiedFields.push('LastName');
+  }
+  if (customer.FirstName && customer.LastName) {
+    customer.FullName = `${customer.FirstName} ${customer.LastName}`.trim();
+    customer.fullName = customer.FullName;
+  }
+
+  // 2. Date of Birth & Minor status
+  const rawDob = tCust.dateOfBirth || tCust.birthIncorpDate || tCust.dob || tCust.birthDate;
+  if (rawDob) {
+    let cleanDob = String(rawDob).split('T')[0].trim().replace(/\//g, '-');
+    if (/^\d{8}$/.test(cleanDob)) {
+      cleanDob = `${cleanDob.slice(0, 4)}-${cleanDob.slice(4, 6)}-${cleanDob.slice(6, 8)}`;
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleanDob) && customer.DateOfBirth !== cleanDob) {
+      customer.DateOfBirth = cleanDob;
+      customer.dateOfBirth = cleanDob;
+      modifiedFields.push('DateOfBirth');
+      const birthTime = new Date(cleanDob).getTime();
+      if (!isNaN(birthTime)) {
+        const ageYears = (Date.now() - birthTime) / (1000 * 60 * 60 * 24 * 365.25);
+        customer.IsMinor = ageYears < 18;
+        customer.isMinor = customer.IsMinor;
+      }
+    }
+  }
+
+  // 3. Gender
+  const rawGender = tCust.gender || tCust.Gender;
+  if (rawGender) {
+    const gStr = String(rawGender).trim().toUpperCase();
+    let normGender = null;
+    if (gStr === 'M' || gStr === 'MALE') normGender = 'MALE';
+    else if (gStr === 'F' || gStr === 'FEMALE') normGender = 'FEMALE';
+    if (normGender && customer.Gender !== normGender) {
+      customer.Gender = normGender;
+      customer.gender = normGender;
+      modifiedFields.push('Gender');
+    }
+  }
+
+  // 4. Country Code
+  const rawCountry = tCust.country || tCust.residence || tCust.nationality || tCust.domicile;
+  if (rawCountry) {
+    let cCode = String(rawCountry).trim().toUpperCase();
+    if (cCode === 'LITHUANIA') cCode = 'LT';
+    if (cCode.length === 2 && customer.CountryCode !== cCode) {
+      customer.CountryCode = cCode;
+      customer.countryCode = cCode;
+      customer.BirthCountryCode = cCode;
+      customer.Nationalities = [cCode];
+      modifiedFields.push('CountryCode');
+    }
+  }
+
+  // 5. Contact Details (Phone & Email)
+  if (Array.isArray(tCust.contactDetails)) {
+    for (const c of tCust.contactDetails) {
+      const type = String(c.contactType || c.type || '').toUpperCase();
+      const val = String(c.contactData || c.data || c.value || '').trim();
+      if (!val) continue;
+
+      if (type.includes('MOBILE') || type.includes('PHONE') || type.includes('TEL')) {
+        let fullPhone = val;
+        const idd = String(c.iddPrefixPhone || c.idd || '').trim();
+        if (idd && !fullPhone.startsWith('+')) {
+          fullPhone = (idd.startsWith('+') ? idd : '+' + idd) + fullPhone.replace(/^0+/, '');
+        } else if (!fullPhone.startsWith('+')) {
+          fullPhone = '+370' + fullPhone.replace(/^0+/, '');
+        }
+        if (customer.PrimaryPhoneNumber !== fullPhone) {
+          customer.PrimaryPhoneNumber = fullPhone;
+          customer.primaryPhoneNumber = fullPhone;
+          customer.PrimaryPhoneNumberVerified = true;
+          modifiedFields.push('PrimaryPhoneNumber');
+        }
+      } else if (type.includes('EMAIL')) {
+        if (customer.PrimaryEmail !== val) {
+          customer.PrimaryEmail = val;
+          customer.primaryEmail = val;
+          customer.PrimaryEmailVerified = true;
+          modifiedFields.push('PrimaryEmail');
+        }
+      }
+    }
+  }
+
+  // Top level email/phone fallbacks
+  if (tCust.email && customer.PrimaryEmail !== tCust.email) {
+    customer.PrimaryEmail = tCust.email;
+    customer.primaryEmail = tCust.email;
+    customer.PrimaryEmailVerified = true;
+    modifiedFields.push('PrimaryEmail');
+  }
+  if (tCust.phone || tCust.mobile) {
+    const pVal = String(tCust.phone || tCust.mobile).trim();
+    if (customer.PrimaryPhoneNumber !== pVal) {
+      customer.PrimaryPhoneNumber = pVal;
+      customer.primaryPhoneNumber = pVal;
+      customer.PrimaryPhoneNumberVerified = true;
+      modifiedFields.push('PrimaryPhoneNumber');
+    }
+  }
+
+  // 6. Address
+  let streetStr = '';
+  if (Array.isArray(tCust.streets) && tCust.streets.length > 0) {
+    streetStr = tCust.streets.filter(Boolean).join(', ');
+  } else if (typeof tCust.street === 'string') {
+    streetStr = tCust.street;
+  } else if (typeof tCust.addressStreet === 'string') {
+    streetStr = tCust.addressStreet;
+  }
+
+  let cityStr = '';
+  if (Array.isArray(tCust.addressCities) && tCust.addressCities.length > 0) {
+    cityStr = tCust.addressCities.filter(Boolean).join(', ');
+  } else if (typeof tCust.city === 'string') {
+    cityStr = tCust.city;
+  } else if (typeof tCust.addressCity === 'string') {
+    cityStr = tCust.addressCity;
+  }
+
+  let postCodeStr = tCust.postCode || tCust.postalCode || tCust.addressPostCode || '';
+  let countryStr = '';
+  if (Array.isArray(tCust.countries) && tCust.countries.length > 0) {
+    countryStr = tCust.countries[0];
+  } else if (typeof tCust.country === 'string') {
+    countryStr = tCust.country;
+  }
+
+  if (streetStr || cityStr || postCodeStr) {
+    if (!customer.RegistrationAddress) customer.RegistrationAddress = {};
+    const addr = customer.RegistrationAddress;
+    if (streetStr) addr.street = streetStr;
+    if (cityStr) addr.city = cityStr;
+    if (postCodeStr) addr.postCode = String(postCodeStr);
+    if (countryStr) {
+      const cUpper = String(countryStr).toUpperCase();
+      addr.countryCode = cUpper === 'LITHUANIA' ? 'LT' : (cUpper.length === 2 ? cUpper : (addr.countryCode || 'LT'));
+    }
+    addr.fullAddress = [addr.street, addr.postCode ? `${addr.postCode} ${addr.city}` : addr.city, addr.countryCode || 'LT'].filter(Boolean).join(', ');
+    customer.registrationAddress = addr;
+    modifiedFields.push('RegistrationAddress');
+
+    if (!customer.ResidenceAddress || !customer.ResidenceAddress.street) {
+      customer.ResidenceAddress = { ...addr };
+      customer.residenceAddress = customer.ResidenceAddress;
+    }
+  }
+
+  // 7. Personal Code / National ID if present
+  const extPersonalCode = tCust.extensions?.personalCode || tCust.personalCode || tCust.legalId;
+  if (extPersonalCode && !customer.PersonalCode) {
+    customer.PersonalCode = extPersonalCode;
+    customer.personalCode = extPersonalCode;
+    modifiedFields.push('PersonalCode');
+  }
+
+  // 8. Transact metadata
+  customer.TransactStatus = 'Synced from Transact';
+  customer.TransactSyncDate = new Date().toISOString();
+  customer.transactCustomerDetails = tCust;
+
+  return {
+    updated: modifiedFields.length > 0,
+    modifiedFields
+  };
+}
+
+export async function fetchTransactCustomerData(transactId, options = {}) {
+  const tid = String(transactId).trim();
+  if (!tid) throw new Error('Transact customerId is required.');
+
+  // If mock mode requested
+  if (options.mock === true || process.env.MOCK_TRANSACT === 'true') {
+    return generateMockTransactCustomer(tid);
+  }
+
+  const baseUrl = options.url || DEFAULT_TRANSACT_GET_CUSTOMER_URL;
+  const separator = baseUrl.includes('?') ? '&' : '?';
+  const url = `${baseUrl}${separator}customerId=${encodeURIComponent(tid)}`;
+  const cookie = options.cookie || DEFAULT_TRANSACT_COOKIE;
+  const token = options.token || DEFAULT_TRANSACT_TOKEN;
+
+  const headers = {
+    'Accept': 'application/json'
+  };
+  if (cookie) headers['Cookie'] = cookie;
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'GET',
+      headers,
+      signal: AbortSignal.timeout(options.timeout || 6000)
+    });
+  } catch (netErr) {
+    if (options.fallbackMock === true) {
+      console.warn(`[Transact Fetch] Network fetch failed (${url}): ${netErr.message}. Using simulated customer record.`);
+      return generateMockTransactCustomer(tid);
+    }
+    const err = new Error(`Connection to Transact failed (${url}): ${netErr.message}`);
+    err.statusCode = 502;
+    err.details = netErr.message;
+    throw err;
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    const err = new Error(`Transact API returned HTTP ${response.status}: ${errorText.slice(0, 300)}`);
+    err.statusCode = response.status;
+    err.details = errorText;
+    throw err;
+  }
+
+  const data = await response.json();
+  const customerRecord = extractTransactCustomerRecord(data, tid);
+  if (!customerRecord) {
+    const err = new Error(`No customer record found in Transact response for customerId '${tid}'.`);
+    err.statusCode = 404;
+    err.transactResponse = data;
+    throw err;
+  }
+
+  return customerRecord;
+}
+
+export async function fetchAndSyncCustomerFromTransact(customer, transactId, options = {}) {
+  if (!customer || !transactId) {
+    return { success: false, synced: false, message: 'Customer or TransactID missing' };
+  }
+
+  const tid = String(transactId).trim();
+  try {
+    const tCust = await fetchTransactCustomerData(tid, options);
+    const syncRes = syncMcdCustomerFromTransactData(customer, tCust);
+    return {
+      success: true,
+      synced: true,
+      transactId: tid,
+      modifiedFields: syncRes.modifiedFields,
+      message: `Updated Transact ID to '${tid}' and synced customer data from Transact (${syncRes.modifiedFields.join(', ') || 'already up to date'}).`,
+      transactCustomer: tCust
+    };
+  } catch (err) {
+    console.warn(`[Transact Fetch Notice] Transact ID updated to '${tid}', but customer fetch from Transact failed: ${err.message}`);
+    return {
+      success: true,
+      synced: false,
+      transactId: tid,
+      error: err.message,
+      message: `Transact ID updated to '${tid}'. (Transact customer fetch notice: ${err.message})`
+    };
+  }
+}
+
 export async function syncCustomerWithTransact(personalCode, options = {}) {
   if (!personalCode) {
     const error = new Error('PersonalCode is required.');
@@ -978,16 +1391,24 @@ export async function syncCustomerWithTransact(personalCode, options = {}) {
   if (options.transactId || options.transactID || options.TransactID) {
     const directId = String(options.transactId || options.transactID || options.TransactID).trim();
     normalizeTransactKeys(customer, directId);
-    customer.TransactSyncDate = new Date().toISOString();
-    customer.TransactStatus = 'Synced (Manual)';
+    let syncResult = null;
+    if (directId && directId !== 'null') {
+      syncResult = await fetchAndSyncCustomerFromTransact(customer, directId, options);
+    }
+    if (!syncResult || !syncResult.synced) {
+      customer.TransactSyncDate = new Date().toISOString();
+      customer.TransactStatus = 'Synced (Manual)';
+    }
     db.physicalPersons.set(targetKey, customer);
     syncDbToFile();
     return {
       success: true,
-      message: `Customer ${customer.McdId} (PersonalCode: ${personalCode}) TransactID updated to ${directId}.`,
+      message: syncResult?.message || `Customer ${customer.McdId} (PersonalCode: ${personalCode}) TransactID updated to ${directId}.`,
       personalCode: String(personalCode),
       mcdId: customer.McdId,
       transactId: directId,
+      transactSynced: syncResult ? syncResult.synced : false,
+      syncResult,
       customer
     };
   }
@@ -1288,6 +1709,33 @@ export async function handleRequest(req, res) {
       }, null, 2));
     }
 
+    // Transact Customer Query Endpoint: GET /irf-provider-container/api/v3.0.0/party/customers?customerId=... or /transact/customers
+    if (method === 'GET' && (
+      pathname === '/irf-provider-container/api/v3.0.0/party/customers' ||
+      pathname === '/transact/customers'
+    )) {
+      const qCustId = query.customerId || query.id;
+      if (!qCustId) {
+        return sendJson(res, 400, { success: false, ErrorCode: '400001', ErrorMessage: 'Query parameter customerId is required' });
+      }
+      try {
+        const isMock = query.mock === 'true' || req.headers['x-mock-transact'] === 'true' || process.env.MOCK_TRANSACT === 'true';
+        const custRecord = await fetchTransactCustomerData(qCustId, {
+          mock: isMock,
+          url: query.url || req.headers['x-transact-url']
+        });
+        return sendJson(res, 200, {
+          header: { status: 'success', id: qCustId },
+          body: [custRecord]
+        });
+      } catch (err) {
+        return sendJson(res, err.statusCode || 502, {
+          header: { status: 'failed' },
+          error: { message: err.message, details: err.details }
+        });
+      }
+    }
+
     // Dedicated TransactID update endpoint: PUT/POST /admin/db/physical/:id/transact-id or /persons/physical/:id/transact-id
     const transactIdMatch = pathname.match(/^\/(?:admin\/db|persons)\/physical\/([^\/]+)\/transact-id$/);
     if ((method === 'PUT' || method === 'POST') && transactIdMatch) {
@@ -1303,18 +1751,29 @@ export async function handleRequest(req, res) {
                      (body.TransactId !== undefined ? body.TransactId : body.id)));
       
       normalizeTransactKeys(person, newTid);
+      let syncResult = null;
       if (newTid && String(newTid).trim() !== '' && String(newTid) !== 'null') {
-        person.TransactStatus = 'Synced (Manual)';
-        person.TransactSyncDate = new Date().toISOString();
+        const isMock = body.mock === true || req.headers['x-mock-transact'] === 'true' || process.env.MOCK_TRANSACT === 'true';
+        syncResult = await fetchAndSyncCustomerFromTransact(person, String(newTid).trim(), {
+          mock: isMock,
+          url: body.transactUrl || req.headers['x-transact-url']
+        });
+        if (!syncResult.synced) {
+          person.TransactStatus = 'Synced (Manual)';
+          person.TransactSyncDate = new Date().toISOString();
+        }
       } else {
         person.TransactStatus = 'Pending';
+        person.transactCustomerDetails = null;
       }
       syncDbToFile();
       return sendJson(res, 200, {
         success: true,
-        message: `TransactID for physical person ${id} updated to '${person.TransactID || ''}'`,
+        message: syncResult?.message || `TransactID for physical person ${id} updated to '${person.TransactID || ''}'`,
         mcdId: id,
         transactId: person.TransactID,
+        transactSynced: syncResult ? syncResult.synced : false,
+        syncResult,
         record: person
       });
     }
@@ -1342,7 +1801,21 @@ export async function handleRequest(req, res) {
 
       // Merge and update
       const updated = { ...existing, ...body, McdId: id };
-      if (bodyTransactId !== undefined) {
+      let syncResult = null;
+      if (colName === 'physical' && bodyTransactId !== undefined) {
+        normalizeTransactKeys(updated, bodyTransactId);
+        if (bodyTransactId && String(bodyTransactId).trim() !== '' && String(bodyTransactId) !== 'null') {
+          const isMock = body.mock === true || req.headers['x-mock-transact'] === 'true' || process.env.MOCK_TRANSACT === 'true';
+          syncResult = await fetchAndSyncCustomerFromTransact(updated, String(bodyTransactId).trim(), {
+            mock: isMock,
+            url: body.transactUrl || req.headers['x-transact-url']
+          });
+          if (!syncResult.synced && (!updated.TransactStatus || !updated.TransactStatus.startsWith('Synced'))) {
+            updated.TransactStatus = 'Synced (Manual)';
+            updated.TransactSyncDate = new Date().toISOString();
+          }
+        }
+      } else if (bodyTransactId !== undefined) {
         normalizeTransactKeys(updated, bodyTransactId);
       } else {
         normalizeTransactKeys(updated);
@@ -1352,7 +1825,11 @@ export async function handleRequest(req, res) {
 
       return sendJson(res, 200, {
         success: true,
-        message: `Record ${id} updated in ${colName} successfully`,
+        message: syncResult?.synced
+          ? `Record ${id} updated and synced with Transact customer '${bodyTransactId}'`
+          : `Record ${id} updated in ${colName} successfully`,
+        transactSynced: syncResult ? syncResult.synced : false,
+        syncResult,
         record: updated
       });
     }
@@ -3018,6 +3495,10 @@ export function renderDashboardHtml() {
           <span style="font-size: 12px; color: var(--text-muted); font-weight: normal;">All 21 endpoints</span>
         </div>
         <div class="endpoint-list">
+          <div class="endpoint-item" onclick="testEndpoint('GET', '/irf-provider-container/api/v3.0.0/party/customers?customerId=10001868')">
+            <div><span class="method-tag method-get">GET</span>/irf-provider-container/api/v3.0.0/party/customers?customerId=10001868</div>
+            <span style="color: var(--text-muted); font-size: 11px;">Fetch customer info from Transact (Party API)</span>
+          </div>
           <div class="endpoint-item" onclick="testEndpoint('POST', '/transact/sync-customer', { personalCode: '38501010001' })">
             <div><span class="method-tag method-post">POST</span>/transact/sync-customer</div>
             <span style="color: var(--text-muted); font-size: 11px;">Sync customer to Transact T24</span>
@@ -3836,7 +4317,11 @@ export function renderDashboardHtml() {
         const result = await res.json();
         if (res.ok) {
           closeModal();
-          showToast(result.message || 'Saved successfully!');
+          if (result.transactSynced) {
+            showToast('✅ Saved & synced customer info from Transact!');
+          } else {
+            showToast(result.message || 'Saved successfully!');
+          }
           await loadDatabase();
           if (modalMode === 'edit' && currentlyInspected && (currentlyInspected.mcdId || currentlyInspected.McdId) === modalRecordId) {
             inspectRecord(result.record || payload);
@@ -4050,6 +4535,7 @@ export function renderDashboardHtml() {
     async function quickEditTransactId(id, currentVal) {
       const newId = prompt('Update Transact ID for ' + id + ' (leave empty to clear):', currentVal || '');
       if (newId === null) return;
+      showToast('Updating Transact ID & syncing customer details from Transact...');
       try {
         const res = await fetch('/admin/db/physical/' + encodeURIComponent(id) + '/transact-id', {
           method: 'PUT',
@@ -4058,9 +4544,13 @@ export function renderDashboardHtml() {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          showToast('Updated Transact ID for ' + id + ' to ' + (newId.trim() || 'None'));
+          if (data.transactSynced) {
+            showToast('✅ Transact ID updated & synced from Transact: ' + (data.syncResult?.message || newId.trim()));
+          } else {
+            showToast('Updated Transact ID for ' + id + ' to ' + (newId.trim() || 'None'));
+          }
           await loadDatabase();
-          if (currentlyInspected && (currentlyInspected.mcdId || currentlyInspected.McdId) === id) {
+          if (data.record) {
             inspectRecord(data.record);
           }
         } else {
