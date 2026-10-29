@@ -6,14 +6,16 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test": "node test-runner.mjs"
+    "test": "node test-runner.mjs",
+    "generate:postman": "node build-postman-collection.mjs"
   },
   "keywords": [
     "apidog",
     "mcd",
     "infinity",
     "banking",
-    "api"
+    "api",
+    "postman"
   ],
   "author": "Antigravity",
   "license": "MIT",

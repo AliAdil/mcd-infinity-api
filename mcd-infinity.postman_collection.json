@@ -1,0 +1,2679 @@
+{
+  "info": {
+    "_postman_id": "mcd-infinity-postman-collection-v1",
+    "name": "MCD Infinity API - Complete Collection",
+    "description": "# MCD Infinity API - Postman Collection (v1.0.0)\n\nComplete, fully configured collection of all **42 REST API endpoints** for the **MCD Infinity Digital Banking & Mock Server**.\n\n### Included Feature Modules:\n1. **Physical Persons**: Retail prospects, full CRUD, Transact sync, consent management, junior guardian assignments, and co-applicant links.\n2. **Juridical Persons (SME)**: Business accounts, JAR registry lookups, accumulated capital accounts for company founding, and representative verification.\n3. **Legal Representatives**: Corporate officers, directors, and proxy authorizations.\n4. **Temenos Transact T24 Core Banking Integration**: Direct personal code synchronization, Transact ID linking, and Party API queries.\n5. **Formpipe LaserNet Document Services**: Document generation (DocID & DMLink), raw PDF binary streaming, Base64 conversion, metadata lookup, and byte uploads.\n6. **Admin & Database Utilities**: Live DB inspection, table CRUD, Transact ID assignment, DB resets, and OpenAPI 3.0 schema inspection.\n\n### Quick Start:\n- Default base URL is set to `http://localhost:3000` via the `{{baseUrl}}` collection variable.\n- Launch local server: `node server.mjs`\n- Run collection in Postman or Newman runner!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Physical Persons",
+      "description": "Endpoints for managing individual / retail digital banking customers, prospect creation with automatic Transact T24 sync, AML/KYC screening, parental/junior guardians, co-applicants, and consent management.",
+      "item": [
+        {
+          "name": "Search Physical Persons",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical?FirstName={{firstName}}&CountryCode={{countryCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical"
+              ],
+              "query": [
+                {
+                  "key": "FirstName",
+                  "value": "{{firstName}}",
+                  "description": "First name to filter by (e.g. Jonas)"
+                },
+                {
+                  "key": "LastName",
+                  "value": "",
+                  "description": "Last name filter (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "PersonalCode",
+                  "value": "",
+                  "description": "Lithuanian personal code (optional)",
+                  "disabled": true
+                },
+                {
+                  "key": "CountryCode",
+                  "value": "{{countryCode}}",
+                  "description": "ISO 2-letter country code (e.g. LT)"
+                }
+              ]
+            },
+            "description": "Searches physical person prospects or existing clients in the MCD database by name, national personal code, or country code."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Physical Prospect (Auto Transact Sync)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "const res = pm.response.json();",
+                  "if (res.mcdId) {",
+                  "    pm.collectionVariables.set(\"lastCreatedMcdId\", res.mcdId);",
+                  "    console.log(\"Saved lastCreatedMcdId:\", res.mcdId);",
+                  "}",
+                  "if (res.transactID) {",
+                  "    pm.collectionVariables.set(\"lastTransactId\", res.transactID);",
+                  "    console.log(\"Saved lastTransactId:\", res.transactID);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Mantas\",\n  \"middleName\": \"\",\n  \"lastName\": \"Jankauskas\",\n  \"personalCode\": \"39007070007\",\n  \"countryCode\": \"LT\",\n  \"email\": \"m.jankauskas@example.com\",\n  \"emailVerified\": true,\n  \"phoneNumber\": \"+37060099887\",\n  \"phoneNumberVerified\": true,\n  \"selectedProducts\": [\n    {\n      \"ProductCategory\": \"ACCOUNTS\",\n      \"ProductId\": \"STANDARD\"\n    }\n  ],\n  \"mock\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical"
+              ]
+            },
+            "description": "Creates a new physical person prospect in MCD. Automatically queries Transact T24 core banking by Personal Code to link or assign a Transact Customer ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Physical Person by MCD ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical/:mcdId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical",
+                ":mcdId"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdPhysical}}",
+                  "description": "MCD identifier (e.g. F20014528 or legacy P1001)"
+                }
+              ]
+            },
+            "description": "Retrieves the complete profile for a physical customer, including identity documents, contact details, residential address, KYC/AML screening, and Transact ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Lookup Physical Person by Personal Code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical/by-personal-code/:personalCode",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical",
+                "by-personal-code",
+                ":personalCode"
+              ],
+              "variable": [
+                {
+                  "key": "personalCode",
+                  "value": "{{personalCode}}",
+                  "description": "Lithuanian national personal identification code (Asmens kodas)"
+                }
+              ]
+            },
+            "description": "Directly looks up a physical customer by national personal code (11 digits, e.g. 48802020002)."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Physical Person",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"PrimaryEmail\": \"jonas.updated@example.com\",\n  \"MobileNumber\": \"+37060000001\",\n  \"RegistrationAddress\": {\n    \"Street\": \"Gedimino pr. 10\",\n    \"City\": \"Vilnius\",\n    \"PostCode\": \"LT-01103\",\n    \"CountryCode\": \"LT\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical/:mcdId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical",
+                ":mcdId"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdPhysical}}",
+                  "description": "MCD identifier of the physical person"
+                }
+              ]
+            },
+            "description": "Updates mutable fields (email, mobile phone number, residential address, etc.) of an existing physical customer."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Physical Person Consents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Consent updated successfully\", function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ConsentOffers\": true,\n  \"ConsentProfiling\": true,\n  \"ConsentPartnersOffers\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical/:mcdId/consent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical",
+                ":mcdId",
+                "consent"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdPhysical}}",
+                  "description": "MCD identifier"
+                }
+              ]
+            },
+            "description": "Updates GDPR and marketing consents for a physical customer (offers, profiling, partner offers)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Potential Junior Guardians",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical/:mcdId/potentialGuardians",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical",
+                ":mcdId",
+                "potentialGuardians"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdJunior}}",
+                  "description": "MCD identifier of the junior / minor (e.g. F20014530)"
+                }
+              ]
+            },
+            "description": "Returns a list of adult physical clients eligible to be legal guardians for a junior/child account."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Junior Guardian",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Guardian set successfully\", function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical/:mcdId/guardian/:guardianMcdId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical",
+                ":mcdId",
+                "guardian",
+                ":guardianMcdId"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdJunior}}",
+                  "description": "MCD identifier of the junior person"
+                },
+                {
+                  "key": "guardianMcdId",
+                  "value": "{{mcdIdPhysical}}",
+                  "description": "MCD identifier of the adult guardian"
+                }
+              ]
+            },
+            "description": "Links an adult guardian to a junior customer card in MCD."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Children Linked to Guardian",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical/:mcdId/children",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical",
+                ":mcdId",
+                "children"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdPhysical}}",
+                  "description": "MCD identifier of the adult guardian"
+                }
+              ]
+            },
+            "description": "Retrieves all junior cards linked under the specified adult guardian."
+          },
+          "response": []
+        },
+        {
+          "name": "Set Co-applicant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200 or 201\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Coapplicant set successfully\", function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/physical/:mcdId/coapplicant/:coapplicantMcdId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "physical",
+                ":mcdId",
+                "coapplicant",
+                ":coapplicantMcdId"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdPhysical}}",
+                  "description": "Primary applicant MCD identifier"
+                },
+                {
+                  "key": "coapplicantMcdId",
+                  "value": "{{mcdIdCoapplicant}}",
+                  "description": "Co-applicant MCD identifier"
+                }
+              ]
+            },
+            "description": "Links a co-applicant to an existing customer for joint applications (e.g. joint loans or mortgages)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Juridical Persons (SME)",
+      "description": "Endpoints for managing business / SME corporate accounts, RC/JAR registry lookups, accumulated capital accounts for company founding, and representative authorizations.",
+      "item": [
+        {
+          "name": "Search Juridical Persons",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/juridical?CompanyCode={{companyCode}}&CountryCode={{countryCode}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "juridical"
+              ],
+              "query": [
+                {
+                  "key": "CompanyCode",
+                  "value": "{{companyCode}}",
+                  "description": "Lithuanian JAR company registration code (e.g. 305123456)"
+                },
+                {
+                  "key": "CountryCode",
+                  "value": "{{countryCode}}",
+                  "description": "ISO country code (e.g. LT)"
+                }
+              ]
+            },
+            "description": "Searches juridical persons (companies / legal entities) by company registration code and country."
+          },
+          "response": []
+        },
+        {
+          "name": "Ensure Juridical Prospect with Representative",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"juridicalPerson\": {\n    \"companyCode\": \"306999888\",\n    \"countryCode\": \"LT\",\n    \"fullName\": \"UAB Inovaciju Centras\",\n    \"phoneNumber\": \"+37060012345\",\n    \"email\": \"info@inovacijos.lt\",\n    \"registrationAddress\": {\n      \"street\": \"Upės g. 5\",\n      \"city\": \"Vilnius\",\n      \"postCode\": \"LT-08128\",\n      \"countryCode\": \"LT\"\n    }\n  },\n  \"representative\": {\n    \"firstName\": \"Tomas\",\n    \"lastName\": \"Vaitkus\",\n    \"personalCode\": \"38101010010\",\n    \"countryCode\": \"LT\",\n    \"relationshipType\": \"DIRECTOR\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/juridical",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "juridical"
+              ]
+            },
+            "description": "Creates or updates a corporate entity (SME) together with its authorized legal representative in a single idempotent call."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Juridical Person by MCD ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/juridical/:mcdId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "juridical",
+                ":mcdId"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdJuridical}}",
+                  "description": "MCD identifier of company (e.g. J20014528 or legacy J2001)"
+                }
+              ]
+            },
+            "description": "Retrieves full corporate profile of a juridical person, including registered address, directors, and AML status."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Juridical Person",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"FullName\": \"UAB Baltijos Technologijos Group\",\n  \"Email\": \"contact@baltijos-tech.lt\",\n  \"PhoneNumber\": \"+37052001122\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/juridical/:mcdId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "juridical",
+                ":mcdId"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdJuridical}}",
+                  "description": "MCD identifier of company"
+                }
+              ]
+            },
+            "description": "Updates mutable corporate information such as trade name, email, or telephone."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Juridical Person Consents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Consent updated successfully\", function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ConsentOffers\": true,\n  \"ConsentPartnersOffers\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/juridical/:mcdId/consent",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "juridical",
+                ":mcdId",
+                "consent"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdJuridical}}",
+                  "description": "MCD identifier of company"
+                }
+              ]
+            },
+            "description": "Updates corporate marketing and partner offer consents for the juridical entity."
+          },
+          "response": []
+        },
+        {
+          "name": "Ensure Accumulated Account with Representative",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"juridicalPersonDetails\": {\n    \"fullName\": \"UAB Naujas Startas 2\",\n    \"phoneNumber\": \"+37068811223\",\n    \"secondaryPhoneNumber\": \"+37052990000\",\n    \"registrationAddress\": {\n      \"countryCode\": \"LT\",\n      \"city\": \"Vilnius\",\n      \"street\": \"Upės g. 21\",\n      \"postCode\": \"LT-08128\"\n    },\n    \"selectedProducts\": [\n      {\n        \"ProductCategory\": \"ACCUMULATED\",\n        \"ProductId\": \"FOUNDING_CAPITAL\"\n      }\n    ]\n  },\n  \"representativeDetails\": {\n    \"firstName\": \"Simas\",\n    \"lastName\": \"Kairys\",\n    \"personalCode\": \"39304040004\",\n    \"countryCode\": \"LT\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/juridical/accumulated",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "juridical",
+                "accumulated"
+              ]
+            },
+            "description": "Creates or updates an accumulated (kaupiamoji) capital account for a company in formation prior to JAR registration."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Accumulated Account",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/juridical/accumulated?CompanyName={{accumulatedCompanyName}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "juridical",
+                "accumulated"
+              ],
+              "query": [
+                {
+                  "key": "CompanyName",
+                  "value": "Naujas",
+                  "description": "Company name keyword to search"
+                }
+              ]
+            },
+            "description": "Searches accumulated capital accounts for companies in formation."
+          },
+          "response": []
+        },
+        {
+          "name": "Transform Accumulated Account to Full Juridical",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"juridicalPersonDetails\": {\n    \"companyCode\": \"307111222\"\n  },\n  \"representativeDetails\": {\n    \"firstName\": \"Vytautas\",\n    \"lastName\": \"Petrauskas\",\n    \"personalCode\": \"37905050005\",\n    \"countryCode\": \"LT\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/juridical/:mcdId/transformFromAccumulated",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "juridical",
+                ":mcdId",
+                "transformFromAccumulated"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdAccumulated}}",
+                  "description": "MCD identifier of accumulated account (e.g. A4001)"
+                }
+              ]
+            },
+            "description": "Transforms a temporary accumulated capital account into a fully registered SME corporate customer once JAR registration completes."
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Representative of Juridical Person",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/juridical/:mcdId/representatives/:representativeMcdId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "juridical",
+                ":mcdId",
+                "representatives",
+                ":representativeMcdId"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdJuridical}}",
+                  "description": "Company MCD ID"
+                },
+                {
+                  "key": "representativeMcdId",
+                  "value": "{{mcdIdRepresentative}}",
+                  "description": "Representative MCD ID (e.g. R3001)"
+                }
+              ]
+            },
+            "description": "Validates that a representative has active legal authority to act on behalf of the company according to RC/JAR records."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Legal Representatives",
+      "description": "Endpoints for querying and updating corporate officers, managing directors, and authorized legal representatives.",
+      "item": [
+        {
+          "name": "Search Representatives",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/representatives?FirstName=Vytautas&LastName=Petrauskas&CountryCode=LT",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "representatives"
+              ],
+              "query": [
+                {
+                  "key": "FirstName",
+                  "value": "Vytautas",
+                  "description": "First name"
+                },
+                {
+                  "key": "LastName",
+                  "value": "Petrauskas",
+                  "description": "Last name"
+                },
+                {
+                  "key": "PersonalCode",
+                  "value": "",
+                  "description": "Personal identification code",
+                  "disabled": true
+                },
+                {
+                  "key": "CountryCode",
+                  "value": "LT",
+                  "description": "Country code"
+                }
+              ]
+            },
+            "description": "Searches for corporate representatives and directors in MCD."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Representative by MCD ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/persons/representatives/:mcdId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "representatives",
+                ":mcdId"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdRepresentative}}",
+                  "description": "Representative MCD ID (e.g. R3001)"
+                }
+              ]
+            },
+            "description": "Retrieves complete profile and authorization history for a legal representative."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Representative",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"PrimaryEmail\": \"vytautas.petrauskas@example.com\",\n  \"MobileNumber\": \"+37060012399\",\n  \"RegistrationAddress\": {\n    \"Street\": \"Konstitucijos pr. 12\",\n    \"City\": \"Vilnius\",\n    \"PostCode\": \"LT-08105\",\n    \"CountryCode\": \"LT\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/persons/representatives/:mcdId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "persons",
+                "representatives",
+                ":mcdId"
+              ],
+              "variable": [
+                {
+                  "key": "mcdId",
+                  "value": "{{mcdIdRepresentative}}",
+                  "description": "Representative MCD ID"
+                }
+              ]
+            },
+            "description": "Updates contact info and address for an authorized company representative."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Transact Core Banking Integration",
+      "description": "Integration endpoints bridging MCD Infinity with Temenos Transact (T24) Core Banking for customer synchronization, party queries, and Transact ID resolution.",
+      "item": [
+        {
+          "name": "Sync Customer to Transact Core Banking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Sync result is valid\", function () {",
+                  "    pm.expect(res.success).to.be.true;",
+                  "    pm.expect(res.transactId).to.be.a(\"string\");",
+                  "});",
+                  "if (res.transactId) {",
+                  "    pm.collectionVariables.set(\"lastTransactId\", res.transactId);",
+                  "    console.log(\"Saved Transact ID:\", res.transactId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"personalCode\": \"48802020002\",\n  \"force\": true,\n  \"mock\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/transact/sync-customer",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "transact",
+                "sync-customer"
+              ]
+            },
+            "description": "Synchronizes a client to Temenos Transact core banking by personal code. If the customer does not have a Transact ID, one is looked up or generated in Transact and persisted to the local MCD record."
+          },
+          "response": []
+        },
+        {
+          "name": "Query Transact Customer Profile (Direct Mock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/irf-provider-container/api/v3.0.0/party/customers?customerId={{transactCustomerId}}&mock=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "irf-provider-container",
+                "api",
+                "v3.0.0",
+                "party",
+                "customers"
+              ],
+              "query": [
+                {
+                  "key": "customerId",
+                  "value": "{{transactCustomerId}}",
+                  "description": "Transact Core Customer ID (e.g. 10001868)"
+                },
+                {
+                  "key": "mock",
+                  "value": "true",
+                  "description": "Enable mock mode for local standalone testing"
+                }
+              ]
+            },
+            "description": "Queries customer records directly from Temenos Transact T24 Core Party API endpoint (IRF provider container)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Formpipe Document Adapter",
+      "description": "Document generation, PDF rendering, binary streams, Base64 conversion, and document archiving via Formpipe LaserNet adapter.",
+      "item": [
+        {
+          "name": "Generate Document (DocID & Download Link)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "const res = pm.response.json();",
+                  "pm.test(\"Document generated successfully\", function () {",
+                  "    pm.expect(res.DocID).to.be.a(\"string\");",
+                  "    pm.expect(res.DMLink).to.be.a(\"string\");",
+                  "});",
+                  "if (res.DocID) {",
+                  "    pm.collectionVariables.set(\"lastGeneratedDocId\", res.DocID);",
+                  "    console.log(\"Saved generated DocID:\", res.DocID);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "AccessKey",
+                "value": "{{accessKey}}",
+                "type": "text",
+                "description": "Formpipe LaserNet API access key / secret token"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payloadContentType\": \"application/json\",\n  \"payloadType\": \"account-opening-agreement\",\n  \"payload\": {\n    \"clients\": [\n      {\n        \"client\": {\n          \"firstName\": \"Jonas\",\n          \"lastName\": \"Kazlauskas\",\n          \"personalCode\": \"38501010001\"\n        }\n      }\n    ]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formpipe-adapter/v1/document-generation/generate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formpipe-adapter",
+                "v1",
+                "document-generation",
+                "generate"
+              ]
+            },
+            "description": "Generates a PDF document via Formpipe template and returns its DocID and direct file download link (DMLink)."
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Document Only (Raw Binary PDF)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is application/pdf\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "AccessKey",
+                "value": "{{accessKey}}",
+                "type": "text",
+                "description": "Formpipe LaserNet API access key / secret token"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payloadContentType\": \"application/json\",\n  \"payloadType\": \"standard-terms\",\n  \"payload\": {\n    \"title\": \"General Terms and Conditions\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formpipe-adapter/v1/document-generation/documentonly",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formpipe-adapter",
+                "v1",
+                "document-generation",
+                "documentonly"
+              ]
+            },
+            "description": "Directly compiles and streams raw PDF bytes (Content-Type: application/pdf) without creating an archived DocID."
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Document Only (Base64 Format)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns Base64 encoded PDF\", function () {",
+                  "    pm.expect(pm.response.text()).to.match(/^JVBERi0x/);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "AccessKey",
+                "value": "{{accessKey}}",
+                "type": "text",
+                "description": "Formpipe LaserNet API access key / secret token"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payloadContentType\": \"application/json\",\n  \"payloadType\": \"standard-terms\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formpipe-adapter/v1/document-generation/documentonly?format=base64",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formpipe-adapter",
+                "v1",
+                "document-generation",
+                "documentonly"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "base64",
+                  "description": "Return as base64 string"
+                }
+              ]
+            },
+            "description": "Generates document and returns pure Base64 encoded string starting with JVBERi0x."
+          },
+          "response": []
+        },
+        {
+          "name": "Retrieve Document File by ID (PDF Binary)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Content-Type is application/pdf\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/pdf\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/pdf",
+                "type": "text"
+              },
+              {
+                "key": "AccessKey",
+                "value": "{{accessKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formpipe-adapter/v1/documents/by-id/:id/file",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formpipe-adapter",
+                "v1",
+                "documents",
+                "by-id",
+                ":id",
+                "file"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{documentId}}",
+                  "description": "Formpipe Document ID (e.g. 68719477778)"
+                }
+              ]
+            },
+            "description": "Downloads the original binary PDF file by Document ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Retrieve Document File by ID (Base64 Format)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Returns Base64 text\", function () {",
+                  "    pm.expect(pm.response.text()).to.match(/^JVBERi0x/);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/plain",
+                "type": "text"
+              },
+              {
+                "key": "AccessKey",
+                "value": "{{accessKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formpipe-adapter/v1/documents/by-id/:id/file?format=base64",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formpipe-adapter",
+                "v1",
+                "documents",
+                "by-id",
+                ":id",
+                "file"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "base64",
+                  "description": "Return as base64 string"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{documentId}}",
+                  "description": "Formpipe Document ID"
+                }
+              ]
+            },
+            "description": "Retrieves document as a raw Base64 string."
+          },
+          "response": []
+        },
+        {
+          "name": "Retrieve Document File by ID (JSON Wrapper)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "const res = pm.response.json();",
+                  "pm.test(\"JSON wrapper contains DocID and base64 file\", function () {",
+                  "    pm.expect(res.DocID).to.be.a(\"string\");",
+                  "    pm.expect(res.file).to.match(/^JVBERi0x/);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "AccessKey",
+                "value": "{{accessKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formpipe-adapter/v1/documents/by-id/:id/file?format=json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formpipe-adapter",
+                "v1",
+                "documents",
+                "by-id",
+                ":id",
+                "file"
+              ],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json",
+                  "description": "Return as JSON with base64 file payload"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{documentId}}",
+                  "description": "Formpipe Document ID"
+                }
+              ]
+            },
+            "description": "Retrieves document embedded inside a JSON object: { \"status\": \"200\", \"DocID\": \"...\", \"file\": \"JVBERi0x...\" }."
+          },
+          "response": []
+        },
+        {
+          "name": "Retrieve Document Metadata by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "AccessKey",
+                "value": "{{accessKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/formpipe-adapter/v1/documents/by-id/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formpipe-adapter",
+                "v1",
+                "documents",
+                "by-id",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{documentId}}",
+                  "description": "Formpipe Document ID"
+                }
+              ]
+            },
+            "description": "Retrieves metadata (creation date, MIME type, size, status) of a generated document."
+          },
+          "response": []
+        },
+        {
+          "name": "Upload or Update Document Byte Array",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "AccessKey",
+                "value": "{{accessKey}}",
+                "type": "text",
+                "description": "Formpipe LaserNet API access key / secret token"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Agreement Document\",\n  \"description\": \"Uploaded signed agreement PDF byte stream\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/formpipe-adapter/v1/documents/by-id/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "formpipe-adapter",
+                "v1",
+                "documents",
+                "by-id",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{documentId}}",
+                  "description": "Formpipe Document ID"
+                }
+              ]
+            },
+            "description": "Uploads or replaces the document payload/bytes for a specified Document ID."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Admin & Database Utilities",
+      "description": "Operations for live database inspection, table querying, single-entity CRUD, Transact ID manual assignment, database state resets, and OpenAPI schema introspection.",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Status is ok\", function () {",
+                  "    pm.expect(pm.response.json().status).to.eql(\"ok\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Server health check returning uptime and timestamp."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Database Snapshot (All Tables)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/db",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "db"
+              ]
+            },
+            "description": "Exports the complete live database snapshot containing all 4 tables (physical, juridical, representatives, accumulated)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Table Records (Physical Persons)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/db/physical",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "db",
+                "physical"
+              ]
+            },
+            "description": "Returns all records directly from the physical persons table."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Single Record by Table and ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/db/:table/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "db",
+                ":table",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "table",
+                  "value": "physical",
+                  "description": "Table name: physical | juridical | representatives | accumulated"
+                },
+                {
+                  "key": "id",
+                  "value": "{{mcdIdPhysical}}",
+                  "description": "Entity ID (e.g. F20014528)"
+                }
+              ]
+            },
+            "description": "Queries a single row from any database table by its ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Upsert Record Directly in Admin DB",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Jonas\",\n  \"lastName\": \"Kazlauskas\",\n  \"registrationAddress\": {\n    \"street\": \"Gedimino pr. 99\",\n    \"city\": \"Vilnius\",\n    \"postCode\": \"LT-01103\",\n    \"countryCode\": \"LT\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/db/:table/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "db",
+                ":table",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "table",
+                  "value": "physical",
+                  "description": "Table name"
+                },
+                {
+                  "key": "id",
+                  "value": "{{mcdIdPhysical}}",
+                  "description": "Entity ID"
+                }
+              ]
+            },
+            "description": "Directly updates or creates an entity in the database from the web console / admin API."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Transact ID & Sync Customer Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"transactId\": \"10001868\",\n  \"mock\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/db/physical/:id/transact-id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "db",
+                "physical",
+                ":id",
+                "transact-id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{mcdIdCoapplicant}}",
+                  "description": "Physical person MCD ID (e.g. F20014529)"
+                }
+              ]
+            },
+            "description": "Quick-assigns a Transact Customer ID to a physical person and fetches matching customer demographics from Transact."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Record Directly in Admin DB",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Aidas\",\n  \"lastName\": \"Gedvilas\",\n  \"countryCode\": \"LT\",\n  \"personalCode\": \"38901010077\",\n  \"mock\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/admin/db/:table",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "db",
+                ":table"
+              ],
+              "variable": [
+                {
+                  "key": "table",
+                  "value": "physical",
+                  "description": "Target table name"
+                }
+              ]
+            },
+            "description": "Appends a new record directly into any table in the database."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Record from Admin DB",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Deleted successfully\", function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/db/:table/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "db",
+                ":table",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "table",
+                  "value": "physical",
+                  "description": "Target table name"
+                },
+                {
+                  "key": "id",
+                  "value": "F99999999",
+                  "description": "ID to delete"
+                }
+              ]
+            },
+            "description": "Deletes an entity from the database."
+          },
+          "response": []
+        },
+        {
+          "name": "Reset Database to Initial Seed State",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Database reset succeeded\", function () {",
+                  "    pm.expect(pm.response.json().success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/db/reset",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "db",
+                "reset"
+              ]
+            },
+            "description": "Resets the live database back to the standard pre-seeded Lithuanian test entities."
+          },
+          "response": []
+        },
+        {
+          "name": "Get OpenAPI 3.0 Specification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Response time is acceptable (< 2000ms)\", function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+                  "});",
+                  "pm.test(\"Response is valid JSON\", function () {",
+                  "    pm.expect(pm.response.json()).to.be.an(\"object\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/openapi.json",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "openapi.json"
+              ]
+            },
+            "description": "Retrieves the complete OpenAPI 3.0 specification backing the Swagger UI documentation."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Base URL of MCD Infinity API Server"
+    },
+    {
+      "key": "mcdIdPhysical",
+      "value": "F20014528",
+      "type": "string",
+      "description": "Physical Person MCD ID (Jonas Kazlauskas)"
+    },
+    {
+      "key": "mcdIdJunior",
+      "value": "F20014530",
+      "type": "string",
+      "description": "Junior Person MCD ID (Lukas Kazlauskas)"
+    },
+    {
+      "key": "mcdIdCoapplicant",
+      "value": "F20014529",
+      "type": "string",
+      "description": "Co-applicant MCD ID (Ieva Kazlauskienė)"
+    },
+    {
+      "key": "mcdIdJuridical",
+      "value": "J20014528",
+      "type": "string",
+      "description": "Juridical Entity MCD ID (UAB Baltijos Technologijos)"
+    },
+    {
+      "key": "mcdIdRepresentative",
+      "value": "R3001",
+      "type": "string",
+      "description": "Legal Representative MCD ID (Vytautas Petrauskas)"
+    },
+    {
+      "key": "mcdIdAccumulated",
+      "value": "A4001",
+      "type": "string",
+      "description": "Accumulated Account MCD ID (UAB Naujas Startas)"
+    },
+    {
+      "key": "personalCode",
+      "value": "48802020002",
+      "type": "string",
+      "description": "Sample Lithuanian personal code"
+    },
+    {
+      "key": "companyCode",
+      "value": "305123456",
+      "type": "string",
+      "description": "Sample Lithuanian JAR company code"
+    },
+    {
+      "key": "firstName",
+      "value": "Jonas",
+      "type": "string",
+      "description": "Search query first name"
+    },
+    {
+      "key": "countryCode",
+      "value": "LT",
+      "type": "string",
+      "description": "ISO 2-letter country code"
+    },
+    {
+      "key": "accumulatedCompanyName",
+      "value": "Naujas",
+      "type": "string",
+      "description": "Accumulated company search term"
+    },
+    {
+      "key": "documentId",
+      "value": "68719477778",
+      "type": "string",
+      "description": "Formpipe LaserNet Document ID"
+    },
+    {
+      "key": "transactCustomerId",
+      "value": "10001868",
+      "type": "string",
+      "description": "Temenos Transact T24 Core Customer ID"
+    },
+    {
+      "key": "accessKey",
+      "value": "formpipe-secret-key-xyz",
+      "type": "string",
+      "description": "Formpipe LaserNet Adapter Access Key"
+    }
+  ]
+}

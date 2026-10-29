@@ -326,6 +326,36 @@ await assertTest('PUT /persons/representatives/R3001', async () => {
   if ((res.json.languageCode || res.json.LanguageCode) !== 'en') throw new Error('Update failed');
 });
 
+await assertTest('PUT /persons/representatives/R3001 (Update mcdId updates table key)', async () => {
+  // Update mcdId to R3099
+  const res = await request('PUT', '/persons/representatives/R3001', {
+    mcdId: 'R3099'
+  });
+  if (res.status !== 200) throw new Error(`Status ${res.status}`);
+  if (res.json.mcdId !== 'R3099') throw new Error(`Expected mcdId R3099, got ${res.json.mcdId}`);
+
+  // Query new ID via GET /persons/representatives/R3099
+  const getNewRes = await request('GET', '/persons/representatives/R3099');
+  if (getNewRes.status !== 200) throw new Error(`Expected 200 on new ID, got ${getNewRes.status}`);
+  if (getNewRes.json.mcdId !== 'R3099') throw new Error(`Expected mcdId R3099 on GET, got ${getNewRes.json.mcdId}`);
+
+  // Old ID should return 404
+  const getOldRes = await request('GET', '/persons/representatives/R3001');
+  if (getOldRes.status !== 404) throw new Error(`Expected 404 on old ID R3001, got ${getOldRes.status}`);
+
+  // Update back to R3001 via PUT /admin/db/representatives/R3099
+  const adminPutRes = await request('PUT', '/admin/db/representatives/R3099', {
+    mcdId: 'R3001'
+  });
+  if (adminPutRes.status !== 200) throw new Error(`Admin update status ${adminPutRes.status}`);
+  if (adminPutRes.json.mcdId !== 'R3001') throw new Error(`Expected mcdId R3001 from admin update, got ${adminPutRes.json.mcdId}`);
+
+  // Query R3001 via GET /persons/representatives/R3001
+  const getRestoredRes = await request('GET', '/persons/representatives/R3001');
+  if (getRestoredRes.status !== 200) throw new Error(`Expected 200 on restored R3001, got ${getRestoredRes.status}`);
+  if (getRestoredRes.json.mcdId !== 'R3001') throw new Error(`Expected mcdId R3001, got ${getRestoredRes.json.mcdId}`);
+});
+
 // 5. Admin DB Direct Browser Edit Endpoints
 await assertTest('PUT /admin/db/physical/F20014528 (Direct browser update)', async () => {
   const res = await request('PUT', '/admin/db/physical/F20014528', {

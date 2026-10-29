@@ -80,6 +80,31 @@ bash test-api.sh
 
 ---
 
+## Postman Collection & Environment
+
+A complete, fully structured Postman collection covering all **42 REST API endpoints** is provided in this repository, along with a pre-configured environment file:
+
+- **Postman Collection v2.1.0:** [`mcd-infinity.postman_collection.json`](./mcd-infinity.postman_collection.json)
+- **Postman Environment:** [`mcd-infinity.postman_environment.json`](./mcd-infinity.postman_environment.json)
+- **Regenerate Script:** `npm run generate:postman`
+
+### Collection Structure (6 Folders / 42 Endpoints):
+1. **Physical Persons (10 requests)**: Search, create with auto Transact sync, lookup by personal code, full profile retrieval, updates, GDPR/marketing consents, junior guardian assignments, linked children, and co-applicants.
+2. **Juridical Persons / SME (9 requests)**: JAR registry company search, idempotent company+representative creation, profile retrieval, updates, corporate consents, accumulated capital accounts for company founding, transform from accumulated, and representative validation.
+3. **Legal Representatives (3 requests)**: Search directors/representatives, get by MCD ID, and update contact/address.
+4. **Transact Core Banking (2 requests)**: Customer synchronization by personal code and direct query of Transact party records.
+5. **Formpipe Document Adapter (8 requests)**: Document generation with DocID & download link, raw binary PDF stream, Base64 format, document retrieval (binary, base64, JSON wrapper), metadata inspection, and byte payload upload.
+6. **Admin & Database Utilities (10 requests)**: Health check, full DB snapshot, table-specific records, single entity CRUD, Transact ID assignment, DB reset to seed, and OpenAPI 3.0 specification.
+
+### How to Import and Run:
+1. Open **Postman**.
+2. Click the **Import** button in the top left.
+3. Select or drag-and-drop both `mcd-infinity.postman_collection.json` and `mcd-infinity.postman_environment.json`.
+4. Select the **"MCD Infinity - Local Server"** environment in Postman.
+5. Ensure the server is running (`npm start`) and trigger any request or run the entire suite using Postman Collection Runner / Newman!
+
+---
+
 ## API Endpoints & Usage Details
 
 ### 1. Physical Persons (`/persons/physical`)

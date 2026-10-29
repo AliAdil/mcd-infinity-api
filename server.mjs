@@ -742,6 +742,47 @@ export function getJuridicalPerson(id) {
   return j;
 }
 
+// Helper: look up representative with fallback to physical persons & case-insensitive search
+export function getRepresentative(id) {
+  if (!id) return null;
+  // 1. Direct or case-insensitive search in db.representatives
+  let r = db.representatives.get(id);
+  if (!r) {
+    const lower = String(id).toLowerCase();
+    for (const [k, v] of db.representatives.entries()) {
+      if (
+        k.toLowerCase() === lower ||
+        (v.McdId && v.McdId.toLowerCase() === lower) ||
+        (v.mcdId && v.mcdId.toLowerCase() === lower) ||
+        (v.PersonalCode && String(v.PersonalCode) === String(id)) ||
+        (v.personalCode && String(v.personalCode) === String(id))
+      ) {
+        r = v;
+        break;
+      }
+    }
+  }
+  // 2. Fallback: check in physical persons (in Infinity/MCD, a representative is often a physical person)
+  if (!r) {
+    const p = getPhysicalPerson(id);
+    if (p) {
+      r = {
+        McdId: p.McdId || p.mcdId,
+        mcdId: p.mcdId || p.McdId,
+        FirstName: p.FirstName || p.firstName,
+        LastName: p.LastName || p.lastName,
+        PersonalCode: p.PersonalCode || p.personalCode,
+        CountryCode: p.CountryCode || p.countryCode,
+        Status: p.Status || p.status || 'Existing',
+        PrimaryEmail: p.PrimaryEmail || p.primaryEmail,
+        PrimaryPhoneNumber: p.PrimaryPhoneNumber || p.primaryPhoneNumber
+      };
+    }
+  }
+  return r;
+}
+
+
 // Sequence counters (8 digits)
 export let physicalSeq = 20014533;
 export let juridicalSeq = 20014529;
@@ -1245,6 +1286,7 @@ export function syncDualCaseProperties(target, source) {
   if (!target || !source || typeof source !== 'object') return target;
 
   const fieldPairs = [
+    ['mcdId', 'McdId'],
     ['firstName', 'FirstName'],
     ['middleName', 'MiddleName'],
     ['lastName', 'LastName'],
@@ -2423,6 +2465,7 @@ export async function handleRequest(req, res) {
       }
 
       const body = await parseBody(req);
+      let existingKey = targetMap.has(id) ? id : null;
       let existing = targetMap.get(id);
       if (!existing) {
         for (const [k, v] of targetMap.entries()) {
@@ -2436,6 +2479,7 @@ export async function handleRequest(req, res) {
             (v.companyCode && String(v.companyCode) === String(id))
           ) {
             existing = v;
+            existingKey = k;
             break;
           }
         }
@@ -2450,6 +2494,17 @@ export async function handleRequest(req, res) {
           status: 'Prospect'
         };
       }
+
+      // Check if mcdId was updated in the body (supports mcdId, McdId, mcdid, etc.)
+      const rawNewMcdId = body.mcdId !== undefined ? body.mcdId :
+                          (body.McdId !== undefined ? body.McdId :
+                          (body.mcdid !== undefined ? body.mcdid :
+                          (body.mcdID !== undefined ? body.mcdID :
+                          (body.MCDID !== undefined ? body.MCDID : undefined))));
+      const requestedNewId = (rawNewMcdId !== undefined && rawNewMcdId !== null)
+        ? String(rawNewMcdId).trim()
+        : null;
+      const finalId = requestedNewId || existingKey || id;
 
       let bodyTransactId = undefined;
       if (body.TransactID !== undefined) bodyTransactId = body.TransactID;
@@ -2471,8 +2526,14 @@ export async function handleRequest(req, res) {
         ((newTransactId !== existingTransactId && (!isNewRecord || !alreadyHasSyncData)) || body.force === true);
 
       // Merge and update local MCD record
-      const updated = { ...existing, ...body, McdId: id, mcdId: id };
+      const updated = { ...existing, ...body, McdId: finalId, mcdId: finalId };
       syncDualCaseProperties(updated, body);
+      delete updated.mcdid;
+      delete updated.mcdID;
+      delete updated.Mcdid;
+      delete updated.MCDID;
+      updated.McdId = finalId;
+      updated.mcdId = finalId;
 
       let syncResult = null;
       // ONLY trigger external Transact sync IF the TransactID was actually CHANGED!
@@ -2501,17 +2562,51 @@ export async function handleRequest(req, res) {
         normalizeTransactKeys(updated, isTransactIdExplicitlyProvided ? newTransactId : (existingTransactId || null));
       }
 
-      targetMap.set(id, updated);
+      // If the key changed, remove old key from targetMap and re-insert under finalId
+      if (existingKey && existingKey !== finalId) {
+        targetMap.delete(existingKey);
+      }
+      if (id && id !== finalId) {
+        targetMap.delete(id);
+      }
+      targetMap.set(finalId, updated);
+
+      // If this is the representatives table, cascade update foreign key references in juridical and accumulated tables
+      if (colName === 'representatives' || colName === 'representative') {
+        const oldIdLower = (existingKey || id).toLowerCase();
+        for (const jur of db.juridicalPersons.values()) {
+          const curRep = (jur.RepresentativeMcdId || jur.representativeMcdId || '').toLowerCase();
+          if (curRep === oldIdLower) {
+            jur.RepresentativeMcdId = finalId;
+            jur.representativeMcdId = finalId;
+          }
+        }
+        for (const acc of db.accumulatedJuridicalPersons.values()) {
+          const curRep = (acc.RepresentativeMcdId || acc.representativeMcdId || '').toLowerCase();
+          if (curRep === oldIdLower) {
+            acc.RepresentativeMcdId = finalId;
+            acc.representativeMcdId = finalId;
+          }
+        }
+      } else if (colName === 'physical' || colName === 'physicalPersons') {
+        const oldIdLower = (existingKey || id).toLowerCase();
+        for (const p of db.physicalPersons.values()) {
+          if ((p.guardianMcdId || '').toLowerCase() === oldIdLower) p.guardianMcdId = finalId;
+          if ((p.coapplicantMcdId || '').toLowerCase() === oldIdLower) p.coapplicantMcdId = finalId;
+        }
+      }
+
       syncDbToFile();
 
       return sendJson(res, 200, {
         success: true,
         message: syncResult?.synced
-          ? `Record ${id} updated and synced with Transact customer '${newTransactId}'`
-          : `Record ${id} updated in ${colName} successfully`,
+          ? `Record ${finalId} updated and synced with Transact customer '${newTransactId}'`
+          : `Record ${finalId} updated in ${colName} successfully`,
         transactSynced: syncResult ? syncResult.synced : false,
         syncResult,
-        record: updated
+        record: updated,
+        ...updated
       });
     }
 
@@ -3269,19 +3364,26 @@ export async function handleRequest(req, res) {
     if (method === 'GET' && m) {
       const [, mcdId, representativeMcdId] = m;
       const jur = getJuridicalPerson(mcdId);
-      const rep = db.representatives.get(representativeMcdId);
+      const rep = getRepresentative(representativeMcdId);
       if (!jur || !rep) {
         return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: 'Company or representative not found' });
       }
 
-      if (jur.RepresentativeMcdId === representativeMcdId) {
+      const jurRepId = (jur.RepresentativeMcdId || jur.representativeMcdId || '').toLowerCase();
+      const repId = (rep.McdId || rep.mcdId || '').toLowerCase();
+      const reqRepId = String(representativeMcdId).toLowerCase();
+
+      const isLinked = jurRepId === reqRepId || jurRepId === repId ||
+        (rep.PersonalCode && jur.RepresentativePersonalCode && rep.PersonalCode === jur.RepresentativePersonalCode);
+
+      if (isLinked) {
         return sendJson(res, 200, {
-          McdId: rep.McdId,
-          FirstName: rep.FirstName,
-          LastName: rep.LastName,
-          PersonalCode: rep.PersonalCode,
-          CountryCode: rep.CountryCode,
-          Status: rep.Status
+          McdId: rep.McdId || rep.mcdId,
+          FirstName: rep.FirstName || rep.firstName,
+          LastName: rep.LastName || rep.lastName,
+          PersonalCode: rep.PersonalCode || rep.personalCode,
+          CountryCode: rep.CountryCode || rep.countryCode,
+          Status: rep.Status || rep.status || 'Existing'
         });
       } else {
         return sendJson(res, 404, { ErrorCode: '404002', ErrorMessage: 'Representative is not linked to this company' });
@@ -3471,7 +3573,7 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/representatives\/([^\/]+)$/);
     if (method === 'GET' && m) {
       const mcdId = m[1];
-      const rep = db.representatives.get(mcdId);
+      const rep = getRepresentative(mcdId);
       if (!rep) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Representative ${mcdId} not found` });
       return sendJson(res, 200, rep);
     }
@@ -3480,10 +3582,76 @@ export async function handleRequest(req, res) {
     m = pathname.match(/^\/persons\/representatives\/([^\/]+)$/);
     if (method === 'PUT' && m) {
       const mcdId = m[1];
-      const rep = db.representatives.get(mcdId);
+      let existingKey = db.representatives.has(mcdId) ? mcdId : null;
+      let rep = db.representatives.get(mcdId);
+      if (!rep) {
+        const lower = String(mcdId).toLowerCase();
+        for (const [k, v] of db.representatives.entries()) {
+          if (
+            k.toLowerCase() === lower ||
+            (v.McdId && v.McdId.toLowerCase() === lower) ||
+            (v.mcdId && v.mcdId.toLowerCase() === lower) ||
+            (v.PersonalCode && String(v.PersonalCode) === String(mcdId)) ||
+            (v.personalCode && String(v.personalCode) === String(mcdId))
+          ) {
+            rep = v;
+            existingKey = k;
+            break;
+          }
+        }
+      }
       if (!rep) return sendJson(res, 404, { ErrorCode: '404001', ErrorMessage: `Representative ${mcdId} not found` });
 
       const body = await parseBody(req);
+      const rawNewMcdId = body.mcdId !== undefined ? body.mcdId :
+                          (body.McdId !== undefined ? body.McdId :
+                          (body.mcdid !== undefined ? body.mcdid :
+                          (body.mcdID !== undefined ? body.mcdID :
+                          (body.MCDID !== undefined ? body.MCDID : undefined))));
+      const requestedNewId = (rawNewMcdId !== undefined && rawNewMcdId !== null)
+        ? String(rawNewMcdId).trim()
+        : null;
+      const finalId = requestedNewId || existingKey || mcdId;
+
+      if (requestedNewId && requestedNewId !== (existingKey || mcdId)) {
+        if (existingKey) db.representatives.delete(existingKey);
+        db.representatives.delete(mcdId);
+
+        rep.McdId = finalId;
+        rep.mcdId = finalId;
+        db.representatives.set(finalId, rep);
+
+        const oldIdLower = (existingKey || mcdId).toLowerCase();
+        for (const jur of db.juridicalPersons.values()) {
+          const curRep = (jur.RepresentativeMcdId || jur.representativeMcdId || '').toLowerCase();
+          if (curRep === oldIdLower) {
+            jur.RepresentativeMcdId = finalId;
+            jur.representativeMcdId = finalId;
+          }
+        }
+        for (const acc of db.accumulatedJuridicalPersons.values()) {
+          const curRep = (acc.RepresentativeMcdId || acc.representativeMcdId || '').toLowerCase();
+          if (curRep === oldIdLower) {
+            acc.RepresentativeMcdId = finalId;
+            acc.representativeMcdId = finalId;
+          }
+        }
+      } else {
+        rep.McdId = finalId;
+        rep.mcdId = finalId;
+        if (existingKey && existingKey !== finalId) {
+          db.representatives.delete(existingKey);
+        }
+        db.representatives.set(finalId, rep);
+      }
+
+      syncDualCaseProperties(rep, body);
+      delete rep.mcdid;
+      delete rep.mcdID;
+      delete rep.Mcdid;
+      delete rep.MCDID;
+      rep.McdId = finalId;
+      rep.mcdId = finalId;
       if (body.LanguageCode) rep.LanguageCode = body.LanguageCode;
       if (body.PrimaryEmail) rep.PrimaryEmail = body.PrimaryEmail;
       if (body.PrimaryPhoneNumber) rep.PrimaryPhoneNumber = body.PrimaryPhoneNumber;
@@ -5912,5 +6080,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     }
   });
 
+  process.on('uncaughtException', (err) => console.error('[Uncaught Exception]:', err));
+  process.on('unhandledRejection', (reason) => console.error('[Unhandled Rejection]:', reason));
   tryListen(PORT);
 }
